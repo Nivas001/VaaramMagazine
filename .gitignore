@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+build
+.env
+.env.local
+.env*.local
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.bun-cache
+.tmp
+.vercel
+.netlify
+
+# Generated on first `npm install` — see SETUP-GUIDE, Appendix.
+# Committing one built without registry access omits the Linux SWC binaries.

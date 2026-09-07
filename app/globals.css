@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VAARAM MAGAZINE DESIGN TOKENS
+   Crisp, authoritative editorial broadsheet aesthetic.
+   Paper whites (#ffffff), refined neutrals, signature crimson red (#cd2129),
+   warm gold (#b89028 / #d2ac47) and sharp geometric typography.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  --font-display: var(--font-display), "Bayon", Impact, "Arial Black", sans-serif;
+  --font-sans: var(--font-sans), "Assistant", ui-sans-serif, system-ui, sans-serif;
+
+  --color-red-primary: #cd2129;
+  --color-red-hover: #b01b22;
+  --color-red-dark: #8b0f16;
+  --color-gold-accent: #b89028;
+
+  --color-ink-50: #ffffff;
+  --color-ink-100: #f4f4f5;
+  --color-ink-200: #e4e4e7;
+  --color-ink-300: #d4d4d8;
+  --color-ink-400: #a1a1aa;
+  --color-ink-500: #71717a;
+  --color-ink-600: #52525b;
+  --color-ink-700: #3f3f46;
+  --color-ink-800: #27272a;
+  --color-ink-900: #18181b;
+  --color-ink-950: #0a0a0c;
+
+  --color-accent: #cd2129;
+  --color-accent-hover: #b01b22;
+
+  --radius-bento: 0px;
+
+  --shadow-glass: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
+  --shadow-lift: 0 10px 25px -3px rgba(205, 33, 41, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+}
+
+/* ── Theme Variables ───────────────────────────────────────────────────────── */
+:root {
+  --surface: 255 255 255;
+  --surface-raised: 248 248 249;
+  --text: 15 23 42;
+  --text-muted: 100 116 139;
+  --hairline: 228 228 231;
+  --glass-tint: 255 255 255;
+  --glass-alpha: 0.98;
+  --glass-border: 228 228 231;
+  --glass-border-alpha: 1;
+  color-scheme: light;
+}
+
+html.dark {
+  --surface: 0 0 0;
+  --surface-raised: 14 14 14;
+  --text: 255 255 255;
+  --text-muted: 161 161 170;
+  --hairline: 38 38 38;
+  --glass-tint: 10 10 10;
+  --glass-alpha: 0.96;
+  --glass-border: 38 38 38;
+  --glass-border-alpha: 1;
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--glass-border) / var(--glass-border-alpha));
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    background-color: #ffffff;
+  }
+
+  html.dark {
+    background-color: #000000;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #111827;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .dark body,
+  html.dark body {
+    background-color: #000000;
+    color: #ffffff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-wrap: balance;
+    font-weight: 400;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: #cd2129;
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid #cd2129;
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f4f4f5;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 0px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #27272a;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #cd2129;
+  }
+}
+
+/* ═══ SURFACES & UTILITIES ═════════════════════════════════════════════════ */
+@utility glass {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass,
+html.dark .glass {
+  background: #0a0a0a;
+  border-color: #262626;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7);
+}
+
+@utility glass-soft {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .glass-soft,
+html.dark .glass-soft {
+  background: #121212;
+  border-color: #222222;
+}
+
+@utility text-gradient {
+  color: #cd2129;
+}
+
+@utility bento {
+  border-radius: 0px;
+  overflow: hidden;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.dark .bento,
+html.dark .bento {
+  border-color: #262626;
+  background: #0e0e0e;
+}
+
+@utility bento-hover {
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #cd2129;
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* ═══ ANIMATIONS ═════════════════════════════════════════════════════════ */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.pdf-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0px;
+  border: 1px solid #e4e4e7;
+}
+
+.dark .pdf-canvas {
+  border-color: #262626;
+}

@@ -1,0 +1,25 @@
+# Supabase pauses a free project after 7 days with no database activity.
+# This pings the database every 5 days so the website never goes down.
+#
+# After pushing this file, add two repository secrets in
+# GitHub → Settings → Secrets and variables → Actions:
+#   SUPABASE_URL       — your project URL
+#   SUPABASE_ANON_KEY  — your anon/publishable key
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: "0 6 */5 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query one row
+        run: |
+          curl --fail --silent --show-error \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/publications?select=id&limit=1" \
+            --header "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            --header "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          echo "Database pinged successfully."
