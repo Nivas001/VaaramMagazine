@@ -1,99 +1,123 @@
 import type { Metadata } from "next";
-import { Clock, MapPin, Zap } from "lucide-react";
-import { siteConfig } from "@/site.config";
-import { Eyebrow, Section } from "@/components/ui/Bento";
+import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { siteConfig, whatsappLink } from "@/site.config";
+import { ContactForm } from "@/components/site/ContactForm";
+import { Section, Eyebrow } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
-import { DirectContactHub } from "@/components/site/DirectContactHub";
 
 export const metadata: Metadata = {
-  title: "Contact Desk — Direct WhatsApp & Email",
-  description: `Contact ${siteConfig.name} directly via WhatsApp or email. No forms. Immediate responses for classified ads, display banners, and editorial stories.`,
+  title: "Contact — advertise with Vaaram",
+  description: `Get in touch with ${siteConfig.name} about advertising in the weekly edition, or with any question about the publication.`,
   alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {
+  const whatsapp = whatsappLink(
+    "Hello Vaaram Magazine, I'd like to advertise in an upcoming edition."
+  );
+
   return (
-    <>
-      <Section className="!pb-8">
+    <Section className="!pt-14 sm:!pt-20">
+      <header className="max-w-2xl">
+        <Eyebrow>Contact</Eyebrow>
+        <h1 className="display-xl mt-5">Let&apos;s connect.</h1>
+        <p className="lead mt-6">
+          Whether you want to advertise in the next edition or just have a question about
+          the magazine, this reaches us directly.
+        </p>
+      </header>
+
+      <div className="mt-14 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-16 xl:gap-24">
+        {/* ── Direct details ───────────────────────────────────────────── */}
         <Reveal>
-          <div className="mx-auto max-w-3xl text-center">
-            <Eyebrow>DIRECT EDITORIAL &amp; ADVERTISING DESK</Eyebrow>
-            <h1 className="mt-5 font-display text-4xl sm:text-6xl md:text-7xl uppercase tracking-wide text-neutral-900 dark:text-white">
-              REACH US <span className="text-[#cd2129]">DIRECTLY</span>
-            </h1>
-            <p className="mx-auto mt-4 max-w-2xl font-sans text-base leading-relaxed text-neutral-600 dark:text-neutral-400 sm:text-lg">
-              No forms, no ticket queues, and no delays. Tap WhatsApp or Email below to connect directly with our Toronto production desk.
+          <h2 className="label-eyebrow text-[rgb(var(--text-faint))]">Reach us directly</h2>
+
+          <ul className="mt-6 space-y-px">
+            <ContactRow
+              Icon={Phone}
+              label="Phone"
+              value={siteConfig.contact.phone}
+              href={`tel:${siteConfig.contact.phone.replace(/\s/g, "")}`}
+            />
+            {whatsapp && (
+              <ContactRow
+                Icon={MessageCircle}
+                label="WhatsApp"
+                value="Message our desk"
+                href={whatsapp}
+                external
+              />
+            )}
+            <ContactRow
+              Icon={Mail}
+              label="Email"
+              value={siteConfig.contact.email}
+              href={`mailto:${siteConfig.contact.email}`}
+            />
+            <ContactRow Icon={MapPin} label="Address" value={siteConfig.contact.address} />
+            <ContactRow Icon={Clock} label="Office hours" value={siteConfig.contact.hours} />
+          </ul>
+
+          <div className="card-quiet mt-10 p-6">
+            <h3 className="font-display text-xl tracking-[-0.02em]">
+              Advertising in the next edition
+            </h3>
+            <p className="mt-3 text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">
+              Send us what you want to say and roughly how much space you have in mind. We
+              lay the advertisement out for you and send a proof to approve before it is
+              published.
             </p>
           </div>
         </Reveal>
-      </Section>
 
-      <Section className="!pt-0">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <DirectContactHub variant="contact" />
-          </Reveal>
+        {/* ── Form ─────────────────────────────────────────────────────── */}
+        <Reveal delay={0.08}>
+          <h2 className="label-eyebrow text-[rgb(var(--text-faint))]">Send an enquiry</h2>
+          <div className="mt-6">
+            <ContactForm />
+          </div>
+        </Reveal>
+      </div>
+    </Section>
+  );
+}
 
-          {/* Guidelines & Publishing Deadlines */}
-          <Reveal className="mt-12">
-            <div className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#0c0c0c] p-6 sm:p-8 shadow-xs">
-              <div className="flex items-center gap-2 font-display text-xs uppercase tracking-widest text-[#b89028] dark:text-[#d2ac47] border-b border-neutral-200 dark:border-neutral-800 pb-3">
-                <Zap className="size-4 text-[#cd2129]" />
-                PUBLICATION DESK PROTOCOLS &amp; DEADLINES
-              </div>
-
-              <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] p-5 shadow-xs">
-                  <span className="font-display text-[10px] tracking-widest text-[#cd2129] uppercase font-bold">
-                    CLOSING DEADLINE
-                  </span>
-                  <h4 className="mt-1 font-display text-lg tracking-wider text-neutral-900 dark:text-white uppercase">
-                    FRIDAYS AT 5:00 PM EST
-                  </h4>
-                  <p className="mt-2 font-sans text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-                    All classifieds and display advertisements must be confirmed by Friday 5:00 PM for placement in Sunday&apos;s 6:00 AM issue.
-                  </p>
-                </div>
-
-                <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] p-5 shadow-xs">
-                  <span className="font-display text-[10px] tracking-widest text-[#b89028] dark:text-[#d2ac47] uppercase font-bold">
-                    FREE TYPESETTING
-                  </span>
-                  <h4 className="mt-1 font-display text-lg tracking-wider text-neutral-900 dark:text-white uppercase">
-                    PROOF SENT BEFORE PRESS
-                  </h4>
-                  <p className="mt-2 font-sans text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-                    Our graphics team formats your classified or display banner and shares a digital proof on WhatsApp for your approval.
-                  </p>
-                </div>
-
-                <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#121212] p-5 shadow-xs">
-                  <span className="font-display text-[10px] tracking-widest text-[#1e8343] dark:text-[#25D366] uppercase font-bold">
-                    INSTANT DELIVERY
-                  </span>
-                  <h4 className="mt-1 font-display text-lg tracking-wider text-neutral-900 dark:text-white uppercase">
-                    SUNDAYS 6:00 AM
-                  </h4>
-                  <p className="mt-2 font-sans text-xs leading-relaxed text-neutral-600 dark:text-neutral-400">
-                    Every issue is published worldwide at 6:00 AM EST with high-resolution digital broadsheet and print PDF downloads.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-neutral-200 dark:border-neutral-800 pt-5 text-xs text-neutral-600 dark:text-neutral-400">
-                <div className="flex items-center gap-2">
-                  <MapPin className="size-4 text-[#cd2129]" />
-                  <span>{siteConfig.contact.address}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="size-4 text-[#b89028] dark:text-[#d2ac47]" />
-                  <span>{siteConfig.contact.hours}</span>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </Section>
+function ContactRow({
+  Icon,
+  label,
+  value,
+  href,
+  external,
+}: {
+  Icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  href?: string;
+  external?: boolean;
+}) {
+  const inner = (
+    <>
+      <Icon className="mt-0.5 size-[18px] shrink-0 text-[rgb(var(--text-faint))]" />
+      <span className="min-w-0">
+        <span className="label-eyebrow block text-[rgb(var(--text-faint))]">{label}</span>
+        <span className="mt-1.5 block text-[15px] text-[rgb(var(--text))]">{value}</span>
+      </span>
     </>
+  );
+
+  return (
+    <li className="border-b border-[rgb(var(--hairline))]">
+      {href ? (
+        <a
+          href={href}
+          {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          className="flex gap-4 py-4 transition-colors hover:text-[rgb(var(--accent))]"
+        >
+          {inner}
+        </a>
+      ) : (
+        <div className="flex gap-4 py-4">{inner}</div>
+      )}
+    </li>
   );
 }

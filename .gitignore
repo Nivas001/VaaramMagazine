@@ -15,3 +15,6 @@ next-env.d.ts
 
 # Generated on first `npm install` — see SETUP-GUIDE, Appendix.
 # Committing one built without registry access omits the Linux SWC binaries.
+
+.idea/
+.claude/

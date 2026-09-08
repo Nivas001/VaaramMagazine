@@ -4,8 +4,18 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import type { ActionResult } from "@/app/admin/actions";
+import { cn } from "@/lib/utils";
 
 type Status = "new" | "contacted" | "closed";
+
+const STATUSES: { value: Status; label: string }[] = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "closed", label: "Closed" },
+];
+
+const BUTTON =
+  "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors disabled:opacity-60";
 
 export function EnquiryActions({
   id,
@@ -29,46 +39,66 @@ export function EnquiryActions({
     });
   }
 
-  const base =
-    "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-colors disabled:opacity-50";
-
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {(["new", "contacted", "closed"] as Status[]).map((option) => (
-        <button
-          key={option}
-          onClick={() => run(() => onSetStatus(id, option))}
-          disabled={pending || status === option}
-          className={`${base} ${
-            status === option
-              ? "bg-[linear-gradient(100deg,var(--color-brand-600),var(--color-fuchsia))] text-white"
-              : "bg-[rgb(var(--glass-tint)/0.9)] hover:bg-[rgb(var(--glass-tint))]"
-          }`}
-        >
-          {pending && status !== option && <Loader2 className="size-3.5 animate-spin" />}
-          Mark {option}
-        </button>
-      ))}
+      {/* A segmented control: the current status is selected, not a button. */}
+      <div
+        role="group"
+        aria-label="Enquiry status"
+        className="flex items-center gap-0.5 rounded-full border border-[rgb(var(--hairline))] p-1"
+      >
+        {STATUSES.map(({ value, label }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => run(() => onSetStatus(id, value))}
+            disabled={pending || status === value}
+            aria-pressed={status === value}
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors",
+              status === value
+                ? "bg-[rgb(var(--text))] text-[rgb(var(--surface))]"
+                : "text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text))] disabled:opacity-60"
+            )}
+          >
+            {pending && status !== value && (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            )}
+            {label}
+          </button>
+        ))}
+      </div>
 
       {confirming ? (
         <>
           <button
+            type="button"
             onClick={() => run(() => onDelete(id))}
             disabled={pending}
-            className={`${base} bg-[var(--color-rose)] text-white`}
+            className={cn(BUTTON, "bg-[rgb(var(--accent))] text-white hover:bg-ember-strong")}
           >
-            <Trash2 className="size-3.5" /> Confirm delete
+            <Trash2 className="size-3.5" aria-hidden />
+            Confirm delete
           </button>
-          <button onClick={() => setConfirming(false)} className={`${base} text-[rgb(var(--text-muted))]`}>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className={cn(BUTTON, "text-[rgb(var(--text-muted))]")}
+          >
             Cancel
           </button>
         </>
       ) : (
         <button
+          type="button"
           onClick={() => setConfirming(true)}
-          className={`${base} ml-auto text-[rgb(var(--text-muted))] hover:bg-[var(--color-rose)]/10 hover:text-[var(--color-rose)]`}
+          aria-label="Delete enquiry"
+          className={cn(
+            BUTTON,
+            "ml-auto text-[rgb(var(--text-faint))] hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent))]"
+          )}
         >
-          <Trash2 className="size-3.5" />
+          <Trash2 className="size-3.5" aria-hidden />
         </button>
       )}
     </div>

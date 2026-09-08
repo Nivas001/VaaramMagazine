@@ -4,20 +4,34 @@ import { siteConfig } from "@/site.config";
 import { ThemeProvider } from "@/components/site/ThemeProvider";
 import "./globals.css";
 
-const bayon = localFont({
-  src: "../public/fonts/bayon.woff2",
-  weight: "400",
-  variable: "--font-display",
+/**
+ * Newsreader carries every headline — an editorial serif reads as a magazine
+ * rather than a newspaper, which is exactly the distinction Vaaram needs.
+ */
+const newsreader = localFont({
+  src: "../public/fonts/newsreader.woff2",
+  weight: "400 600",
+  variable: "--font-newsreader",
   display: "swap",
-  fallback: ["Impact", "Arial Black", "sans-serif"],
+  fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
-const assistant = localFont({
-  src: "../public/fonts/assistant.woff2",
-  weight: "400 700",
-  variable: "--font-sans",
+/** Plus Jakarta Sans handles the interface and all body copy. */
+const jakarta = localFont({
+  src: "../public/fonts/jakarta.woff2",
+  weight: "400 800",
+  variable: "--font-jakarta",
   display: "swap",
-  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
+  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
+});
+
+/** Loaded only for the Tamil wordmark "வாரம்". */
+const tamil = localFont({
+  src: "../public/fonts/tamil.woff2",
+  weight: "400 700",
+  variable: "--font-tamil",
+  display: "swap",
+  fallback: ["Arial", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -31,15 +45,11 @@ export const metadata: Metadata = {
   keywords: [
     "Vaaram Magazine",
     "Vaaram",
-    "vaaram.ca",
-    "weekly magazine",
-    "community broadsheet",
-    "weekly ads paper",
-    "Canada weekly magazine",
-    "Toronto classifieds",
-    "download magazine pdf",
-    "free digital magazine",
-    ...siteConfig.editions.map((e) => `${e.name} edition`),
+    "weekly advertising magazine",
+    "classifieds Canada",
+    "local business directory Toronto",
+    "advertise locally",
+    "weekly edition PDF",
   ],
   authors: [{ name: siteConfig.legalName }],
   openGraph: {
@@ -64,35 +74,43 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#cd2129",
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf8f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0b0d" },
+  ],
 };
+
+/**
+ * Applied before first paint so a visitor who chose dark never sees a flash of
+ * the light theme. Kept deliberately tiny and dependency-free.
+ */
+const themeScript = `
+try {
+  var stored = localStorage.getItem('vaaram-theme');
+  var dark = stored === 'dark' || (!stored && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('dark', dark);
+} catch (e) {}
+`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="en"
+      lang="en-CA"
       suppressHydrationWarning
-      className={`${bayon.variable} ${assistant.variable}`}
+      className={`${newsreader.variable} ${jakarta.variable} ${tamil.variable}`}
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const t = localStorage.getItem('vaaram-theme');
-                if (t === 'dark') {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-              } catch (_) {}
-            `,
-          }}
-        />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="bg-white dark:bg-black text-neutral-900 dark:text-white min-h-dvh antialiased selection:bg-[#cd2129] selection:text-white">
+      <body className="min-h-dvh antialiased">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-[rgb(var(--accent))] focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white"
+        >
+          Skip to content
+        </a>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

@@ -11,10 +11,10 @@ const PdfReader = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="bento glass glass-sheen grid min-h-[60vh] place-items-center">
-        <div className="flex flex-col items-center gap-3 text-[rgb(var(--text-muted))]">
-          <Loader2 className="size-7 animate-spin text-[var(--color-violet)]" />
-          <p className="text-sm font-medium">Loading the reader…</p>
+      <div className="grid min-h-[62vh] place-items-center rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]">
+        <div className="flex flex-col items-center gap-4 text-[rgb(var(--text-muted))]">
+          <Loader2 className="size-6 animate-spin text-[rgb(var(--accent))]" aria-hidden />
+          <p className="label-eyebrow">Loading the reader</p>
         </div>
       </div>
     ),

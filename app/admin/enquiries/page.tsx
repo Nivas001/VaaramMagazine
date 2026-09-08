@@ -1,10 +1,10 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
 import { adminGetEnquiries } from "@/lib/admin-queries";
 import { deleteEnquiry, setEnquiryStatus } from "@/app/admin/actions";
-import { getEdition } from "@/site.config";
 import { formatDate } from "@/lib/utils";
-import { BentoCard } from "@/components/ui/Bento";
 import { EnquiryActions } from "@/components/admin/EnquiryActions";
+import { EmptyState, PageHeader, Panel } from "@/components/admin/ui";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -17,70 +17,69 @@ export default async function AdminEnquiriesPage() {
   };
 
   return (
-    <div className="pt-6">
-      <h1 className="text-3xl font-extrabold sm:text-4xl">Enquiries</h1>
-      <p className="mt-2 text-sm text-[rgb(var(--text-muted))]">
-        {counts.new} new · {counts.contacted} contacted · {counts.closed} closed
-      </p>
+    <>
+      <PageHeader
+        title="Enquiries"
+        lead={`${counts.new} new · ${counts.contacted} contacted · ${counts.closed} closed`}
+      />
 
       {enquiries.length === 0 ? (
-        <BentoCard className="mt-8 p-10 text-center" interactive={false}>
-          <p className="text-sm text-[rgb(var(--text-muted))]">
-            No enquiries yet. They will appear here the moment someone uses the contact form.
-          </p>
-        </BentoCard>
+        <EmptyState
+          title="No enquiries yet"
+          body="They appear here the moment someone uses the contact form."
+        />
       ) : (
-        <div className="mt-8 flex flex-col gap-3">
+        <ul className="mt-8 space-y-3">
           {enquiries.map((e) => (
-            <BentoCard
-              key={e.id}
-              glow={e.status === "new" ? "amber" : "violet"}
-              className="p-5 sm:p-6"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base font-bold">{e.name}</h2>
+            <Panel as="li" key={e.id} className="p-5 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="font-semibold">{e.name}</h2>
                     <StatusPill status={e.status} />
                   </div>
-                  <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">
+                  <p className="mt-1.5 text-[13px] text-[rgb(var(--text-faint))]">
                     {formatDate(e.created_at, { hour: "numeric", minute: "2-digit" })}
-                    {e.edition && ` · ${getEdition(e.edition)?.name ?? e.edition} edition`}
                     {e.category && ` · ${e.category}`}
                   </p>
                 </div>
+
+                {/* One tap to reply, in whichever way the sender prefers. */}
                 <div className="flex flex-wrap gap-2">
                   <a
                     href={`tel:${e.phone.replace(/\s/g, "")}`}
-                    className="glass inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--hairline))] px-3.5 text-[13px] font-medium transition-colors hover:border-[rgb(var(--text-faint))]"
                   >
-                    <Phone className="size-3.5" /> {e.phone}
+                    <Phone className="size-3.5" aria-hidden />
+                    {e.phone}
                   </a>
                   <a
                     href={`https://wa.me/${e.phone.replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#25D366] px-3.5 text-xs font-bold text-white"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--hairline))] px-3.5 text-[13px] font-medium transition-colors hover:border-[rgb(var(--text-faint))]"
                   >
-                    <MessageCircle className="size-3.5" /> WhatsApp
+                    <MessageCircle className="size-3.5" aria-hidden />
+                    WhatsApp
                   </a>
                   {e.email && (
                     <a
                       href={`mailto:${e.email}`}
-                      className="glass inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--hairline))] px-3.5 text-[13px] font-medium transition-colors hover:border-[rgb(var(--text-faint))]"
                     >
-                      <Mail className="size-3.5" /> Email
+                      <Mail className="size-3.5" aria-hidden />
+                      Email
                     </a>
                   )}
                 </div>
               </div>
 
-              <p className="mt-4 text-sm font-semibold">{e.subject}</p>
-              <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[rgb(var(--text-muted))]">
+              <p className="mt-5 font-semibold">{e.subject}</p>
+              <p className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">
                 {e.message}
               </p>
 
-              <div className="mt-4">
+              <div className="mt-5 border-t border-[rgb(var(--hairline))] pt-4">
                 <EnquiryActions
                   id={e.id}
                   status={e.status}
@@ -88,22 +87,28 @@ export default async function AdminEnquiriesPage() {
                   onDelete={deleteEnquiry}
                 />
               </div>
-            </BentoCard>
+            </Panel>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </>
   );
 }
 
 function StatusPill({ status }: { status: "new" | "contacted" | "closed" }) {
   const styles = {
-    new: "bg-[var(--color-amber)]/15 text-[var(--color-amber)]",
-    contacted: "bg-[var(--color-cyan)]/15 text-[var(--color-cyan)]",
-    closed: "bg-[rgb(var(--text)/0.08)] text-[rgb(var(--text-muted))]",
-  };
+    new: "bg-amber-500/14 text-amber-700 dark:text-amber-400",
+    contacted: "bg-sky-500/14 text-sky-700 dark:text-sky-400",
+    closed: "bg-[rgb(var(--text)/0.07)] text-[rgb(var(--text-muted))]",
+  } as const;
+
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${styles[status]}`}>
+    <span
+      className={cn(
+        "rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em]",
+        styles[status]
+      )}
+    >
       {status}
     </span>
   );

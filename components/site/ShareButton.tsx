@@ -29,10 +29,15 @@ export function ShareButton({ title }: { title: string }) {
   return (
     <button
       onClick={share}
-      className="inline-flex h-11 items-center gap-2 border border-neutral-700 bg-neutral-900 px-6 font-bold text-xs uppercase tracking-wider text-white hover:border-neutral-500 hover:bg-neutral-800 transition-colors"
+      type="button"
+      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-[rgb(var(--hairline))] px-5 text-sm font-semibold text-[rgb(var(--text))] transition-colors hover:border-[rgb(var(--text-faint))] hover:bg-[rgb(var(--surface-2))]"
     >
-      {copied ? <Check className="size-4 text-[#cd2129]" /> : <Share2 className="size-4" />}
-      {copied ? "LINK COPIED" : "SHARE"}
+      {copied ? (
+        <Check className="size-4 text-[rgb(var(--accent))]" aria-hidden />
+      ) : (
+        <Share2 className="size-4" aria-hidden />
+      )}
+      {copied ? "Link copied" : "Share"}
     </button>
   );
 }

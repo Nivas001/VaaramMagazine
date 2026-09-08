@@ -2,16 +2,17 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createMockSupabaseClient } from "./mock";
+import { getSupabasePublicKey, getSupabaseSecretKey, getSupabaseUrl } from "./env";
 
 /**
  * Supabase client for Server Components, Server Actions and Route Handlers.
  * Reads and refreshes the logged-in admin's session from cookies.
  */
 export async function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = getSupabaseUrl();
+  const key = getSupabasePublicKey();
 
-  if (!url || !anonKey) {
+  if (!url || !key) {
     return createMockSupabaseClient();
   }
 
@@ -19,7 +20,7 @@ export async function createClient() {
 
   return createServerClient(
     url,
-    anonKey,
+    key,
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
@@ -44,16 +45,16 @@ export async function createClient() {
  * caller is a signed-in admin.
  */
 export function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = getSupabaseUrl();
+  const secretKey = getSupabaseSecretKey();
 
-  if (!url || !serviceKey) {
+  if (!url || !secretKey) {
     return createMockSupabaseClient();
   }
 
   return createSupabaseClient(
     url,
-    serviceKey,
+    secretKey,
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
 }

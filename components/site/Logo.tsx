@@ -1,111 +1,75 @@
-import React from "react";
+import { siteConfig } from "@/site.config";
 import { cn } from "@/lib/utils";
 
-interface LogoProps {
-  variant?: "full" | "compact" | "mark";
+/**
+ * The Vaaram wordmark.
+ *
+ * A publication's mark is its name set well, so this is pure typography: the
+ * editorial serif for "Vaaram", the Tamil வாரம் ("week") set quietly beside it,
+ * and a hairline rule standing in for a masthead.
+ */
+export function Logo({
+  size = "md",
+  showNative = true,
+  className,
+}: {
   size?: "sm" | "md" | "lg";
-  showSlogan?: boolean;
+  showNative?: boolean;
   className?: string;
+}) {
+  const wordmark = {
+    sm: "text-[19px]",
+    md: "text-[23px]",
+    lg: "text-[34px]",
+  }[size];
+
+  const native = {
+    sm: "text-[10px]",
+    md: "text-[11px]",
+    lg: "text-[14px]",
+  }[size];
+
+  return (
+    <span className={cn("inline-flex select-none items-baseline gap-2", className)}>
+      <span
+        className={cn(
+          "font-display font-medium leading-none tracking-[-0.03em] text-[rgb(var(--text))]",
+          "transition-colors group-hover:text-[rgb(var(--accent))]",
+          wordmark
+        )}
+      >
+        Vaaram
+      </span>
+
+      {showNative && (
+        <span
+          className={cn(
+            "font-tamil leading-none text-[rgb(var(--text-faint))] translate-y-[-1px]",
+            native
+          )}
+          // The Tamil name is decorative beside the Latin wordmark; screen
+          // readers already have "Vaaram" and should not hear it twice.
+          aria-hidden
+        >
+          {siteConfig.nativeName}
+        </span>
+      )}
+    </span>
+  );
 }
 
 /**
- * Vaaram Magazine Official Brand Logo
- * Razor-sharp athletic geometry, crimson red accent, and high-impact Bayon typography.
+ * The stacked masthead used in the footer and on the login screen, where the
+ * mark has room to breathe.
  */
-export function Logo({
-  variant = "full",
-  size = "md",
-  showSlogan = false,
-  className,
-}: LogoProps) {
-  const emblemSizes = {
-    sm: "size-7",
-    md: "size-9",
-    lg: "size-12",
-  };
-
-  const titleSizes = {
-    sm: "text-lg",
-    md: "text-2xl",
-    lg: "text-4xl",
-  };
-
-  const badgeSizes = {
-    sm: "text-[8px] px-1 py-0.5",
-    md: "text-[9px] px-1.5 py-0.5",
-    lg: "text-[11px] px-2 py-0.5",
-  };
-
+export function Masthead({ className }: { className?: string }) {
   return (
-    <div className={cn("inline-flex items-center gap-3 select-none", className)}>
-      {/* ── Geometric Emblem "V" ────────────────────────────────────────── */}
-      <div
-        className={cn(
-          "relative flex shrink-0 items-center justify-center border border-neutral-800 bg-[#0c0c0c] transition-transform duration-200 group-hover:scale-105",
-          emblemSizes[size]
-        )}
-      >
-        <svg
-          viewBox="0 0 48 48"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="size-4/5"
-        >
-          {/* Left Wing - Sharp Crisp White */}
-          <path
-            d="M8 8H18L24 36L18 36L8 8Z"
-            fill="#FFFFFF"
-          />
-          {/* Right Wing - Channel 199 High-Voltage Crimson Red */}
-          <path
-            d="M40 8H30L22 36H28L40 8Z"
-            fill="#CD2129"
-          />
-          {/* Central Connecting Blade */}
-          <path
-            d="M18 8L24 24L30 8H24L18 8Z"
-            fill="#CD2129"
-            fillOpacity="0.85"
-          />
-          {/* Gold North Star / Connection Compass */}
-          <polygon
-            points="24,11 26,16 31,16 27,19 29,24 24,21 19,24 21,19 17,16 22,16"
-            fill="#D2AC47"
-          />
-        </svg>
-        {/* Dynamic Red Corner Accent */}
-        <div className="absolute -bottom-0.5 -right-0.5 size-1.5 bg-[#cd2129]" />
-      </div>
-
-      {/* ── Wordmark & Slogan ───────────────────────────────────────────── */}
-      {variant !== "mark" && (
-        <div className="flex flex-col leading-none">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "font-display tracking-widest text-neutral-950 dark:text-white uppercase transition-colors group-hover:text-[#cd2129]",
-                titleSizes[size]
-              )}
-            >
-              VAARAM
-            </span>
-            <span
-              className={cn(
-                "bg-[#cd2129] font-display font-normal uppercase tracking-widest text-white",
-                badgeSizes[size]
-              )}
-            >
-              MAGAZINE
-            </span>
-          </div>
-
-          {(showSlogan || variant === "full") && (
-            <span className="mt-1 font-sans text-[9px] font-bold uppercase tracking-[0.22em] text-[#b89028] dark:text-[#d2ac47]">
-              DISCOVER • CONNECT • EVERY WEEK
-            </span>
-          )}
-        </div>
-      )}
+    <div className={cn("inline-flex flex-col gap-3", className)}>
+      <Logo size="lg" />
+      <span className="h-px w-full bg-[rgb(var(--hairline))]" aria-hidden />
+      <span className="label-eyebrow text-[rgb(var(--label))]">
+        Weekly advertising magazine
+      </span>
     </div>
   );
 }

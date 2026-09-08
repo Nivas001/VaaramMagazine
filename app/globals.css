@@ -3,226 +3,325 @@
 @variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   VAARAM MAGAZINE DESIGN TOKENS
-   Crisp, authoritative editorial broadsheet aesthetic.
-   Paper whites (#ffffff), refined neutrals, signature crimson red (#cd2129),
-   warm gold (#b89028 / #d2ac47) and sharp geometric typography.
+   VAARAM MAGAZINE — DESIGN SYSTEM
+
+   Vaaram is a weekly advertising magazine, not a newspaper, so the surface
+   language is warm printed paper rather than cold newsprint:
+     · paper  — a warm off-white with a hint of cream
+     · ink    — a near-black carrying a trace of warmth, never pure #000
+     · ember  — the signature accent, a deep printed vermilion
+     · brass  — a muted gold, used only for small editorial labels
+
+   Radii are deliberately mixed: interface chrome is softly rounded, while
+   anything representing a printed page keeps a sharp trimmed edge.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  --font-display: var(--font-display), "Bayon", Impact, "Arial Black", sans-serif;
-  --font-sans: var(--font-sans), "Assistant", ui-sans-serif, system-ui, sans-serif;
+  /* ── Type families ─────────────────────────────────────────────────────── */
+  --font-display: var(--font-newsreader);
+  --font-sans: var(--font-jakarta);
+  --font-tamil: var(--font-tamil), var(--font-jakarta);
 
-  --color-red-primary: #cd2129;
-  --color-red-hover: #b01b22;
-  --color-red-dark: #8b0f16;
-  --color-gold-accent: #b89028;
+  /* ── Brand ─────────────────────────────────────────────────────────────── */
+  --color-ember: #c2452f;
+  --color-ember-strong: #a83722;
+  --color-ember-soft: #d9563e;
+  --color-brass: #9c7430;
+  --color-brass-soft: #c39a4d;
 
-  --color-ink-50: #ffffff;
-  --color-ink-100: #f4f4f5;
-  --color-ink-200: #e4e4e7;
-  --color-ink-300: #d4d4d8;
-  --color-ink-400: #a1a1aa;
-  --color-ink-500: #71717a;
-  --color-ink-600: #52525b;
-  --color-ink-700: #3f3f46;
-  --color-ink-800: #27272a;
-  --color-ink-900: #18181b;
-  --color-ink-950: #0a0a0c;
+  /* ── Warm neutral ramp ─────────────────────────────────────────────────── */
+  --color-warm-50: #faf8f4;
+  --color-warm-100: #f3efe8;
+  --color-warm-200: #e6e0d6;
+  --color-warm-300: #d3cabc;
+  --color-warm-400: #a89d8e;
+  --color-warm-500: #7d7367;
+  --color-warm-600: #5c544b;
+  --color-warm-700: #423c36;
+  --color-warm-800: #2a262c;
+  --color-warm-900: #1d1a1f;
+  --color-warm-950: #141215;
 
-  --color-accent: #cd2129;
-  --color-accent-hover: #b01b22;
+  /* ── Radii ─────────────────────────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
 
-  --radius-bento: 0px;
+  /* ── Elevation, warm-tinted so shadows never read as grey on paper ─────── */
+  --shadow-card: 0 1px 2px rgba(28, 22, 16, 0.04), 0 8px 24px -12px rgba(28, 22, 16, 0.12);
+  --shadow-lift: 0 2px 4px rgba(28, 22, 16, 0.05), 0 18px 44px -18px rgba(28, 22, 16, 0.22);
+  --shadow-cover: 0 2px 6px rgba(20, 16, 12, 0.14), 0 30px 60px -24px rgba(20, 16, 12, 0.42),
+    0 60px 120px -60px rgba(20, 16, 12, 0.4);
 
-  --shadow-glass: 0 4px 20px -2px rgba(0, 0, 0, 0.08);
-  --shadow-lift: 0 10px 25px -3px rgba(205, 33, 41, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
-
-  --animate-marquee: marquee 32s linear infinite;
-  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-ticker: ticker 48s linear infinite;
 }
 
-/* ── Theme Variables ───────────────────────────────────────────────────────── */
+/* ── Runtime theme variables ───────────────────────────────────────────────
+   Every colour is declared once for light and again for dark, so no value
+   depends on a media query alone.                                           */
 :root {
-  --surface: 255 255 255;
-  --surface-raised: 248 248 249;
-  --text: 15 23 42;
-  --text-muted: 100 116 139;
-  --hairline: 228 228 231;
-  --glass-tint: 255 255 255;
-  --glass-alpha: 0.98;
-  --glass-border: 228 228 231;
-  --glass-border-alpha: 1;
+  --surface: 250 248 244;
+  --surface-2: 243 239 232;
+  --surface-3: 255 255 255;
+  --text: 20 18 21;
+  --text-muted: 92 84 75;
+  /* Both of these are darkened from their first draft so that small labels
+     clear WCAG AA (4.5:1) against every light surface, including the raised
+     one at #f3efe8 — the eyebrow type is 11px, so AA applies at normal size. */
+  --text-faint: 114 106 95;
+  --hairline: 230 224 214;
+  --accent: 194 69 47;
+  --accent-contrast: 255 255 255;
+  --label: 133 97 33;
   color-scheme: light;
 }
 
 html.dark {
-  --surface: 0 0 0;
-  --surface-raised: 14 14 14;
-  --text: 255 255 255;
-  --text-muted: 161 161 170;
-  --hairline: 38 38 38;
-  --glass-tint: 10 10 10;
-  --glass-alpha: 0.96;
-  --glass-border: 38 38 38;
-  --glass-border-alpha: 1;
+  --surface: 12 11 13;
+  --surface-2: 21 19 23;
+  --surface-3: 29 26 31;
+  --text: 245 242 237;
+  --text-muted: 160 152 143;
+  --text-faint: 130 122 113;
+  --hairline: 44 40 46;
+  --accent: 217 86 62;
+  --accent-contrast: 255 255 255;
+  --label: 195 154 77;
   color-scheme: dark;
 }
 
 @layer base {
-  * {
-    border-color: rgb(var(--glass-border) / var(--glass-border-alpha));
-  }
+  * { border-color: rgb(var(--hairline)); }
 
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
-    background-color: #ffffff;
-  }
-
-  html.dark {
-    background-color: #000000;
+    background-color: rgb(var(--surface));
   }
 
   body {
-    background-color: #ffffff;
-    color: #111827;
+    background-color: rgb(var(--surface));
+    color: rgb(var(--text));
     font-family: var(--font-sans);
+    font-feature-settings: "kern" 1, "liga" 1;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
-    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  .dark body,
-  html.dark body {
-    background-color: #000000;
-    color: #ffffff;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
+  /* Headlines are set in the editorial serif, mixed case, tight and large.
+     Uppercase is reserved for small labels only. */
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.06;
     text-wrap: balance;
-    font-weight: 400;
+    color: rgb(var(--text));
   }
 
-  p {
-    text-wrap: pretty;
+  h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 650;
+    letter-spacing: -0.01em;
   }
+
+  p { text-wrap: pretty; }
 
   ::selection {
-    background: #cd2129;
-    color: #ffffff;
+    background: rgb(var(--accent));
+    color: rgb(var(--accent-contrast));
   }
 
   :focus-visible {
-    outline: 2px solid #cd2129;
-    outline-offset: 2px;
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 3px;
+    border-radius: 2px;
   }
+  :focus:not(:focus-visible) { outline: none; }
 
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #f4f4f5;
-  }
-  .dark ::-webkit-scrollbar-track {
-    background: #0a0a0a;
-  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgb(var(--surface-2)); }
   ::-webkit-scrollbar-thumb {
-    background: #d4d4d8;
-    border-radius: 0px;
+    background: rgb(var(--hairline));
+    border-radius: 999px;
+    border: 2px solid rgb(var(--surface-2));
   }
-  .dark ::-webkit-scrollbar-thumb {
-    background: #27272a;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #cd2129;
-  }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--text-faint)); }
 }
 
-/* ═══ SURFACES & UTILITIES ═════════════════════════════════════════════════ */
-@utility glass {
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+/* ═══ TYPE SCALE ═══════════════════════════════════════════════════════════
+   Fluid sizes, so a headline never needs a breakpoint override.             */
+@utility display-hero {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 1.2rem + 6.4vw, 6.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  font-weight: 500;
 }
 
-.dark .glass,
-html.dark .glass {
-  background: #0a0a0a;
-  border-color: #262626;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7);
+@utility display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.125rem, 1.2rem + 3.8vw, 4.25rem);
+  line-height: 1.03;
+  letter-spacing: -0.03em;
+  font-weight: 500;
 }
 
-@utility glass-soft {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+@utility display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.1rem + 2.4vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-weight: 500;
 }
 
-.dark .glass-soft,
-html.dark .glass-soft {
-  background: #121212;
-  border-color: #222222;
+@utility display-md {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 1.05rem + 1.3vw, 1.95rem);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  font-weight: 500;
 }
 
-@utility text-gradient {
-  color: #cd2129;
+/** Small uppercase editorial label — the only place uppercase is used. */
+@utility label-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
-@utility bento {
-  border-radius: 0px;
+@utility lead {
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.6;
+  color: rgb(var(--text-muted));
+}
+
+/* ═══ SURFACES ═════════════════════════════════════════════════════════════ */
+@utility card {
+  background: rgb(var(--surface-3));
+  border: 1px solid rgb(var(--hairline));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+@utility card-quiet {
+  background: rgb(var(--surface-2));
+  border: 1px solid rgb(var(--hairline));
+  border-radius: var(--radius-lg);
+}
+
+/** Sticky chrome: translucent and blurred, never fully opaque over the hero. */
+@utility chrome-blur {
+  background: rgb(var(--surface) / 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+}
+
+/* ═══ THE PRINTED PAGE ═════════════════════════════════════════════════════
+   A cover is drawn as a physical object: a sharp trimmed edge, a spine
+   shadow down the binding side, and a soft sheen across the stock.          */
+@utility page-stock {
+  position: relative;
+  border-radius: 2px 5px 5px 2px;
+  box-shadow: var(--shadow-cover);
+  background: #fff;
   overflow: hidden;
-  border: 1px solid #e4e4e7;
-  background: #ffffff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.dark .bento,
-html.dark .bento {
-  border-color: #262626;
-  background: #0e0e0e;
+.page-stock::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 7%;
+  max-width: 26px;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.11) 28%,
+    rgba(0, 0, 0, 0) 62%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
 }
 
-@utility bento-hover {
-  &:hover {
-    transform: translateY(-2px);
-    border-color: #cd2129;
-    box-shadow: var(--shadow-lift);
-  }
+.page-stock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    104deg,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(255, 255, 255, 0.13) 50%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  pointer-events: none;
+  z-index: 3;
 }
 
-/* ═══ ANIMATIONS ═════════════════════════════════════════════════════════ */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+/** The block of pages peeking out behind a closed cover. */
+@utility page-stack {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px 5px 5px 2px;
+  background: linear-gradient(to right, #cfc7ba 0%, #f2ede4 12%, #fbf9f5 100%);
 }
 
-@keyframes shimmer {
-  from { background-position: -200% 0; }
-  to   { background-position: 200% 0; }
+/* ═══ MOTION ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * The hero entrance is done in CSS rather than JavaScript on purpose.
+ *
+ * A JS-driven entrance starts at opacity 0, which means the single most
+ * important thing on the site stays invisible until a script has run — and
+ * animation frameloops are paused entirely while a tab is in the background.
+ * CSS with `both` fill mode always resolves to the visible end state, and the
+ * reduced-motion rule below collapses it to an instant appearance.
+ */
+@keyframes rise {
+  from { opacity: 0; transform: translate3d(0, 22px, 0); }
+  to   { opacity: 1; transform: none; }
 }
 
+@utility animate-rise {
+  animation: rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes ticker {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Honour the visitor's motion preference everywhere, the ticker included. */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
-    animation-duration: 0.001ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
+/* ═══ PDF READER ═══════════════════════════════════════════════════════════ */
 .pdf-canvas {
   display: block;
   max-width: 100%;
   height: auto;
-  border-radius: 0px;
-  border: 1px solid #e4e4e7;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28), 0 24px 60px -24px rgba(0, 0, 0, 0.55);
 }
 
-.dark .pdf-canvas {
-  border-color: #262626;
+/** Horizontal chip rails stay scrollable but lose their scrollbar. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
 }

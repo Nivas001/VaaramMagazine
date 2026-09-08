@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabasePublicKey, getSupabaseUrl } from "./env";
 
 /**
  * Refreshes the Supabase auth cookie on every request and guards /admin.
@@ -8,8 +9,8 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseAnonKey = getSupabasePublicKey();
 
   if (!supabaseUrl || !supabaseAnonKey) {
     const { pathname } = request.nextUrl;

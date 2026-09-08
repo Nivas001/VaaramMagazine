@@ -1,87 +1,255 @@
 "use client";
 
-import { AlertTriangle, Loader2, LogIn } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { AlertCircle, ArrowLeft, ArrowRight, Loader2, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { OtpInput } from "./OtpInput";
+import { cn } from "@/lib/utils";
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  ADMIN SIGN IN — email one-time code
+ *
+ *  The code is generated, expired and rate-limited by Supabase Auth. Nothing
+ *  here validates it: this component only collects the email, asks Supabase to
+ *  send a code, and hands the typed code back for Supabase to verify. There is
+ *  no client-side secret and no fallback code — if Supabase is not configured,
+ *  sign-in correctly fails rather than letting anyone through.
+ *
+ *  Supabase's own settings decide who may sign in at all; leave sign-ups
+ *  disabled on the project so only invited administrators can request a code.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+const RESEND_SECONDS = 45;
+
+type Step = "email" | "code";
 
 function Form() {
   const router = useRouter();
   const params = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
+
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
+  // Resend countdown.
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [countdown]);
 
-    const data = new FormData(event.currentTarget);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: String(data.get("email") ?? ""),
-      password: String(data.get("password") ?? ""),
-    });
+  const sendCode = useCallback(
+    async (address: string) => {
+      setBusy(true);
+      setError(null);
+      const supabase = createClient();
 
-    if (authError) {
-      setError(
-        authError.message === "Invalid login credentials"
-          ? "That email and password combination did not work."
-          : authError.message
-      );
+      const { error: sendError } = await supabase.auth.signInWithOtp({
+        email: address,
+        options: {
+          // Administrators are invited in the Supabase dashboard; the login
+          // page must never be able to create a new account on its own.
+          shouldCreateUser: false,
+        },
+      });
+
       setBusy(false);
-      return;
-    }
 
-    // Full navigation so the middleware picks up the new session cookie.
-    router.replace(params.get("next") || "/admin");
-    router.refresh();
+      if (sendError) {
+        setError(
+          /rate|limit|too many/i.test(sendError.message)
+            ? "Too many requests. Wait a minute before trying again."
+            : sendError.message
+        );
+        return false;
+      }
+
+      setStep("code");
+      setCode("");
+      setInvalid(false);
+      setCountdown(RESEND_SECONDS);
+      return true;
+    },
+    []
+  );
+
+  async function onSubmitEmail(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await sendCode(email.trim());
   }
 
-  const field =
-    "w-full rounded-xl border border-stone-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 text-sm outline-none transition-all focus:border-stone-900 dark:focus:border-stone-100 focus:ring-1 focus:ring-stone-900/10";
+  const verify = useCallback(
+    async (token: string) => {
+      setBusy(true);
+      setError(null);
+      setInvalid(false);
 
-  return (
-    <form onSubmit={onSubmit} className="bento p-7">
-      <label htmlFor="email" className="mb-1.5 block font-mono text-xs uppercase tracking-[0.12em] text-stone-500 dark:text-stone-400">
-        Email
-      </label>
-      <input id="email" name="email" type="email" required autoComplete="username" className={field} />
+      const supabase = createClient();
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token,
+        type: "email",
+      });
 
-      <label htmlFor="password" className="mb-1.5 mt-4 block font-mono text-xs uppercase tracking-[0.12em] text-stone-500 dark:text-stone-400">
-        Password
-      </label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        required
-        autoComplete="current-password"
-        className={field}
-      />
+      if (verifyError) {
+        setBusy(false);
+        setInvalid(true);
+        setError(
+          /expired/i.test(verifyError.message)
+            ? "That code has expired. Send a new one."
+            : "That code is not right. Check it and try again."
+        );
+        return;
+      }
 
-      {error && (
-        <p className="mt-4 flex items-start gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          {error}
+      // A full navigation, so the middleware picks up the new session cookie.
+      router.replace(params.get("next") || "/admin");
+      router.refresh();
+    },
+    [email, params, router]
+  );
+
+  const field = cn(
+    "h-12 w-full rounded-md border border-[rgb(var(--hairline))] bg-[rgb(var(--surface))]",
+    "px-3.5 text-[15px] text-[rgb(var(--text))] outline-none transition-colors",
+    "placeholder:text-[rgb(var(--text-faint))] focus:border-[rgb(var(--accent))]"
+  );
+
+  /* ── Step 1: email ───────────────────────────────────────────────────── */
+  if (step === "email") {
+    return (
+      <form onSubmit={onSubmitEmail} className="card p-7 sm:p-8">
+        <label htmlFor="email" className="label-eyebrow block text-[rgb(var(--text-faint))]">
+          Administrator email
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoFocus
+          autoComplete="username"
+          placeholder="you@vaaram.ca"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={cn(field, "mt-3")}
+        />
+
+        {error && <ErrorNote>{error}</ErrorNote>}
+
+        <button
+          type="submit"
+          disabled={busy || !email.trim()}
+          className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+        >
+          {busy ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <Mail className="size-4" aria-hidden />
+          )}
+          {busy ? "Sending code…" : "Email me a code"}
+        </button>
+
+        <p className="mt-4 text-[13px] leading-relaxed text-[rgb(var(--text-faint))]">
+          We will email a six-digit code. It is valid for a few minutes and can only be
+          used once.
         </p>
-      )}
+      </form>
+    );
+  }
+
+  /* ── Step 2: code ────────────────────────────────────────────────────── */
+  return (
+    <div className="card p-7 sm:p-8">
+      <button
+        type="button"
+        onClick={() => {
+          setStep("email");
+          setError(null);
+          setInvalid(false);
+        }}
+        className="inline-flex items-center gap-2 text-sm font-medium text-[rgb(var(--text-muted))] transition-colors hover:text-[rgb(var(--text))]"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        Use a different email
+      </button>
+
+      <p className="mt-6 text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">
+        We sent a six-digit code to{" "}
+        <span className="font-semibold text-[rgb(var(--text))]">{email}</span>.
+      </p>
+
+      <div className="mt-7">
+        <OtpInput
+          value={code}
+          onChange={(next) => {
+            setCode(next);
+            if (invalid) setInvalid(false);
+          }}
+          onComplete={verify}
+          disabled={busy}
+          invalid={invalid}
+        />
+      </div>
+
+      {error && <ErrorNote>{error}</ErrorNote>}
 
       <button
-        type="submit"
-        disabled={busy}
-        className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-stone-900 text-sm font-semibold text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white shadow-sm transition-all disabled:opacity-60 cursor-pointer"
+        type="button"
+        onClick={() => verify(code)}
+        disabled={busy || code.length < 6}
+        className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
       >
-        {busy ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />}
-        {busy ? "Signing in…" : "Sign in"}
+        {busy ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <ArrowRight className="size-4" aria-hidden />
+        )}
+        {busy ? "Verifying…" : "Verify and sign in"}
       </button>
-    </form>
+
+      <div className="mt-5 text-[13px] text-[rgb(var(--text-faint))]">
+        {countdown > 0 ? (
+          <p aria-live="polite">
+            You can request a new code in {countdown} second{countdown === 1 ? "" : "s"}.
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => sendCode(email.trim())}
+            disabled={busy}
+            className="font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-4 transition-colors hover:text-[rgb(var(--accent))] disabled:opacity-50"
+          >
+            Send a new code
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ErrorNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      role="alert"
+      className="mt-5 flex items-start gap-2.5 rounded-md border border-[rgb(var(--accent))]/30 bg-[rgb(var(--accent))]/8 px-4 py-3 text-sm text-[rgb(var(--accent))]"
+    >
+      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+      {children}
+    </p>
   );
 }
 
 export function LoginForm() {
   return (
-    <Suspense fallback={<div className="bento glass h-80" />}>
+    <Suspense fallback={<div className="card h-80" />}>
       <Form />
     </Suspense>
   );

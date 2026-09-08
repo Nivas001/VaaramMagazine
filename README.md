@@ -40,18 +40,18 @@ Open <http://localhost:3000>. The admin dashboard is at `/admin`.
 
 ```
 app/
-  (site)/        Public pages: home, editions, about, advertise, contact, legal
-  admin/         Password-protected dashboard
+  (site)/        Public pages: home, archives, about, contact, legal
+  admin/         Publishing dashboard, behind an emailed sign-in code
   api/           Upload tickets, contact form, view/click counters
-components/      UI primitives, site chrome, reader, admin, ad slots
+components/      UI primitives, site chrome, magazine, archive, reader, about 3D, admin, ad slots
 lib/             Supabase clients, storage, queries, helpers
 supabase/        schema.sql — run this once in the Supabase SQL editor
-site.config.ts   Brand name, editions, contact details, categories
+site.config.ts   Brand name, copy, contact details, ticker, categories
 ```
 
 ## Re-branding
 
 Almost everything visible is in **`site.config.ts`** — the name, tagline,
-editions, phone number, address, stats and ad categories. Change it there and the
+phone number, address, ticker messages and ad categories. Change it there and the
 whole site updates. Colours live in the `@theme` block at the top of
 `app/globals.css`.

@@ -4,20 +4,28 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Eye, EyeOff, Loader2, Trash2 } from "lucide-react";
 import type { ActionResult } from "@/app/admin/actions";
+import { cn } from "@/lib/utils";
 
-/** Publish / unpublish + delete controls shared by the issues and banners tables. */
+const BUTTON =
+  "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors disabled:opacity-50";
+
+/** Show / hide plus delete, shared by the issues and banners lists. */
 export function RowActions({
   id,
   isActive,
   onToggle,
   onDelete,
   confirmLabel,
+  activeLabel = "Hide",
+  inactiveLabel = "Show",
 }: {
   id: string;
   isActive: boolean;
   onToggle: (id: string, next: boolean) => Promise<ActionResult>;
   onDelete: (id: string) => Promise<ActionResult>;
   confirmLabel: string;
+  activeLabel?: string;
+  inactiveLabel?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -33,53 +41,70 @@ export function RowActions({
     });
   }
 
-  const button =
-    "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-colors disabled:opacity-50";
-
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
+        type="button"
         onClick={() => run(() => onToggle(id, !isActive))}
         disabled={pending}
-        className={`${button} bg-[rgb(var(--glass-tint)/0.9)] hover:bg-[rgb(var(--glass-tint))]`}
+        className={cn(
+          BUTTON,
+          "border border-[rgb(var(--hairline))] text-[rgb(var(--text))]",
+          "hover:border-[rgb(var(--text-faint))] hover:bg-[rgb(var(--surface-2))]"
+        )}
       >
         {pending ? (
-          <Loader2 className="size-3.5 animate-spin" />
+          <Loader2 className="size-3.5 animate-spin" aria-hidden />
         ) : isActive ? (
-          <EyeOff className="size-3.5" />
+          <EyeOff className="size-3.5" aria-hidden />
         ) : (
-          <Eye className="size-3.5" />
+          <Eye className="size-3.5" aria-hidden />
         )}
-        {isActive ? "Hide" : "Show"}
+        {isActive ? activeLabel : inactiveLabel}
       </button>
 
       {confirming ? (
         <>
           <button
+            type="button"
             onClick={() => run(() => onDelete(id))}
             disabled={pending}
-            className={`${button} bg-[var(--color-rose)] text-white hover:brightness-110`}
+            className={cn(BUTTON, "bg-[rgb(var(--accent))] text-white hover:bg-ember-strong")}
           >
-            {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+            {pending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Trash2 className="size-3.5" aria-hidden />
+            )}
             {confirmLabel}
           </button>
           <button
+            type="button"
             onClick={() => setConfirming(false)}
-            className={`${button} text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text))]`}
+            className={cn(BUTTON, "text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text))]")}
           >
             Cancel
           </button>
         </>
       ) : (
         <button
+          type="button"
           onClick={() => setConfirming(true)}
-          className={`${button} text-[rgb(var(--text-muted))] hover:bg-[var(--color-rose)]/10 hover:text-[var(--color-rose)]`}
+          className={cn(
+            BUTTON,
+            "text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent))]"
+          )}
         >
-          <Trash2 className="size-3.5" /> Delete
+          <Trash2 className="size-3.5" aria-hidden />
+          Delete
         </button>
       )}
 
-      {error && <span className="text-xs text-[var(--color-rose)]">{error}</span>}
+      {error && (
+        <span role="alert" className="text-[13px] text-[rgb(var(--accent))]">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

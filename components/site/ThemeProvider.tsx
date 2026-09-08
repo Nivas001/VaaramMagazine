@@ -1,97 +1,102 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Theme = "light" | "dark";
 
-interface ThemeContextType {
+const STORAGE_KEY = "vaaram-theme";
+
+const ThemeContext = createContext<{
   theme: Theme;
-  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
-}
+  mounted: boolean;
+}>({ theme: "light", toggleTheme: () => {}, mounted: false });
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
+/**
+ * Reads whatever the inline script in app/layout.tsx already applied, so the
+ * provider and the pre-paint script can never disagree. Until a visitor picks
+ * a side explicitly, the operating system preference wins.
+ */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("vaaram-theme") as Theme | null;
-    if (saved === "dark" || saved === "light") {
-      setThemeState(saved);
-      document.documentElement.classList.toggle("dark", saved === "dark");
-    } else {
-      // Default to light mode as requested
-      setThemeState("light");
-      document.documentElement.classList.remove("dark");
-    }
+    setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
   }, []);
 
-  function setTheme(newTheme: Theme) {
-    setThemeState(newTheme);
-    localStorage.setItem("vaaram-theme", newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }
+  // Follow the system while the visitor has not made an explicit choice.
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => {
+      if (localStorage.getItem(STORAGE_KEY)) return;
+      document.documentElement.classList.toggle("dark", e.matches);
+      setTheme(e.matches ? "dark" : "light");
+    };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
-  function toggleTheme() {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }
+  const toggleTheme = useCallback(() => {
+    setTheme((current) => {
+      const next: Theme = current === "dark" ? "light" : "dark";
+      document.documentElement.classList.toggle("dark", next === "dark");
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        /* Private browsing — the choice simply does not persist. */
+      }
+      return next;
+    });
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    return {
-      theme: "light" as Theme,
-      setTheme: () => {},
-      toggleTheme: () => {},
-    };
-  }
-  return context;
+  return useContext(ThemeContext);
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
-    return (
-      <button
-        aria-label="Toggle theme"
-        className="grid size-9 place-items-center border border-neutral-300 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300"
-      >
-        <Sun className="size-4" />
-      </button>
-    );
-  }
+  const { theme, toggleTheme, mounted } = useTheme();
 
   return (
     <button
+      type="button"
       onClick={toggleTheme}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      className={`grid size-9 place-items-center border border-neutral-300 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-[#cd2129] hover:text-[#cd2129] transition-colors cursor-pointer ${className ?? ""}`}
-    >
-      {theme === "dark" ? (
-        <Sun className="size-4 text-[#d2ac47]" />
-      ) : (
-        <Moon className="size-4 text-neutral-800" />
+      aria-label={
+        mounted ? `Switch to ${theme === "dark" ? "light" : "dark"} theme` : "Switch theme"
+      }
+      className={cn(
+        "grid size-9 shrink-0 place-items-center rounded-full border border-[rgb(var(--hairline))]",
+        "text-[rgb(var(--text-muted))] transition-colors",
+        "hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent))]",
+        className
       )}
+    >
+      {/* Both icons are rendered and cross-faded, so the button never shifts
+          or flickers between the server render and hydration. */}
+      <Sun
+        className={cn(
+          "size-[17px] transition-opacity duration-200",
+          mounted && theme === "dark" ? "opacity-100" : "absolute opacity-0"
+        )}
+        aria-hidden
+      />
+      <Moon
+        className={cn(
+          "size-[17px] transition-opacity duration-200",
+          !mounted || theme === "light" ? "opacity-100" : "absolute opacity-0"
+        )}
+        aria-hidden
+      />
     </button>
   );
 }

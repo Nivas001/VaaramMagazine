@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 type Phase = "idle" | "reading" | "uploading-pdf" | "uploading-cover" | "saving" | "done" | "error";
 
 const field =
-  "w-full rounded-2xl border border-[rgb(var(--text)/0.12)] bg-[rgb(var(--glass-tint)/0.55)] px-4 py-3 text-sm outline-none transition-all focus:border-[var(--color-violet)] focus:ring-4 focus:ring-[var(--color-violet)]/15";
+  "w-full rounded-md border border-[rgb(var(--hairline))] bg-[rgb(var(--surface))] px-4 py-3 text-sm outline-none transition-all focus:border-[rgb(var(--accent))] focus:ring-4 focus:ring-[rgb(var(--accent))]/15";
 const label =
   "mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-[rgb(var(--text-muted))]";
 
@@ -38,6 +38,8 @@ export function PublishForm() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  /** Which of the two submit buttons was pressed. */
+  const intent = useRef<"publish" | "draft">("publish");
   const [pageCount, setPageCount] = useState<number | null>(null);
 
   const busy = phase !== "idle" && phase !== "error" && phase !== "done";
@@ -47,7 +49,7 @@ export function PublishForm() {
     setPageCount(null);
     if (!incoming) return;
     if (incoming.type !== "application/pdf") {
-      setError("That is not a PDF. Please choose the print-ready PDF of the issue.");
+      setError("That is not a PDF. Please choose the print-ready PDF of the edition.");
       return;
     }
     setFile(incoming);
@@ -56,9 +58,12 @@ export function PublishForm() {
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file) {
-      setError("Choose the issue PDF first.");
+      setError("Choose the edition PDF first.");
       return;
     }
+
+    // `intent` is set by whichever button was pressed.
+    const publishNow = intent.current === "publish";
 
     const data = new FormData(event.currentTarget);
     const title = String(data.get("title") ?? "").trim();
@@ -113,7 +118,7 @@ export function PublishForm() {
         fileSizeBytes: file.size,
         totalPages: pages,
         coverUrl,
-        isPublished: data.get("isPublished") === "on",
+        isPublished: publishNow,
       });
 
       if (!result.ok) throw new Error(result.error);
@@ -128,13 +133,17 @@ export function PublishForm() {
 
   if (phase === "done") {
     return (
-      <div className="bento glass glass-sheen p-10 text-center">
-        <span className="mx-auto grid size-16 place-items-center rounded-full bg-[var(--color-emerald)]/15">
-          <CheckCircle2 className="size-8 text-[var(--color-emerald)]" />
+      <div className="rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-10 text-center">
+        <span className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-500/15">
+          <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
         </span>
-        <h2 className="mt-5 text-2xl font-bold">Issue published</h2>
+        <h2 className="mt-5 font-display text-2xl tracking-[-0.02em]">
+          {intent.current === "publish" ? "Edition published" : "Draft saved"}
+        </h2>
         <p className="mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-[rgb(var(--text-muted))]">
-          It is live on the website now. Readers will see it on the home page and in the archive.
+          {intent.current === "publish"
+            ? "It is live now — readers will see it on the home page and in the archive."
+            : "Everything is uploaded and hidden. Publish it from the Issues list when you are ready."}
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <button
@@ -144,15 +153,15 @@ export function PublishForm() {
               setProgress(0);
               setPageCount(null);
             }}
-            className="inline-flex h-11 items-center rounded-full bg-[linear-gradient(100deg,var(--color-brand-600),var(--color-fuchsia))] px-6 text-sm font-semibold text-white"
+            className="inline-flex h-11 items-center rounded-full bg-[rgb(var(--accent))] px-6 text-sm font-semibold text-white"
           >
             Publish another
           </button>
           <a
-            href="/editions"
+            href="/archives"
             target="_blank"
             rel="noopener noreferrer"
-            className="glass inline-flex h-11 items-center rounded-full px-6 text-sm font-semibold"
+            className="border border-[rgb(var(--hairline))] inline-flex h-11 items-center rounded-full px-6 text-sm font-semibold"
           >
             View on the site
           </a>
@@ -172,7 +181,7 @@ export function PublishForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="bento glass glass-sheen p-6 sm:p-8">
+    <form onSubmit={onSubmit} className="rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-6 sm:p-8">
       {/* ── Drop zone ─────────────────────────────────────────────────── */}
       <div
         onDragOver={(e) => {
@@ -189,8 +198,8 @@ export function PublishForm() {
         className={cn(
           "cursor-pointer rounded-3xl border-2 border-dashed p-8 text-center transition-all",
           dragging
-            ? "border-[var(--color-violet)] bg-[var(--color-violet)]/8"
-            : "border-[rgb(var(--text)/0.16)] hover:border-[var(--color-violet)]/60",
+            ? "border-[rgb(var(--accent))] bg-[rgb(var(--accent))]/8"
+            : "border-[rgb(var(--hairline))] hover:border-[rgb(var(--accent))]/60",
           busy && "pointer-events-none opacity-60"
         )}
       >
@@ -204,7 +213,7 @@ export function PublishForm() {
 
         {file ? (
           <div className="flex items-center justify-center gap-4 text-left">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--color-brand-600),var(--color-fuchsia))] text-white">
+            <span className="grid size-12 shrink-0 place-items-center rounded-md bg-[rgb(var(--accent))] text-white">
               <FileText className="size-5" />
             </span>
             <div className="min-w-0">
@@ -222,7 +231,7 @@ export function PublishForm() {
                   setFile(null);
                   setPageCount(null);
                 }}
-                className="ml-2 grid size-8 shrink-0 place-items-center rounded-full text-[rgb(var(--text-muted))] transition-colors hover:bg-[var(--color-rose)]/10 hover:text-[var(--color-rose)]"
+                className="ml-2 grid size-8 shrink-0 place-items-center rounded-full text-[rgb(var(--text-muted))] transition-colors hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent))]"
                 aria-label="Remove file"
               >
                 <X className="size-4" />
@@ -246,12 +255,12 @@ export function PublishForm() {
       {busy && (
         <div className="mt-5">
           <div className="flex items-center gap-2.5 text-sm font-medium text-[rgb(var(--text-muted))]">
-            <Loader2 className="size-4 animate-spin text-[var(--color-violet)]" />
+            <Loader2 className="size-4 animate-spin text-[rgb(var(--accent))]" />
             {phaseLabel[phase]}
           </div>
-          <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[rgb(var(--text)/0.08)]">
+          <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-2))]">
             <div
-              className="h-full rounded-full bg-[linear-gradient(100deg,var(--color-brand-600),var(--color-fuchsia))] transition-[width] duration-200"
+              className="h-full rounded-full bg-[rgb(var(--accent))] transition-[width] duration-200"
               style={{
                 width:
                   phase === "uploading-pdf" || phase === "uploading-cover"
@@ -267,7 +276,7 @@ export function PublishForm() {
       <div className="mt-7 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="title" className={label}>
-            Issue title <span className="text-[var(--color-rose)]">*</span>
+            Edition title <span className="text-[rgb(var(--accent))]">*</span>
           </label>
           <input
             id="title"
@@ -275,13 +284,13 @@ export function PublishForm() {
             required
             maxLength={200}
             className={field}
-            placeholder="e.g. Issue 101 — Global Weekly"
+            placeholder="e.g. Issue 205"
           />
         </div>
 
         <div>
           <label htmlFor="edition" className={label}>
-            Edition <span className="text-[var(--color-rose)]">*</span>
+            Edition <span className="text-[rgb(var(--accent))]">*</span>
           </label>
           <select id="edition" name="edition" required className={cn(field, "appearance-none")} defaultValue={siteConfig.editions[0].slug}>
             {siteConfig.editions.map((e) => (
@@ -294,7 +303,7 @@ export function PublishForm() {
 
         <div>
           <label htmlFor="editionDate" className={label}>
-            Publication date <span className="text-[var(--color-rose)]">*</span>
+            Publication date <span className="text-[rgb(var(--accent))]">*</span>
           </label>
           <input
             id="editionDate"
@@ -319,41 +328,51 @@ export function PublishForm() {
             rows={3}
             maxLength={500}
             className={cn(field, "resize-y")}
-            placeholder="What is in this week's issue — main sections, notable ads, anything special."
+            placeholder="What is in this week's edition — the main sections, and anything worth calling out."
           />
         </div>
       </div>
 
-      <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-2xl bg-[rgb(var(--glass-tint)/0.6)] px-4 py-3.5">
-        <input
-          type="checkbox"
-          name="isPublished"
-          defaultChecked
-          className="size-4 accent-[var(--color-violet)]"
-        />
-        <span className="text-sm font-medium">
-          Publish immediately
-          <span className="ml-1.5 font-normal text-[rgb(var(--text-muted))]">
-            — untick to save it as a draft first
-          </span>
-        </span>
-      </label>
-
       {error && (
-        <p className="mt-5 flex items-start gap-2 rounded-2xl bg-[var(--color-rose)]/10 px-4 py-3 text-sm text-[var(--color-rose)]">
+        <p className="mt-5 flex items-start gap-2 rounded-md bg-[rgb(var(--accent))]/10 px-4 py-3 text-sm text-[rgb(var(--accent))]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={busy || !file}
-        className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-stone-900 text-sm font-semibold text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-      >
-        {busy ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
-        {busy ? "Working…" : "Publish this issue"}
-      </button>
+      {/* Two named actions rather than one button and a checkbox: an
+          administrator should never have to infer what will happen. */}
+      <div className="mt-7 flex flex-col gap-3 border-t border-[rgb(var(--hairline))] pt-6 sm:flex-row">
+        <button
+          type="submit"
+          onClick={() => (intent.current = "publish")}
+          disabled={busy || !file}
+          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+        >
+          {busy ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <UploadCloud className="size-4" aria-hidden />
+          )}
+          {busy ? "Working…" : "Publish edition"}
+        </button>
+
+        <button
+          type="submit"
+          onClick={() => (intent.current = "draft")}
+          disabled={busy || !file}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[rgb(var(--hairline))] px-6 text-sm font-semibold text-[rgb(var(--text))] transition-colors hover:bg-[rgb(var(--surface-2))] disabled:opacity-50 sm:flex-none"
+        >
+          Save as draft
+        </button>
+      </div>
+
+      <p className="mt-4 text-[13px] leading-relaxed text-[rgb(var(--text-faint))]">
+        <strong className="font-semibold text-[rgb(var(--text-muted))]">Publish</strong> puts
+        the edition on the home page and in the archive straight away.{" "}
+        <strong className="font-semibold text-[rgb(var(--text-muted))]">Save as draft</strong>{" "}
+        uploads everything but keeps it hidden until you publish it from the Issues list.
+      </p>
     </form>
   );
 }

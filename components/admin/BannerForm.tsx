@@ -10,7 +10,7 @@ import { putToStorage, requestTicket } from "./UploadToStorage";
 import { cn, formatBytes } from "@/lib/utils";
 
 const field =
-  "w-full rounded-2xl border border-[rgb(var(--text)/0.12)] bg-[rgb(var(--glass-tint)/0.55)] px-4 py-3 text-sm outline-none transition-all focus:border-[var(--color-violet)] focus:ring-4 focus:ring-[var(--color-violet)]/15";
+  "w-full rounded-md border border-[rgb(var(--hairline))] bg-[rgb(var(--surface))] px-4 py-3 text-sm outline-none transition-all focus:border-[rgb(var(--accent))] focus:ring-4 focus:ring-[rgb(var(--accent))]/15";
 const label =
   "mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-[rgb(var(--text-muted))]";
 
@@ -84,7 +84,7 @@ export function BannerForm() {
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="bento glass glass-sheen p-6">
+    <form ref={formRef} onSubmit={onSubmit} className="rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-6">
       <h2 className="text-lg font-bold">Add a banner</h2>
       <p className="mt-1.5 text-sm text-[rgb(var(--text-muted))]">
         Upload the advertiser&apos;s artwork and choose where it should appear.
@@ -93,8 +93,8 @@ export function BannerForm() {
       <div
         onClick={() => !busy && inputRef.current?.click()}
         className={cn(
-          "mt-5 cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed p-5 text-center transition-all",
-          "border-[rgb(var(--text)/0.16)] hover:border-[var(--color-violet)]/60",
+          "mt-5 cursor-pointer overflow-hidden rounded-md border-2 border-dashed p-5 text-center transition-all",
+          "border-[rgb(var(--hairline))] hover:border-[rgb(var(--accent))]/60",
           busy && "pointer-events-none opacity-60"
         )}
       >
@@ -139,7 +139,7 @@ export function BannerForm() {
       <div className="mt-5 grid gap-4">
         <div>
           <label htmlFor="clientName" className={label}>
-            Advertiser name <span className="text-[var(--color-rose)]">*</span>
+            Advertiser name <span className="text-[rgb(var(--accent))]">*</span>
           </label>
           <input id="clientName" name="clientName" required maxLength={160} className={field} placeholder="e.g. Sri Balaji Motors" />
         </div>
@@ -199,7 +199,7 @@ export function BannerForm() {
       )}
 
       {error && (
-        <p className="mt-4 flex items-start gap-2 rounded-2xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
+        <p className="mt-4 flex items-start gap-2 rounded-md bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           {error}
         </p>

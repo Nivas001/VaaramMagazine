@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { Eye, FileUp, Images, MessageSquare, Newspaper, TrendingUp } from "lucide-react";
+import { ArrowRight, FileUp, Images, MessageSquare } from "lucide-react";
 import { adminGetBanners, adminGetEnquiries, adminGetPublications } from "@/lib/admin-queries";
-import { getEdition } from "@/site.config";
-import { editionLabel, formatDate } from "@/lib/utils";
-import { BentoCard } from "@/components/ui/Bento";
+import { formatDate } from "@/lib/utils";
 import { isR2Configured } from "@/lib/storage";
+import { EmptyState, PageHeader, Panel, Stat, StatusPill, SetupNote } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -15,130 +14,130 @@ export default async function AdminDashboard() {
     adminGetEnquiries(),
   ]);
 
+  const live = publications.filter((p) => p.is_published);
   const newEnquiries = enquiries.filter((e) => e.status === "new");
-  const totalViews = publications.reduce((sum, p) => sum + (p.view_count ?? 0), 0);
-  const totalDownloads = publications.reduce((sum, p) => sum + (p.download_count ?? 0), 0);
-
-  const cards = [
-    { label: "Issues published", value: publications.filter((p) => p.is_published).length, Icon: Newspaper, glow: "violet" as const },
-    { label: "Issue views", value: totalViews, Icon: Eye, glow: "cyan" as const },
-    { label: "PDF downloads", value: totalDownloads, Icon: TrendingUp, glow: "emerald" as const },
-    { label: "New enquiries", value: newEnquiries.length, Icon: MessageSquare, glow: "amber" as const },
-  ];
+  const activeBanners = banners.filter((b) => b.is_active);
+  const views = publications.reduce((sum, p) => sum + (p.view_count ?? 0), 0);
 
   return (
-    <div className="pt-6">
-      <h1 className="text-3xl font-extrabold sm:text-4xl">Dashboard</h1>
-      <p className="mt-2 text-sm text-[rgb(var(--text-muted))]">
-        Everything about the website at a glance.
-      </p>
+    <>
+      <PageHeader
+        title="Dashboard"
+        lead="Everything about the website at a glance."
+        action={
+          <Link
+            href="/admin/issues/new"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-5 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+          >
+            <FileUp className="size-4" aria-hidden />
+            Publish this week
+          </Link>
+        }
+      />
 
       {!isR2Configured() && (
-        <div className="mt-6 rounded-2xl border border-[var(--color-amber)]/40 bg-[var(--color-amber)]/10 px-5 py-4 text-sm">
-          <strong className="font-bold">Using Supabase Storage.</strong> Uploads work, but the free
-          plan allows about 5 GB of downloads a month. Add your Cloudflare R2 keys to{" "}
-          <code className="rounded bg-black/10 px-1.5 py-0.5 text-xs">.env.local</code> for unlimited
-          free downloads — see step 4 of the setup guide.
-        </div>
+        <SetupNote>
+          <strong className="font-semibold">Using Supabase Storage for files.</strong> Uploads
+          work, but the free plan allows roughly 5&nbsp;GB of downloads a month. Add your
+          Cloudflare R2 keys to <code className="rounded bg-black/10 px-1.5 py-0.5 text-xs">.env.local</code>{" "}
+          for unlimited free downloads.
+        </SetupNote>
       )}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map(({ label, value, Icon, glow }) => (
-          <BentoCard key={label} glow={glow} className="p-6">
-            <div className="flex items-start justify-between">
-              <span className="grid size-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--color-brand-600),var(--color-fuchsia))] text-white">
-                <Icon className="size-5" />
-              </span>
-            </div>
-            <p className="text-gradient mt-5 font-display text-4xl font-extrabold tabular-nums">
-              {value.toLocaleString("en-IN")}
-            </p>
-            <p className="mt-1 text-sm text-[rgb(var(--text-muted))]">{label}</p>
-          </BentoCard>
-        ))}
+        <Stat label="Editions live" value={live.length} hint={`${publications.length} in total`} />
+        <Stat label="Edition views" value={views.toLocaleString("en-CA")} />
+        <Stat label="New enquiries" value={newEnquiries.length} hint="Waiting for a reply" />
+        <Stat label="Banners running" value={activeBanners.length} />
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <QuickAction
-          href="/admin/editions/new"
+          href="/admin/issues/new"
           Icon={FileUp}
-          title="Publish this week's issue"
-          body="Upload the PDF and it goes live in under a minute."
-        />
-        <QuickAction
-          href="/admin/banners"
-          Icon={Images}
-          title="Manage ad banners"
-          body={`${banners.filter((b) => b.is_active).length} banner(s) currently running.`}
+          title="Publish an edition"
+          body="Upload the PDF and it goes live in about a minute."
         />
         <QuickAction
           href="/admin/enquiries"
           Icon={MessageSquare}
           title="Read enquiries"
-          body={`${newEnquiries.length} waiting for a reply.`}
+          body={
+            newEnquiries.length === 0
+              ? "Nothing waiting right now."
+              : `${newEnquiries.length} waiting for a reply.`
+          }
+        />
+        <QuickAction
+          href="/admin/banners"
+          Icon={Images}
+          title="Manage banners"
+          body={`${activeBanners.length} running on the site.`}
         />
       </div>
 
-      {/* Recent issues */}
-      <h2 className="mt-12 text-xl font-bold">Latest issues</h2>
+      <h2 className="mt-14 font-display text-2xl tracking-[-0.02em]">Recent editions</h2>
+
       {publications.length === 0 ? (
-        <BentoCard className="mt-4 p-8 text-center" interactive={false}>
-          <p className="text-sm text-[rgb(var(--text-muted))]">
-            Nothing published yet.{" "}
-            <Link href="/admin/editions/new" className="font-semibold text-[var(--color-violet)] hover:underline">
-              Upload your first issue
+        <EmptyState
+          title="Nothing published yet"
+          body="Upload your first edition and it will appear on the site straight away."
+          action={
+            <Link
+              href="/admin/issues/new"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-5 text-sm font-semibold text-white"
+            >
+              Publish an edition
+              <ArrowRight className="size-4" aria-hidden />
             </Link>
-            .
-          </p>
-        </BentoCard>
+          }
+        />
       ) : (
-        <div className="mt-4 flex flex-col gap-3">
+        <ul className="mt-5 space-y-3">
           {publications.slice(0, 5).map((p) => (
-            <BentoCard key={p.id} className="flex flex-wrap items-center gap-4 p-5" glow="violet">
+            <Panel as="li" key={p.id} className="flex flex-wrap items-center gap-4 p-5">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">{p.title}</p>
-                <p className="mt-1 text-xs text-[rgb(var(--text-muted))]">
-                  {getEdition(p.edition)?.name ?? p.edition} · {editionLabel(p.edition_date)} ·{" "}
-                  {p.view_count ?? 0} views · {p.download_count ?? 0} downloads
+                <p className="truncate font-semibold">{p.title}</p>
+                <p className="mt-1 text-[13px] text-[rgb(var(--text-faint))]">
+                  {formatDate(p.edition_date)}
+                  <span className="mx-2" aria-hidden>·</span>
+                  {p.view_count ?? 0} views
+                  <span className="mx-2" aria-hidden>·</span>
+                  {p.download_count ?? 0} downloads
                 </p>
               </div>
-              <span
-                className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${
-                  p.is_published
-                    ? "bg-[var(--color-emerald)]/15 text-[var(--color-emerald)]"
-                    : "bg-[var(--color-amber)]/15 text-[var(--color-amber)]"
-                }`}
-              >
-                {p.is_published ? "Live" : "Draft"}
-              </span>
-            </BentoCard>
+              <StatusPill published={p.is_published} />
+            </Panel>
           ))}
-        </div>
+        </ul>
       )}
 
-      {/* Recent enquiries */}
       {newEnquiries.length > 0 && (
         <>
-          <h2 className="mt-12 text-xl font-bold">Newest enquiries</h2>
-          <div className="mt-4 flex flex-col gap-3">
+          <h2 className="mt-14 font-display text-2xl tracking-[-0.02em]">Newest enquiries</h2>
+          <ul className="mt-5 space-y-3">
             {newEnquiries.slice(0, 4).map((e) => (
-              <BentoCard key={e.id} className="p-5" glow="amber">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-sm font-bold">
-                    {e.name} · <span className="font-normal">{e.phone}</span>
+              <Panel as="li" key={e.id} className="p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <p className="font-semibold">
+                    {e.name}
+                    <span className="ml-2.5 font-normal text-[rgb(var(--text-muted))]">
+                      {e.phone}
+                    </span>
                   </p>
-                  <span className="text-xs text-[rgb(var(--text-muted))]">
+                  <span className="text-[13px] text-[rgb(var(--text-faint))]">
                     {formatDate(e.created_at)}
                   </span>
                 </div>
-                <p className="mt-1.5 text-sm font-medium">{e.subject}</p>
-                <p className="mt-1 line-clamp-2 text-sm text-[rgb(var(--text-muted))]">{e.message}</p>
-              </BentoCard>
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[rgb(var(--text-muted))]">
+                  {e.message}
+                </p>
+              </Panel>
             ))}
-          </div>
+          </ul>
         </>
       )}
-    </div>
+    </>
   );
 }
 
@@ -154,14 +153,14 @@ function QuickAction({
   body: string;
 }) {
   return (
-    <Link href={href}>
-      <BentoCard glow="fuchsia" className="h-full p-6">
-        <span className="grid size-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--color-brand-600),var(--color-fuchsia))] text-white">
-          <Icon className="size-5" />
+    <Link href={href} className="group">
+      <Panel className="h-full p-6 transition-colors group-hover:border-[rgb(var(--text-faint))]">
+        <span className="grid size-10 place-items-center rounded-full bg-[rgb(var(--surface-2))] text-[rgb(var(--accent))]">
+          <Icon className="size-[18px]" />
         </span>
-        <h3 className="mt-4 text-base font-bold">{title}</h3>
+        <h3 className="mt-4 font-semibold">{title}</h3>
         <p className="mt-1.5 text-sm text-[rgb(var(--text-muted))]">{body}</p>
-      </BentoCard>
+      </Panel>
     </Link>
   );
 }

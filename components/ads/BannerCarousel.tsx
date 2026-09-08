@@ -1,24 +1,39 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { AdBanner } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const ASPECTS = {
+  banner: "aspect-[1200/200]",
+  inline: "aspect-[1200/250]",
+  sidebar: "aspect-[6/5]",
+} as const;
 
 /**
- * Rotates through the banners booked for one slot and reports an impression
- * once per banner per page view (and a click when a visitor follows one).
- * Tracking is fire-and-forget so it can never slow the page down.
+ * Rotates through the banners booked for one slot, recording an impression once
+ * per banner per page view and a click when a visitor follows one. Tracking is
+ * fire-and-forget: a failed counter must never slow a page or surface an error.
  */
-export function BannerCarousel({ banners }: { banners: AdBanner[] }) {
+export function BannerCarousel({
+  banners,
+  shape = "banner",
+}: {
+  banners: AdBanner[];
+  shape?: keyof typeof ASPECTS;
+}) {
+  const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const counted = useRef<Set<string>>(new Set());
   const current = banners[index];
 
   useEffect(() => {
-    if (banners.length < 2) return;
+    if (banners.length < 2 || paused) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % banners.length), 7000);
     return () => clearInterval(id);
-  }, [banners.length]);
+  }, [banners.length, paused]);
 
   useEffect(() => {
     if (!current || counted.current.has(current.id)) return;
@@ -33,7 +48,7 @@ export function BannerCarousel({ banners }: { banners: AdBanner[] }) {
 
   if (!current) return null;
 
-  function handleClick(id: string) {
+  function trackClick(id: string) {
     void fetch("/api/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,32 +58,45 @@ export function BannerCarousel({ banners }: { banners: AdBanner[] }) {
   }
 
   const image = (
+    // Banner artwork is uploaded by advertisers and served from object storage.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={current.image_url}
       alt={`Advertisement by ${current.client_name}`}
       loading="lazy"
       decoding="async"
-      className="h-auto w-full object-cover"
+      className="size-full object-cover"
     />
   );
 
   return (
-    <div className="bento glass glass-sheen relative overflow-hidden">
+    <div
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+      className={cn(
+        "relative overflow-hidden rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]",
+        ASPECTS[shape]
+      )}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={current.id}
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.99 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduce ? 0 : 0.45 }}
+          className="absolute inset-0"
         >
           {current.target_url ? (
             <a
               href={current.target_url}
               target="_blank"
+              // `sponsored` tells search engines this is a paid link.
               rel="noopener noreferrer sponsored"
-              onClick={() => handleClick(current.id)}
-              className="block"
+              onClick={() => trackClick(current.id)}
+              className="block size-full"
             >
               {image}
             </a>
@@ -79,15 +107,18 @@ export function BannerCarousel({ banners }: { banners: AdBanner[] }) {
       </AnimatePresence>
 
       {banners.length > 1 && (
-        <div className="absolute bottom-2.5 left-1/2 flex -translate-x-1/2 gap-1.5">
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
           {banners.map((b, i) => (
             <button
               key={b.id}
+              type="button"
               onClick={() => setIndex(i)}
-              aria-label={`Show advertisement ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === index ? "w-5 bg-white" : "w-1.5 bg-white/50"
-              }`}
+              aria-label={`Show advertisement ${i + 1} of ${banners.length}`}
+              aria-current={i === index}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === index ? "w-5 bg-white" : "w-1.5 bg-white/55 hover:bg-white/80"
+              )}
             />
           ))}
         </div>

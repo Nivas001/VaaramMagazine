@@ -254,21 +254,26 @@ export function PdfReader({
   }
 
   const iconButton =
-    "grid size-8 place-items-center rounded-none border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-[#121212] text-neutral-800 dark:text-white transition-all hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 disabled:opacity-30 disabled:pointer-events-none cursor-pointer";
+    "grid size-9 place-items-center rounded-full text-[rgb(var(--text-muted))] transition-colors " +
+    "hover:bg-[rgb(var(--surface-2))] hover:text-[rgb(var(--text))] " +
+    "disabled:pointer-events-none disabled:opacity-30 cursor-pointer";
 
   if (error) {
     return (
-      <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0e0e0e] p-8 text-center shadow-xs">
-        <p className="font-sans text-sm text-neutral-600 dark:text-neutral-400">{error}</p>
-        <a
-          href={url}
-          download
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 inline-flex h-11 items-center gap-2 bg-[#cd2129] px-6 font-bold text-xs uppercase tracking-wider text-white hover:bg-[#b01b22] transition-colors"
-        >
-          <Download className="size-4" /> DOWNLOAD THE PDF
-        </a>
+      <div className="card grid min-h-[50vh] place-items-center p-10 text-center">
+        <div className="max-w-sm">
+          <h2 className="display-md">The reader could not open this edition</h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">{error}</p>
+          <a
+            href={url}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-6 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+          >
+            <Download className="size-4" aria-hidden /> Download the PDF
+          </a>
+        </div>
       </div>
     );
   }
@@ -277,23 +282,23 @@ export function PdfReader({
     <div
       ref={shellRef}
       className={cn(
-        "flex flex-col overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-[#0c0c0c] shadow-md",
-        fullscreen && "bg-neutral-900 dark:bg-black"
+        "flex flex-col overflow-hidden rounded-lg border border-[rgb(var(--hairline))]",
+        "bg-[rgb(var(--surface-3))] shadow-[var(--shadow-card)]",
+        fullscreen && "rounded-none border-0"
       )}
     >
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] px-3 py-2.5 sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] px-2.5 py-2 sm:px-3">
         <div className="flex items-center gap-1">
           <button onClick={() => goTo(page - 1)} disabled={page <= 1} className={iconButton} aria-label="Previous page">
             <ChevronLeft className="size-4" />
           </button>
 
-          <div className="flex items-center gap-1.5 px-2 text-sm font-semibold tabular-nums">
-            <span className="inline-flex min-w-[28px] items-center justify-center border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-950 px-2 py-1 font-mono text-xs font-bold text-neutral-900 dark:text-white">
-              {page}
-            </span>
-            <span className="font-mono text-xs text-neutral-500 dark:text-neutral-400">/ {numPages || "—"}</span>
-          </div>
+          <p className="px-2 text-[13px] tabular-nums text-[rgb(var(--text-muted))]">
+            <span className="font-semibold text-[rgb(var(--text))]">{page}</span>
+            <span className="mx-1.5" aria-hidden>/</span>
+            {numPages || "—"}
+          </p>
 
           <button
             onClick={() => goTo(page + 1)}
@@ -309,7 +314,7 @@ export function PdfReader({
           <button onClick={() => setZoom((z) => Math.max(z - 0.2, 0.6))} disabled={zoom <= 0.6} className={iconButton} aria-label="Zoom out">
             <ZoomOut className="size-4" />
           </button>
-          <span className="w-11 text-center font-mono text-xs text-neutral-400">
+          <span className="w-12 text-center text-[13px] tabular-nums text-[rgb(var(--text-muted))]">
             {Math.round(zoom * 100)}%
           </span>
           <button onClick={() => setZoom((z) => Math.min(z + 0.2, 3))} disabled={zoom >= 3} className={iconButton} aria-label="Zoom in">
@@ -327,9 +332,11 @@ export function PdfReader({
             target="_blank"
             rel="noopener noreferrer"
             onClick={onDownload}
-            className="ml-1 inline-flex h-8 items-center gap-1.5 bg-[#cd2129] px-3.5 font-bold text-xs uppercase tracking-wider text-white hover:bg-[#b01b22] transition-colors"
+            className="ml-1.5 inline-flex h-9 items-center gap-1.5 rounded-full bg-[rgb(var(--accent))] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-ember-strong"
           >
-            <Download className="size-3.5" /> SAVE
+            <Download className="size-3.5" aria-hidden />
+            <span className="hidden sm:inline">Download</span>
+            <span className="sr-only sm:hidden">Download</span>
           </a>
         </div>
       </div>
@@ -338,48 +345,51 @@ export function PdfReader({
       <div
         ref={viewportRef}
         className={cn(
-          "relative flex justify-center overflow-auto bg-black p-3 sm:p-6",
-          fullscreen ? "flex-1" : "min-h-[60vh]"
+          "relative flex justify-center overflow-auto bg-warm-900 p-3 sm:p-6",
+          fullscreen ? "flex-1" : "min-h-[62vh]"
         )}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
         {loading && (
-          <div className="flex flex-col items-center justify-center gap-3 py-24 text-neutral-400">
-            <Loader2 className="size-7 animate-spin text-[#cd2129]" />
-            <p className="font-sans text-xs uppercase tracking-wider">OPENING {title}…</p>
+          <div className="flex flex-col items-center justify-center gap-4 py-24 text-warm-400">
+            <Loader2 className="size-6 animate-spin text-ember-soft" aria-hidden />
+            <p className="label-eyebrow">Opening {title}</p>
           </div>
         )}
 
-        <div key={turnKey} className={cn("relative", !loading && "animate-page-turn")}>
+        <div key={turnKey} className="relative">
           <canvas
             ref={canvasRef}
-            className="pdf-canvas border border-neutral-800 shadow-2xl"
+            className="pdf-canvas"
             aria-label={`Page ${page} of ${title}`}
           />
           {rendering && !loading && (
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
-              <Loader2 className="size-6 animate-spin text-[#cd2129]" />
+              <Loader2 className="size-6 animate-spin text-ember-soft" aria-hidden />
             </div>
           )}
         </div>
       </div>
 
       {/* Mobile paging bar */}
-      <div className="flex items-center justify-between gap-3 border-t border-neutral-800 bg-[#0a0a0a] px-4 py-3 sm:hidden">
+      {/* A phone gets full-width paging targets rather than 32px icon buttons. */}
+      <div className="flex items-center gap-2.5 border-t border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-2.5 sm:hidden">
         <button
+          type="button"
           onClick={() => goTo(page - 1)}
           disabled={page <= 1}
-          className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 border border-neutral-700 bg-neutral-900 font-bold text-xs uppercase tracking-wider text-white disabled:opacity-30"
+          className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full border border-[rgb(var(--hairline))] text-sm font-semibold text-[rgb(var(--text))] disabled:opacity-30"
         >
-          <ChevronLeft className="size-4" /> PREVIOUS
+          <ChevronLeft className="size-4" aria-hidden /> Previous
         </button>
         <button
+          type="button"
           onClick={() => goTo(page + 1)}
           disabled={numPages > 0 && page >= numPages}
-          className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 bg-[#cd2129] font-bold text-xs uppercase tracking-wider text-white disabled:opacity-30"
+          className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white disabled:opacity-30"
         >
-          NEXT <ChevronRight className="size-4" />
+          Next <ChevronRight className="size-4" aria-hidden />
         </button>
       </div>
     </div>

@@ -15,13 +15,11 @@ export function DownloadButton({
   publicationId,
   label = "Download PDF",
   className,
-  iconOnly = false,
 }: {
   url: string;
   publicationId: string;
   label?: string;
   className?: string;
-  iconOnly?: boolean;
 }) {
   function record() {
     void fetch("/api/track", {
@@ -39,9 +37,13 @@ export function DownloadButton({
       target="_blank"
       rel="noopener noreferrer"
       onClick={record}
-      className={cn("inline-flex items-center gap-2", className)}
+      className={cn(
+        "inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-5 text-sm font-semibold",
+        "bg-[rgb(var(--accent))] text-white transition-colors hover:bg-ember-strong",
+        className
+      )}
     >
-      <Download className={iconOnly ? "size-4" : "size-4"} />
+      <Download className="size-4" aria-hidden />
       {label}
     </a>
   );

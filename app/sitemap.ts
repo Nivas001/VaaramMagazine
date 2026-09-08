@@ -11,10 +11,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = (
     [
       ["/", "weekly", 1],
-      ["/editions", "weekly", 0.9],
-      ["/advertise", "monthly", 0.8],
-      ["/about", "yearly", 0.6],
-      ["/contact", "yearly", 0.6],
+      ["/archives", "weekly", 0.9],
+      ["/about", "monthly", 0.7],
+      ["/contact", "monthly", 0.7],
       ["/privacy", "yearly", 0.2],
       ["/terms", "yearly", 0.2],
     ] as const
@@ -26,12 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const publications = await getPublications();
-  const issueRoutes: MetadataRoute.Sitemap = publications.map((p) => ({
-    url: `${base}/editions/${p.slug}`,
+  const editionRoutes: MetadataRoute.Sitemap = publications.map((p) => ({
+    url: `${base}/archives/${p.slug}`,
     lastModified: new Date(p.created_at),
     changeFrequency: "monthly",
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...issueRoutes];
+  return [...staticRoutes, ...editionRoutes];
 }

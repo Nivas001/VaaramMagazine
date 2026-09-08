@@ -69,13 +69,24 @@ Replace `YOUR-USERNAME` with your GitHub username.
 
 ### 2.3 Create your admin login
 
-1. Left sidebar → **Authentication** → **Users** → **Add user** → **Create new user**.
-2. Enter the email and a strong password you will use to sign in to `/admin`.
-3. Tick **Auto Confirm User**, then create.
+Signing in uses a six-digit code emailed to you — there is no password to
+choose, lose or leak.
 
-> This is the only account that can publish issues. Do not share it. To add a
-> second admin later, repeat this step — anyone with an account here has full
-> admin access.
+1. Left sidebar → **Authentication** → **Users** → **Add user** → **Create new user**.
+2. Enter the email address you will sign in with.
+3. Tick **Auto Confirm User**, then create.
+4. Left sidebar → **Authentication** → **Providers** → **Email**: make sure
+   **Enable email provider** is on.
+5. Left sidebar → **Authentication** → **Sign In / Providers**: turn
+   **Allow new users to sign up** **off**.
+
+> Step 5 matters. The login page asks Supabase for a code with
+> `shouldCreateUser: false`, so only addresses you have added here can ever
+> request one. With sign-ups disabled as well, nobody can create an account
+> from the outside even if that setting is changed later.
+>
+> Anyone listed under **Users** has full admin access, so add only people who
+> should be able to publish.
 
 ### 2.4 Copy your three keys
 
@@ -227,7 +238,7 @@ Open **`site.config.ts`** in the project. Everything the visitor reads is here:
 - `since` — the year you started
 - `contact` — phone, WhatsApp number, email, address, office hours
 - `social` — leave a line empty to hide that icon
-- `editions` — your city editions. **The `slug` is used in the database, so
+- `editions` — the editions you publish. **The `slug` is used in the database, so
   once you have published issues, do not change existing slugs.**
 - `stats` — the four numbers on the home page
 - `process` — the "How we work" steps
@@ -305,7 +316,7 @@ to show the advertiser at renewal time.
 | --- | --- |
 | Upload fails with a network error | R2 CORS (step 4.3). Check the domain matches exactly. |
 | Site says it can't connect to the database | Supabase project is paused — open supabase.com and click Resume. Then do Part 6. |
-| "Invalid login credentials" | Reset the password: Supabase → Authentication → Users → ⋯ |
+| No sign-in code arrives | Check the address exists under Supabase → Authentication → Users, and that the email provider is enabled. Codes expire after a few minutes — request a new one. |
 | New issue doesn't appear | Wait one minute and refresh — pages cache for 60 seconds. Also check it isn't saved as a Draft. |
 | PDF won't open in the reader | Confirm the PDF opens normally on your computer, and that the bucket's public access is on (step 4.2). |
 | Enquiry emails not arriving | Check `WEB3FORMS_ACCESS_KEY` in Vercel, and your spam folder. The enquiry is still saved in `/admin/enquiries` either way. |
