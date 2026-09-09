@@ -9,11 +9,15 @@ export type Ticket = {
 };
 
 /** Asks the server for a signed URL for this exact file. */
-export async function requestTicket(fileName: string, contentType: string): Promise<Ticket> {
+export async function requestTicket(
+  fileName: string,
+  contentType: string,
+  size?: number
+): Promise<Ticket> {
   const response = await fetch("/api/admin/upload-ticket", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileName, contentType }),
+    body: JSON.stringify({ fileName, contentType, size }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error ?? "Could not prepare the upload.");

@@ -6,6 +6,7 @@ import { getPublicationBySlug, getPublications } from "@/lib/queries";
 import { getEdition, siteConfig } from "@/site.config";
 import { editionLabel, formatBytes, formatDate } from "@/lib/utils";
 import { ReaderMount } from "@/components/reader/ReaderMount";
+import { JsonLd } from "@/components/site/JsonLd";
 import { EditionCard } from "@/components/magazine/EditionCard";
 import { DownloadButton } from "@/components/site/DownloadButton";
 import { ShareButton } from "@/components/site/ShareButton";
@@ -73,10 +74,7 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       <Section width="wide" className="!pb-8 !pt-10">
         <Link

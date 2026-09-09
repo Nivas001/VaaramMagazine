@@ -21,8 +21,15 @@ export type AdBanner = {
   created_at: string;
   client_name: string;
   target_url: string | null;
+  /** Desktop artwork. Required, and the fallback for every other device. */
   image_url: string;
   image_key: string | null;
+  /** Optional artwork for the middle range. Falls back to desktop. */
+  image_url_tablet: string | null;
+  image_key_tablet: string | null;
+  /** Optional artwork for phones. Falls back to tablet, then desktop. */
+  image_url_mobile: string | null;
+  image_key_mobile: string | null;
   placement: BannerPlacement;
   edition: string | null;
   sort_order: number;
@@ -54,14 +61,71 @@ export type BannerPlacement =
 
 export type BannerShape = "leaderboard" | "banner" | "inline" | "sidebar" | "square";
 
-/** The proportion each shape renders at, shared by the slot and the carousel. */
-export const SHAPE_ASPECTS: Record<BannerShape, string> = {
-  leaderboard: "aspect-[1600/200] min-h-[76px]",
-  banner: "aspect-[1200/200] min-h-[88px]",
-  inline: "aspect-[1200/250] min-h-[110px]",
-  sidebar: "aspect-[6/5] min-h-[200px]",
-  square: "aspect-square min-h-[220px]",
+/** The three device tiers a banner can carry its own artwork for. */
+export type DeviceTier = "desktop" | "tablet" | "mobile";
+
+export const DEVICE_TIERS: {
+  tier: DeviceTier;
+  label: string;
+  range: string;
+  required: boolean;
+}[] = [
+  { tier: "desktop", label: "Desktop", range: "1024px and wider", required: true },
+  { tier: "tablet", label: "Tablet & laptop", range: "640 – 1023px", required: false },
+  { tier: "mobile", label: "Phone", range: "under 640px", required: false },
+];
+
+/**
+ * What each slot looks like, per device.
+ *
+ * A wide strip cannot simply be scaled down: a 1600 × 200 leaderboard on a
+ * 375px phone would be 47px tall and unreadable. So every shape declares a
+ * different proportion per tier, and an advertiser can supply artwork drawn
+ * for each one. The class string is written out literally because Tailwind
+ * reads these at build time and cannot see a value assembled at runtime.
+ */
+export const SHAPE_SPECS: Record<
+  BannerShape,
+  { className: string; sizes: Record<DeviceTier, { w: number; h: number }> }
+> = {
+  leaderboard: {
+    className: "aspect-[2/1] sm:aspect-[24/5] lg:aspect-[8/1] min-h-[76px]",
+    sizes: { desktop: { w: 1600, h: 200 }, tablet: { w: 1200, h: 250 }, mobile: { w: 800, h: 400 } },
+  },
+  banner: {
+    className: "aspect-[2/1] sm:aspect-[24/5] lg:aspect-[6/1] min-h-[88px]",
+    sizes: { desktop: { w: 1200, h: 200 }, tablet: { w: 1200, h: 250 }, mobile: { w: 800, h: 400 } },
+  },
+  inline: {
+    className: "aspect-[8/5] sm:aspect-[4/1] lg:aspect-[24/5] min-h-[110px]",
+    sizes: { desktop: { w: 1200, h: 250 }, tablet: { w: 1200, h: 300 }, mobile: { w: 800, h: 500 } },
+  },
+  sidebar: {
+    className: "aspect-[5/3] lg:aspect-[6/5] min-h-[200px]",
+    sizes: { desktop: { w: 600, h: 500 }, tablet: { w: 1000, h: 600 }, mobile: { w: 1000, h: 600 } },
+  },
+  square: {
+    className: "aspect-square min-h-[220px]",
+    sizes: { desktop: { w: 800, h: 800 }, tablet: { w: 800, h: 800 }, mobile: { w: 800, h: 800 } },
+  },
 };
+
+/** "1600 × 200 px" — the hint shown next to an upload zone. */
+export function sizeHint(shape: BannerShape, tier: DeviceTier) {
+  const { w, h } = SHAPE_SPECS[shape].sizes[tier];
+  return `${w} × ${h} px`;
+}
+
+/**
+ * The artwork a given device should get, falling back up the chain so a banner
+ * with only desktop artwork still renders everywhere.
+ */
+export function bannerArtwork(banner: AdBanner) {
+  const desktop = banner.image_url;
+  const tablet = banner.image_url_tablet || desktop;
+  const mobile = banner.image_url_mobile || tablet;
+  return { desktop, tablet, mobile };
+}
 
 export const BANNER_PLACEMENTS: {
   value: BannerPlacement;

@@ -2,13 +2,22 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { SHAPE_ASPECTS, type AdBanner, type BannerShape } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import {
+  SHAPE_SPECS,
+  bannerArtwork,
+  type AdBanner,
+  type BannerShape,
+} from "@/lib/types";
+import { cn, safeExternalUrl } from "@/lib/utils";
 
 /**
  * Rotates through the banners booked for one slot, recording an impression once
  * per banner per page view and a click when a visitor follows one. Tracking is
  * fire-and-forget: a failed counter must never slow a page or surface an error.
+ *
+ * Artwork is served through <picture>, so a phone downloads only the phone
+ * artwork and never pays for the desktop file. Where an advertiser supplied
+ * one image, every tier resolves to it and this behaves like a plain <img>.
  */
 export function BannerCarousel({
   banners,
@@ -22,6 +31,8 @@ export function BannerCarousel({
   const [paused, setPaused] = useState(false);
   const counted = useRef<Set<string>>(new Set());
   const current = banners[index];
+  // Filtered again here: rows written before the write-side check exist.
+  const href = safeExternalUrl(current?.target_url);
 
   useEffect(() => {
     if (banners.length < 2 || paused) return;
@@ -51,16 +62,23 @@ export function BannerCarousel({
     }).catch(() => {});
   }
 
+  const art = bannerArtwork(current);
+
   const image = (
-    // Banner artwork is uploaded by advertisers and served from object storage.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={current.image_url}
-      alt={`Advertisement by ${current.client_name}`}
-      loading="lazy"
-      decoding="async"
-      className="size-full object-cover"
-    />
+    // Uploaded by advertisers and served straight from object storage, so
+    // Next's optimiser is bypassed site-wide and <picture> is the right tool.
+    <picture className="block size-full">
+      <source media="(min-width: 1024px)" srcSet={art.desktop} />
+      <source media="(min-width: 640px)" srcSet={art.tablet} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={art.mobile}
+        alt={`Advertisement by ${current.client_name}`}
+        loading="lazy"
+        decoding="async"
+        className="size-full object-cover"
+      />
+    </picture>
   );
 
   return (
@@ -71,7 +89,7 @@ export function BannerCarousel({
       onBlurCapture={() => setPaused(false)}
       className={cn(
         "relative overflow-hidden rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]",
-        SHAPE_ASPECTS[shape]
+        SHAPE_SPECS[shape].className
       )}
     >
       <AnimatePresence mode="wait">
@@ -83,9 +101,9 @@ export function BannerCarousel({
           transition={{ duration: reduce ? 0 : 0.45 }}
           className="absolute inset-0"
         >
-          {current.target_url ? (
+          {href ? (
             <a
-              href={current.target_url}
+              href={href}
               target="_blank"
               // `sponsored` tells search engines this is a paid link.
               rel="noopener noreferrer sponsored"

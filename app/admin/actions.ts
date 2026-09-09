@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { slugify } from "@/lib/utils";
+import { safeExternalUrl, slugify } from "@/lib/utils";
 
 /**
  * Every action re-checks the session. Middleware already guards the routes, but
@@ -17,9 +17,13 @@ async function requireAdmin() {
   return supabase;
 }
 
+/**
+ * Everything public renders under the root layout, so one layout-level
+ * revalidation covers the home page, the archive, every edition page and the
+ * footer's banner slot in a single call.
+ */
 function refreshPublicPages() {
   revalidatePath("/", "layout");
-  revalidatePath("/editions");
   revalidatePath("/admin");
 }
 
@@ -110,8 +114,13 @@ export async function deletePublication(id: string): Promise<ActionResult> {
 export async function createBanner(input: {
   clientName: string;
   targetUrl: string;
+  /** Desktop artwork is required; the other two tiers fall back to it. */
   imageUrl: string;
   imageKey: string;
+  imageUrlTablet: string | null;
+  imageKeyTablet: string | null;
+  imageUrlMobile: string | null;
+  imageKeyMobile: string | null;
   placement: string;
   edition: string | null;
   expiresAt: string | null;
@@ -120,9 +129,13 @@ export async function createBanner(input: {
     const supabase = await requireAdmin();
     const { error } = await supabase.from("ad_banners").insert({
       client_name: input.clientName,
-      target_url: input.targetUrl || null,
+      target_url: safeExternalUrl(input.targetUrl),
       image_url: input.imageUrl,
       image_key: input.imageKey,
+      image_url_tablet: input.imageUrlTablet,
+      image_key_tablet: input.imageKeyTablet,
+      image_url_mobile: input.imageUrlMobile,
+      image_key_mobile: input.imageKeyMobile,
       placement: input.placement,
       edition: input.edition,
       expires_at: input.expiresAt,

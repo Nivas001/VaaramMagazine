@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_PUBLICATIONS } from "@/lib/demo-data";
 import type { AdBanner, BannerPlacement, Publication } from "@/lib/types";
+import { safeExternalUrl } from "@/lib/utils";
 
 /**
  * All public reads go through the anon key and are filtered again by Row Level
@@ -84,6 +85,15 @@ export const getBanners = cache(
       console.error("[queries] getBanners:", error.message);
       return [];
     }
-    return (data ?? []) as AdBanner[];
+
+    // Sanitised here, at the boundary, rather than only where it is rendered.
+    // These rows are serialised into the page as props for a client component,
+    // so a "javascript:" link left on the object would travel to the browser as
+    // data even though nothing would click it. Cleaning it once, on the server,
+    // means the value never leaves the machine that can still reason about it.
+    return ((data ?? []) as AdBanner[]).map((banner) => ({
+      ...banner,
+      target_url: safeExternalUrl(banner.target_url),
+    }));
   }
 );

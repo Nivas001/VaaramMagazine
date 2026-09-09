@@ -77,8 +77,14 @@ export function Navbar() {
           overlay && "[--text:245_242_237] [--text-muted:190_182_172] [--text-faint:170_162_152] [--hairline:255_255_255]"
         )}
       >
-        <Link href="/" className="group -ml-1 flex shrink-0 items-center rounded-md px-1 py-1">
-          <Logo size="md" />
+        <Link
+          href="/"
+          className={cn(
+            "group -ml-1 flex shrink-0 items-center rounded-lg px-2 py-1 transition-all duration-300",
+            overlay && "bg-warm-50/95 shadow-sm ring-1 ring-white/20 backdrop-blur-md"
+          )}
+        >
+          <Logo size="md" priority />
           <span className="sr-only">Vaaram Magazine — home</span>
         </Link>
 

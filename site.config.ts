@@ -34,8 +34,7 @@ export const siteConfig = {
   publishDayLabel: "Sunday",
 
   contact: {
-    /** PLACEHOLDER — replace with the real inbox. */
-    email: "hello@vaaram.ca",
+    email: "contact@vaaram.ca",
     /** PLACEHOLDER — 555 numbers are reserved and can never connect. */
     phone: "+1 647 555 0199",
     /** PLACEHOLDER — digits only, used to build the wa.me deep link. */

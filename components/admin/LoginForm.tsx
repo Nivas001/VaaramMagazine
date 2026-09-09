@@ -136,7 +136,7 @@ function Form() {
           required
           autoFocus
           autoComplete="username"
-          placeholder="you@vaaram.ca"
+          placeholder="contact@vaaram.ca"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={cn(field, "mt-3")}

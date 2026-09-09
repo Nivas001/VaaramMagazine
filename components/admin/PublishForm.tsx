@@ -14,6 +14,9 @@ import { siteConfig } from "@/site.config";
 import { createPublication } from "@/app/admin/actions";
 import { inspectPdf } from "@/lib/pdf-client";
 import { putToStorage, requestTicket } from "./UploadToStorage";
+
+/** Supabase Storage refuses anything larger on this plan. */
+const MAX_PDF_BYTES = 50 * 1024 * 1024;
 import { formatBytes } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +55,15 @@ export function PublishForm() {
       setError("That is not a PDF. Please choose the print-ready PDF of the edition.");
       return;
     }
+    // Matches the ceiling enforced by the upload route and by Supabase Storage
+    // itself, so an oversized edition is refused here rather than failing
+    // halfway through a long upload.
+    if (incoming.size > MAX_PDF_BYTES) {
+      setError(
+        `That PDF is ${formatBytes(incoming.size)}. The limit is 50 MB — export it at a lower image quality and try again.`
+      );
+      return;
+    }
     setFile(incoming);
   }, []);
 
@@ -86,7 +98,7 @@ export function PublishForm() {
 
       // 2. Send the PDF straight to storage.
       setPhase("uploading-pdf");
-      const pdfTicket = await requestTicket(file.name, "application/pdf");
+      const pdfTicket = await requestTicket(file.name, "application/pdf", file.size);
       await putToStorage(pdfTicket, file, setProgress);
 
       // 3. Send the generated cover (best-effort — never blocks publishing).
@@ -97,7 +109,8 @@ export function PublishForm() {
         try {
           const coverTicket = await requestTicket(
             file.name.replace(/\.pdf$/i, "-cover.jpg"),
-            "image/jpeg"
+            "image/jpeg",
+            coverBlob.size
           );
           await putToStorage(coverTicket, coverBlob, setProgress);
           coverUrl = coverTicket.publicUrl;

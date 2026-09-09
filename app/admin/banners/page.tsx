@@ -1,6 +1,6 @@
 import { adminGetBanners } from "@/lib/admin-queries";
 import { deleteBanner, toggleBanner } from "@/app/admin/actions";
-import { BANNER_PLACEMENTS } from "@/lib/types";
+import { BANNER_PLACEMENTS, DEVICE_TIERS } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { BannerForm } from "@/components/admin/BannerForm";
 import { RowActions } from "@/components/admin/RowActions";
@@ -57,6 +57,35 @@ export default async function AdminBannersPage() {
                       {placement?.label ?? b.placement}
                       {b.expires_at && ` · until ${formatDate(b.expires_at)}`}
                     </p>
+
+                    {/* Which screen sizes this advertiser supplied art for.
+                        A missing tier is not a fault — it falls back to
+                        desktop — but it is worth being able to see. */}
+                    <ul className="mt-2.5 flex flex-wrap gap-1.5">
+                      {DEVICE_TIERS.map(({ tier, label }) => {
+                        const own =
+                          tier === "desktop"
+                            ? true
+                            : tier === "tablet"
+                              ? Boolean(b.image_url_tablet)
+                              : Boolean(b.image_url_mobile);
+                        return (
+                          <li
+                            key={tier}
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]",
+                              own
+                                ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
+                                : "bg-[rgb(var(--surface-2))] text-[rgb(var(--text-faint))]"
+                            )}
+                            title={own ? `${label}: own artwork` : `${label}: falls back to desktop`}
+                          >
+                            {label}
+                            {!own && " ↩"}
+                          </li>
+                        );
+                      })}
+                    </ul>
                     <p className="mt-1 text-[13px] text-[rgb(var(--text-faint))]">
                       {b.impressions.toLocaleString("en-CA")} views
                       <span className="mx-2" aria-hidden>·</span>

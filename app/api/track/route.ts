@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,15 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * function so a counter bump is a single atomic statement.
  */
 export async function POST(request: Request) {
+  // These numbers are shown to advertisers, so an open endpoint that increments
+  // them is an integrity problem rather than a nuisance. A real reader fires a
+  // handful per page view; anything past this is a script.
+  const limit = rateLimit(clientKey(request, "track"), {
+    limit: 60,
+    windowMs: 60 * 1000,
+  });
+  if (!limit.ok) return new NextResponse(null, { status: 204 });
+
   try {
     const body = (await request.json()) as Body;
     const handler = HANDLERS[body?.type];

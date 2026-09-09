@@ -82,3 +82,24 @@ export function freshness(date: string): string {
 export function editionYear(date: string): number {
   return toDate(date).getUTCFullYear();
 }
+
+/**
+ * An advertiser-supplied link, reduced to something safe to put in an href.
+ *
+ * Only http and https survive. A stored "javascript:" or "data:" URL rendered
+ * into a link is an execution hole for every visitor who clicks a banner, and
+ * the value comes from a form — so it is filtered when it is written and again
+ * when it is rendered, because rows written before this existed are still in
+ * the table.
+ */
+export function safeExternalUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}

@@ -2,6 +2,7 @@ import { Ticker } from "@/components/site/Ticker";
 import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { siteConfig } from "@/site.config";
+import { JsonLd } from "@/components/site/JsonLd";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   /**
@@ -35,10 +36,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <Ticker />
       <Navbar />
       <main id="main" className="relative">

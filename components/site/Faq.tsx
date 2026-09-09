@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { JsonLd } from "@/components/site/JsonLd";
 import { Reveal } from "@/components/ui/Reveal";
 
 export type FaqItem = { question: string; answer: string };
@@ -59,10 +60,5 @@ export function FaqJsonLd({ items }: { items: FaqItem[] }) {
     })),
   };
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
-  );
+  return <JsonLd data={jsonLd} />;
 }

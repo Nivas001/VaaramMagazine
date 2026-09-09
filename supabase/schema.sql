@@ -52,6 +52,14 @@ create table if not exists public.ad_banners (
   clicks       integer not null default 0
 );
 
+-- Per-device artwork. A 1600 x 200 desktop strip is unreadable on a phone, so
+-- a banner may carry its own tablet and phone artwork; both are optional and
+-- fall back to image_url. Added after launch, hence the ALTERs.
+alter table public.ad_banners add column if not exists image_url_tablet text;
+alter table public.ad_banners add column if not exists image_key_tablet text;
+alter table public.ad_banners add column if not exists image_url_mobile text;
+alter table public.ad_banners add column if not exists image_key_mobile text;
+
 create index if not exists ad_banners_lookup_idx
   on public.ad_banners (placement, is_active, sort_order);
 

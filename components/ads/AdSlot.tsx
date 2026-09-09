@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { getBanners } from "@/lib/queries";
 import {
   BANNER_PLACEMENTS,
-  SHAPE_ASPECTS,
+  SHAPE_SPECS,
   type BannerPlacement,
   type BannerShape,
 } from "@/lib/types";
@@ -181,7 +181,7 @@ function AdPlaceholder({
         className={cn(
           "flex w-full flex-col items-center justify-center gap-1.5 rounded-lg px-6 text-center",
           "border border-dashed border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]/60",
-          SHAPE_ASPECTS[shape]
+          SHAPE_SPECS[shape].className
         )}
       >
         <p className="label-eyebrow text-[rgb(var(--text-faint))]">
