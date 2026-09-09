@@ -20,10 +20,10 @@ const H = 1200;
 
 /** Four cover schemes, rotated so consecutive weeks never look alike. */
 const SCHEMES = [
-  { name: "ink",   bg: "#141215", type: "#faf8f4", accent: "#d9563e", block: "#221e24", rule: "#3a343c" },
-  { name: "paper", bg: "#f3efe8", type: "#141215", accent: "#c2452f", block: "#e3dccf", rule: "#cec4b4" },
-  { name: "ember", bg: "#a83722", type: "#fdf3ef", accent: "#f0c9a0", block: "#96301d", rule: "#c2603f" },
-  { name: "brass", bg: "#e8e2d8", type: "#1d1a1f", accent: "#9c7430", block: "#d6cdbc", rule: "#c0b49f" },
+  { name: "ink",   bg: "#150d11", type: "#faf8f4", accent: "#e0b29b", block: "#241a1f", rule: "#3d2c33" },
+  { name: "paper", bg: "#f3efe8", type: "#150d11", accent: "#8a1332", block: "#e3dccf", rule: "#cec4b4" },
+  { name: "wine",  bg: "#8a1332", type: "#fdf1f3", accent: "#e0b29b", block: "#75102b", rule: "#b0546c" },
+  { name: "gold",  bg: "#eee4da", type: "#1e151a", accent: "#8a1332", block: "#dfd0c1", rule: "#c8b6a4" },
 ];
 
 /** Section names that genuinely appear in the publication. */

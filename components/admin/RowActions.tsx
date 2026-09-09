@@ -69,7 +69,7 @@ export function RowActions({
             type="button"
             onClick={() => run(() => onDelete(id))}
             disabled={pending}
-            className={cn(BUTTON, "bg-[rgb(var(--accent))] text-white hover:bg-ember-strong")}
+            className={cn(BUTTON, "bg-[rgb(var(--accent))] text-white hover:bg-wine-strong")}
           >
             {pending ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -92,7 +92,7 @@ export function RowActions({
           onClick={() => setConfirming(true)}
           className={cn(
             BUTTON,
-            "text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent))]"
+            "text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent-text))]"
           )}
         >
           <Trash2 className="size-3.5" aria-hidden />
@@ -101,7 +101,7 @@ export function RowActions({
       )}
 
       {error && (
-        <span role="alert" className="text-[13px] text-[rgb(var(--accent))]">
+        <span role="alert" className="text-[13px] text-[rgb(var(--accent-text))]">
           {error}
         </span>
       )}

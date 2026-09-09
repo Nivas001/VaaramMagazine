@@ -147,7 +147,7 @@ function Form() {
         <button
           type="submit"
           disabled={busy || !email.trim()}
-          className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+          className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-wine-strong disabled:opacity-50"
         >
           {busy ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -205,7 +205,7 @@ function Form() {
         type="button"
         onClick={() => verify(code)}
         disabled={busy || code.length < 6}
-        className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+        className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-wine-strong disabled:opacity-50"
       >
         {busy ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -225,7 +225,7 @@ function Form() {
             type="button"
             onClick={() => sendCode(email.trim())}
             disabled={busy}
-            className="font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-4 transition-colors hover:text-[rgb(var(--accent))] disabled:opacity-50"
+            className="font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-4 transition-colors hover:text-[rgb(var(--accent-text))] disabled:opacity-50"
           >
             Send a new code
           </button>
@@ -239,7 +239,7 @@ function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="alert"
-      className="mt-5 flex items-start gap-2.5 rounded-md border border-[rgb(var(--accent))]/30 bg-[rgb(var(--accent))]/8 px-4 py-3 text-sm text-[rgb(var(--accent))]"
+      className="mt-5 flex items-start gap-2.5 rounded-md border border-[rgb(var(--accent))]/30 bg-[rgb(var(--accent))]/8 px-4 py-3 text-sm text-[rgb(var(--accent-text))]"
     >
       <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
       {children}

@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, FileUp, Images, MessageSquare } from "lucide-react";
-import { adminGetBanners, adminGetEnquiries, adminGetPublications } from "@/lib/admin-queries";
+import { ArrowRight, FileUp, Images, Mail, MessageSquare } from "lucide-react";
+import {
+  adminGetBanners,
+  adminGetEnquiries,
+  adminGetPublications,
+  adminGetSubscribers,
+} from "@/lib/admin-queries";
 import { formatDate } from "@/lib/utils";
 import { isR2Configured } from "@/lib/storage";
 import { EmptyState, PageHeader, Panel, Stat, StatusPill, SetupNote } from "@/components/admin/ui";
@@ -8,16 +13,18 @@ import { EmptyState, PageHeader, Panel, Stat, StatusPill, SetupNote } from "@/co
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [publications, banners, enquiries] = await Promise.all([
+  const [publications, banners, enquiries, subscribers] = await Promise.all([
     adminGetPublications(),
     adminGetBanners(),
     adminGetEnquiries(),
+    adminGetSubscribers(),
   ]);
 
   const live = publications.filter((p) => p.is_published);
   const newEnquiries = enquiries.filter((e) => e.status === "new");
   const activeBanners = banners.filter((b) => b.is_active);
   const views = publications.reduce((sum, p) => sum + (p.view_count ?? 0), 0);
+  const readers = subscribers.filter((s) => s.is_active);
 
   return (
     <>
@@ -27,7 +34,7 @@ export default async function AdminDashboard() {
         action={
           <Link
             href="/admin/issues/new"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-5 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-5 text-sm font-semibold text-white transition-colors hover:bg-wine-strong"
           >
             <FileUp className="size-4" aria-hidden />
             Publish this week
@@ -44,14 +51,17 @@ export default async function AdminDashboard() {
         </SetupNote>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Five cards: 2-col leaves one orphaned at tablet width, so this skips
+          straight from a single mobile column to 3 (3+2) and then 5. */}
+      <div className="mt-8 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Editions live" value={live.length} hint={`${publications.length} in total`} />
         <Stat label="Edition views" value={views.toLocaleString("en-CA")} />
         <Stat label="New enquiries" value={newEnquiries.length} hint="Waiting for a reply" />
         <Stat label="Banners running" value={activeBanners.length} />
+        <Stat label="Readers on the list" value={readers.length} hint="Email subscribers" />
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <QuickAction
           href="/admin/issues/new"
           Icon={FileUp}
@@ -73,6 +83,16 @@ export default async function AdminDashboard() {
           Icon={Images}
           title="Manage banners"
           body={`${activeBanners.length} running on the site.`}
+        />
+        <QuickAction
+          href="/admin/subscribers"
+          Icon={Mail}
+          title="Reader list"
+          body={
+            readers.length === 0
+              ? "Nobody has signed up yet."
+              : `${readers.length} waiting for this week's link.`
+          }
         />
       </div>
 
@@ -155,7 +175,7 @@ function QuickAction({
   return (
     <Link href={href} className="group">
       <Panel className="h-full p-6 transition-colors group-hover:border-[rgb(var(--text-faint))]">
-        <span className="grid size-10 place-items-center rounded-full bg-[rgb(var(--surface-2))] text-[rgb(var(--accent))]">
+        <span className="grid size-10 place-items-center rounded-full bg-[rgb(var(--surface-2))] text-[rgb(var(--accent-text))]">
           <Icon className="size-[18px]" />
         </span>
         <h3 className="mt-4 font-semibold">{title}</h3>

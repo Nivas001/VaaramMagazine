@@ -5,7 +5,15 @@ import { siteConfig } from "@/site.config";
 import { DiscoveryToConnection } from "@/components/about/DiscoveryToConnection";
 import { Section, Eyebrow, SectionHeading } from "@/components/ui/Section";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
-import { InlineAd } from "@/components/ads/AdSlot";
+import { AdSlot } from "@/components/ads/AdSlot";
+import { Faq, FaqJsonLd } from "@/components/site/Faq";
+import { SubscribeBand } from "@/components/home/SubscribeBand";
+import {
+  LocalIllustration,
+  PhoneIllustration,
+  SpreadIllustration,
+  StackIllustration,
+} from "@/components/ui/Illustration";
 
 export const metadata: Metadata = {
   title: "About — what Vaaram Magazine is",
@@ -17,15 +25,17 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
+      <FaqJsonLd items={[...siteConfig.faq]} />
+
       {/* ── 1. Opening statement ───────────────────────────────────────── */}
-      <div className="bg-warm-950 text-warm-50">
+      <div className="on-wine bg-warm-950 text-warm-50">
         <Section className="!pb-16 !pt-20 sm:!pt-28">
           <div className="max-w-3xl">
-            <Eyebrow className="!text-brass-soft">About Vaaram</Eyebrow>
+            <Eyebrow className="!text-gold-soft">About Vaaram</Eyebrow>
             <h1 className="display-hero mt-7 text-warm-50">
               Discover. Connect.
               <br />
-              <span className="text-ember-soft">Every week.</span>
+              <span className="text-wine-soft">Every week.</span>
             </h1>
             <p className="mt-8 max-w-xl text-[17px] leading-relaxed text-warm-300 sm:text-lg">
               Vaaram is a weekly advertising magazine. It exists for one reason: to put
@@ -33,6 +43,22 @@ export default function AboutPage() {
               already looking for them.
             </p>
           </div>
+
+          <ul className="mt-16 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-3">
+            {[
+              { Art: LocalIllustration, title: "Local", body: "Businesses within reach of the reader, not a national directory." },
+              { Art: SpreadIllustration, title: "Laid out", body: "Every advertisement typeset and placed in its section." },
+              { Art: PhoneIllustration, title: "Free to read", body: "One PDF, opened on a phone, with nothing in the way." },
+            ].map(({ Art, title, body }) => (
+              <li key={title} className="bg-warm-950 p-7">
+                <Art className="max-w-[130px] text-warm-500" />
+                <h2 className="mt-5 font-display text-xl tracking-[-0.02em] text-warm-50">
+                  {title}
+                </h2>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-warm-400">{body}</p>
+              </li>
+            ))}
+          </ul>
         </Section>
       </div>
 
@@ -86,7 +112,7 @@ export default function AboutPage() {
               key={step.title}
               className="grid gap-3 border-b border-[rgb(var(--hairline))] py-8 sm:grid-cols-[auto_minmax(0,14rem)_minmax(0,1fr)] sm:items-baseline sm:gap-10"
             >
-              <span className="font-display text-2xl text-[rgb(var(--accent))] tabular-nums">
+              <span className="font-display text-2xl text-[rgb(var(--accent-text))] tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <h3 className="font-display text-2xl tracking-[-0.025em] sm:text-[28px]">
@@ -129,7 +155,7 @@ export default function AboutPage() {
       </div>
 
       <Section className="!py-10">
-        <InlineAd placement="home_mid" />
+        <AdSlot placement="home_mid" />
       </Section>
 
       {/* ── 6. Why Vaaram ──────────────────────────────────────────────── */}
@@ -155,8 +181,29 @@ export default function AboutPage() {
         </RevealGroup>
       </Section>
 
-      {/* ── 7. Closing call to action ──────────────────────────────────── */}
-      <div className="bg-warm-950 text-warm-50">
+      {/* ── 7. Questions ───────────────────────────────────────────────── */}
+      <div className="bg-[rgb(var(--surface-2))]">
+        <Section>
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:gap-16">
+            <Reveal>
+              <SectionHeading eyebrow="Questions" title="Asked before every booking." />
+              <div className="mt-10 hidden lg:block">
+                <StackIllustration className="max-w-[240px]" />
+              </div>
+            </Reveal>
+            <div>
+              <Faq items={[...siteConfig.faq]} id="about-faq" />
+            </div>
+          </div>
+        </Section>
+      </div>
+
+      <Section>
+        <SubscribeBand source="about" />
+      </Section>
+
+      {/* ── 8. Closing call to action ──────────────────────────────────── */}
+      <div className="on-wine bg-warm-950 text-warm-50">
         <Section className="text-center">
           <Reveal>
             <h2 className="display-xl mx-auto max-w-2xl text-warm-50">
@@ -168,7 +215,7 @@ export default function AboutPage() {
             </p>
             <Link
               href="/contact"
-              className="mt-9 inline-flex h-[52px] items-center gap-2.5 rounded-full bg-ember px-8 text-[15px] font-semibold text-white transition-colors hover:bg-ember-soft"
+              className="mt-9 inline-flex h-[52px] items-center gap-2.5 rounded-full bg-wine px-8 text-[15px] font-semibold text-white transition-colors hover:bg-wine-soft"
             >
               Contact us
               <ArrowRight className="size-4" aria-hidden />

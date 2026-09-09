@@ -20,12 +20,12 @@ export type AdCategory = {
 };
 
 export const AD_CATEGORIES: AdCategory[] = [
-  { label: "PROPERTY", paper: "#f7f4ee", ink: "#1d1a1f", accent: "#c2452f" },
-  { label: "SERVICES", paper: "#141215", ink: "#faf8f4", accent: "#d9563e" },
-  { label: "BUSINESS", paper: "#f3efe8", ink: "#1d1a1f", accent: "#9c7430" },
-  { label: "JOBS", paper: "#a83722", ink: "#fdf3ef", accent: "#f0c9a0" },
-  { label: "OFFERS", paper: "#e8e2d8", ink: "#1d1a1f", accent: "#c2452f" },
-  { label: "COMMUNITY", paper: "#1d1a1f", ink: "#f3efe8", accent: "#c39a4d" },
+  { label: "PROPERTY", paper: "#f7f4ee", ink: "#1e151a", accent: "#8a1332" },
+  { label: "SERVICES", paper: "#150d11", ink: "#faf8f4", accent: "#e0b29b" },
+  { label: "BUSINESS", paper: "#f3efe8", ink: "#1e151a", accent: "#b07a5c" },
+  { label: "JOBS", paper: "#8a1332", ink: "#fdf1f3", accent: "#e0b29b" },
+  { label: "OFFERS", paper: "#eee4da", ink: "#1e151a", accent: "#8a1332" },
+  { label: "COMMUNITY", paper: "#1e151a", ink: "#f3efe8", accent: "#e0b29b" },
 ];
 
 const W = 256;

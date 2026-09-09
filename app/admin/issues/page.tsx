@@ -20,7 +20,7 @@ export default async function AdminIssuesPage() {
         action={
           <Link
             href="/admin/issues/new"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-5 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-5 text-sm font-semibold text-white transition-colors hover:bg-wine-strong"
           >
             <FileUp className="size-4" aria-hidden />
             Publish an edition
@@ -87,7 +87,7 @@ export default async function AdminIssuesPage() {
                       href={`/archives/${p.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium text-[rgb(var(--text-muted))] transition-colors hover:text-[rgb(var(--accent))]"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium text-[rgb(var(--text-muted))] transition-colors hover:text-[rgb(var(--accent-text))]"
                     >
                       <ExternalLink className="size-3.5" aria-hidden />
                       Preview

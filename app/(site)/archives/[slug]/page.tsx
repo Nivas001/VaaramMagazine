@@ -9,7 +9,7 @@ import { ReaderMount } from "@/components/reader/ReaderMount";
 import { EditionCard } from "@/components/magazine/EditionCard";
 import { DownloadButton } from "@/components/site/DownloadButton";
 import { ShareButton } from "@/components/site/ShareButton";
-import { SidebarAd } from "@/components/ads/AdSlot";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { Section } from "@/components/ui/Section";
 
 export const revalidate = 60;
@@ -120,6 +120,13 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
         )}
       </Section>
 
+      {/* A leaderboard between the edition's details and the pages themselves.
+          It is the last thing a reader passes before they start reading, which
+          makes it the most valuable strip on the site. */}
+      <Section width="wide" className="!py-8">
+        <AdSlot placement="reader_top" edition={publication.edition} />
+      </Section>
+
       {/* ── Reader ─────────────────────────────────────────────────────── */}
       <Section width="wide" className="!pt-0">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -130,7 +137,7 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
           />
 
           <aside className="flex flex-col gap-6">
-            <SidebarAd placement="reader_sidebar" edition={publication.edition} />
+            <AdSlot placement="reader_sidebar" edition={publication.edition} />
 
             <div className="card p-6">
               <h2 className="font-display text-xl tracking-[-0.02em]">
@@ -142,7 +149,7 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
               </p>
               <Link
                 href="/contact"
-                className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+                className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-wine-strong"
               >
                 Get in touch
                 <ArrowRight className="size-4" aria-hidden />
@@ -155,9 +162,14 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
                 <li>Swipe left or right to turn pages on a phone.</li>
                 <li>Arrow keys turn pages; press F for full screen.</li>
                 <li>Zoom in to read the fine print in a classified.</li>
+                <li>Download the PDF to keep a copy offline.</li>
               </ul>
             </div>
           </aside>
+        </div>
+
+        <div className="mt-10">
+          <AdSlot placement="reader_below" edition={publication.edition} />
         </div>
       </Section>
 
@@ -167,7 +179,7 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
             <h2 className="display-md">More editions</h2>
             <Link
               href="/archives"
-              className="inline-flex items-center gap-2 text-sm font-semibold underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent))]"
+              className="inline-flex items-center gap-2 text-sm font-semibold underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent-text))]"
             >
               Browse the archive
               <ArrowRight className="size-4" aria-hidden />

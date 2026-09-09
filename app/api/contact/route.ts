@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 import { siteConfig } from "@/site.config";
 
 export const runtime = "nodejs";
@@ -16,6 +17,21 @@ function clean(value: unknown, max: number) {
  * if Web3Forms is not configured, or is down, the enquiry is still safe.
  */
 export async function POST(request: Request) {
+  // Generous enough that a person correcting a typo is never blocked, tight
+  // enough that a script cannot fill the table.
+  const limit = rateLimit(clientKey(request, "contact"), {
+    limit: 6,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        error: `You have sent several messages already. Please wait a few minutes, or call us on ${siteConfig.contact.phone}.`,
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   let payload: Record<string, unknown>;
   try {
     payload = await request.json();

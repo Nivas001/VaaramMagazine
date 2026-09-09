@@ -143,7 +143,7 @@ export function DiscoveryToConnection() {
           />
 
           <div className="relative mx-auto w-full max-w-6xl px-5 pt-20 sm:px-8 sm:pt-24">
-            <p className="label-eyebrow text-brass-soft">From discovery to connection</p>
+            <p className="label-eyebrow text-gold-soft">From discovery to connection</p>
             <h2 id="journey-heading" className="display-lg mt-5 max-w-lg text-warm-50">
               How an advertisement becomes the week&apos;s edition.
             </h2>
@@ -156,7 +156,7 @@ export function DiscoveryToConnection() {
                   key={s.title}
                   className={cn(
                     "h-0.5 flex-1 rounded-full transition-colors duration-500",
-                    i <= stage ? "bg-ember-soft" : "bg-white/15"
+                    i <= stage ? "bg-wine-soft" : "bg-white/15"
                   )}
                 />
               ))}
@@ -164,7 +164,7 @@ export function DiscoveryToConnection() {
 
             {/* Announced politely, so a screen reader follows the story too. */}
             <div className="max-w-lg" aria-live="polite">
-              <p className="label-eyebrow text-warm-500">
+              <p className="label-eyebrow text-warm-400">
                 Step {stage + 1} of {STAGES.length}
               </p>
               <h3 className="mt-3 font-display text-3xl tracking-[-0.025em] text-warm-50 sm:text-4xl">
@@ -179,7 +179,7 @@ export function DiscoveryToConnection() {
       ) : (
         <div className="py-20 sm:py-28">
           <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-            <p className="label-eyebrow text-brass-soft">From discovery to connection</p>
+            <p className="label-eyebrow text-gold-soft">From discovery to connection</p>
             <h2 id="journey-heading" className="display-lg mt-5 max-w-lg text-warm-50">
               How an advertisement becomes the week&apos;s edition.
             </h2>

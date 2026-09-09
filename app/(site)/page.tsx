@@ -4,19 +4,23 @@ import { getLatestPublication, getPublications } from "@/lib/queries";
 import { siteConfig } from "@/site.config";
 import { Hero } from "@/components/home/Hero";
 import { WhatIsVaaram } from "@/components/home/WhatIsVaaram";
+import { HowItWorks } from "@/components/home/HowItWorks";
 import { AdvertiseShowcase } from "@/components/home/AdvertiseShowcase";
+import { PublicationStats } from "@/components/home/PublicationStats";
+import { SubscribeBand } from "@/components/home/SubscribeBand";
 import { LatestEdition } from "@/components/magazine/LatestEdition";
 import { EditionCard } from "@/components/magazine/EditionCard";
-import { BannerAd, InlineAd } from "@/components/ads/AdSlot";
-import { Section, Rule } from "@/components/ui/Section";
+import { AdSlot } from "@/components/ads/AdSlot";
+import { Rule, Section } from "@/components/ui/Section";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [latest, recent] = await Promise.all([
+  const [latest, recent, all] = await Promise.all([
     getLatestPublication(),
     getPublications({ limit: 5 }),
+    getPublications(),
   ]);
 
   // The hero already carries the current edition, so the strip below shows
@@ -25,10 +29,12 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero publication={latest} />
+      <Hero publication={latest} previous={previous} />
 
-      <Section className="!py-10">
-        <BannerAd placement="home_hero" />
+      {/* A leaderboard directly under the hero — the first paid slot a reader
+          meets, and the one advertisers ask for by name. */}
+      <Section className="!py-9">
+        <AdSlot placement="home_hero" />
       </Section>
 
       {latest && (
@@ -43,18 +49,34 @@ export default async function HomePage() {
         <WhatIsVaaram />
       </Section>
 
-      <Section className="!py-10">
-        <InlineAd placement="home_mid" />
+      <Section className="!py-9">
+        <AdSlot placement="home_mid" />
       </Section>
 
       <div className="bg-[rgb(var(--surface-2))]">
         <Section>
-          <AdvertiseShowcase />
+          <HowItWorks />
         </Section>
       </div>
 
+      <Section>
+        <AdvertiseShowcase />
+      </Section>
+
+      {/* The feature slot: a full-width panel between the two halves of the
+          page, where a sponsor gets the most room this site sells. */}
+      <Section className="!py-9">
+        <AdSlot placement="home_feature" />
+      </Section>
+
+      {all.length > 0 && (
+        <Section className="!pt-6">
+          <PublicationStats publications={all} />
+        </Section>
+      )}
+
       {previous.length > 0 && (
-        <Section>
+        <Section className="!pt-10">
           <Reveal className="flex flex-wrap items-end justify-between gap-6 border-b border-[rgb(var(--hairline))] pb-7">
             <div>
               <h2 className="display-md">Previous editions</h2>
@@ -64,7 +86,7 @@ export default async function HomePage() {
             </div>
             <Link
               href="/archives"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent))] hover:decoration-[rgb(var(--accent))]"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent-text))] hover:decoration-[rgb(var(--accent))]"
             >
               Browse the full archive
               <ArrowRight className="size-4" aria-hidden />
@@ -81,8 +103,16 @@ export default async function HomePage() {
         </Section>
       )}
 
+      <Section className="!pt-6">
+        <SubscribeBand source="home" />
+      </Section>
+
+      <Section className="!py-9">
+        <AdSlot placement="home_closing" />
+      </Section>
+
       {/* ── Closing call to action ─────────────────────────────────────── */}
-      <div className="bg-warm-950 text-warm-50">
+      <div className="on-wine bg-warm-950 text-warm-50">
         <Section className="text-center">
           <Reveal>
             <h2 className="display-xl mx-auto max-w-2xl text-warm-50">
@@ -96,7 +126,7 @@ export default async function HomePage() {
             <div className="mt-9 flex flex-wrap justify-center gap-3">
               <Link
                 href="/contact"
-                className="inline-flex h-[52px] items-center gap-2.5 rounded-full bg-ember px-7 text-[15px] font-semibold text-white transition-colors hover:bg-ember-soft"
+                className="inline-flex h-[52px] items-center gap-2.5 rounded-full bg-wine px-7 text-[15px] font-semibold text-white transition-colors hover:bg-wine-soft"
               >
                 Contact us
                 <ArrowRight className="size-4" aria-hidden />

@@ -53,7 +53,7 @@ export function EditionCard({
             {freshness(publication.edition_date)}
           </p>
 
-          <h3 className="mt-3 font-display text-[26px] leading-tight tracking-[-0.025em] transition-colors group-hover:text-[rgb(var(--accent))]">
+          <h3 className="mt-3 font-display text-[26px] leading-tight tracking-[-0.025em] transition-colors group-hover:text-[rgb(var(--accent-text))]">
             {publication.title}
           </h3>
 
@@ -71,7 +71,7 @@ export function EditionCard({
             <span className="text-[13px] font-medium text-[rgb(var(--text-faint))]">
               {publication.total_pages ? `${publication.total_pages} pages` : "PDF"}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[rgb(var(--text))] transition-colors group-hover:text-[rgb(var(--accent))]">
+            <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[rgb(var(--text))] transition-colors group-hover:text-[rgb(var(--accent-text))]">
               Read
               <ArrowUpRight
                 className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"

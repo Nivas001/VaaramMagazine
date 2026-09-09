@@ -39,7 +39,7 @@ export function DownloadButton({
       onClick={record}
       className={cn(
         "inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-5 text-sm font-semibold",
-        "bg-[rgb(var(--accent))] text-white transition-colors hover:bg-ember-strong",
+        "bg-[rgb(var(--accent))] text-white transition-colors hover:bg-wine-strong",
         className
       )}
     >

@@ -122,7 +122,7 @@ export function Navbar() {
               "hidden h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold transition-colors sm:inline-flex",
               overlay
                 ? "bg-white text-warm-950 hover:bg-warm-100"
-                : "bg-[rgb(var(--accent))] text-white hover:bg-ember-strong"
+                : "bg-[rgb(var(--accent))] text-white hover:bg-wine-strong"
             )}
           >
             Read this week
@@ -212,7 +212,7 @@ function MobileDrawer({
                       aria-current={active ? "page" : undefined}
                       className="flex items-center justify-between py-5 font-display text-3xl tracking-[-0.02em]"
                     >
-                      <span className={active ? "text-[rgb(var(--accent))]" : undefined}>
+                      <span className={active ? "text-[rgb(var(--accent-text))]" : undefined}>
                         {label}
                       </span>
                       <ArrowRight

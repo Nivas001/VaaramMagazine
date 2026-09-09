@@ -54,7 +54,7 @@ export function AdvertiseShowcase() {
                   className={cn(
                     "flex flex-col justify-between rounded-[3px] p-2.5",
                     format.featured
-                      ? "bg-ember text-white"
+                      ? "bg-wine text-white"
                       : "bg-warm-100 text-warm-700",
                     format.span
                   )}
@@ -75,7 +75,7 @@ export function AdvertiseShowcase() {
                   <span
                     className={cn(
                       "label-eyebrow mt-2 text-[8px]",
-                      format.featured ? "text-white/90" : "text-warm-500"
+                      format.featured ? "text-white/90" : "text-warm-600"
                     )}
                   >
                     {format.name}
@@ -86,7 +86,7 @@ export function AdvertiseShowcase() {
 
             <div className="mt-4 flex items-center justify-between border-t border-warm-200 pt-3">
               <span className="label-eyebrow text-[8px] text-warm-400">Issue 204</span>
-              <span className="label-eyebrow text-[8px] text-ember">vaaram.ca</span>
+              <span className="label-eyebrow text-[8px] text-wine">vaaram.ca</span>
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export function AdvertiseShowcase() {
 
         <Link
           href="/contact"
-          className="mt-9 inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[rgb(var(--accent))] px-7 text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong"
+          className="mt-9 inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[rgb(var(--accent))] px-7 text-[15px] font-semibold text-white transition-colors hover:bg-wine-strong"
         >
           Talk to us about advertising
           <ArrowRight className="size-4" aria-hidden />

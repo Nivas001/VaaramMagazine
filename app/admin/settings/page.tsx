@@ -1,4 +1,4 @@
-import { Check, ExternalLink, X } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, X } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { isR2Configured } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +21,24 @@ export default async function AdminSettingsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  /**
+   * A one-row probe per table. It answers the only question an administrator
+   * actually has when something is missing — "have I run schema.sql since the
+   * last update?" — and costs three trivial queries on a page nobody loads in
+   * a loop.
+   */
+  const tables = ["publications", "ad_banners", "enquiries", "subscribers"] as const;
+  const tableChecks = await Promise.all(
+    tables.map(async (table) => {
+      const { error } = await supabase.from(table).select("id").limit(1);
+      // A missing relation is the case worth reporting. Anything else (an RLS
+      // refusal, say) still means the table is there.
+      const missing = Boolean(error?.message?.includes("schema cache") || error?.code === "42P01");
+      return { table, missing };
+    })
+  );
+  const missingTables = tableChecks.filter((t) => t.missing).map((t) => t.table);
 
   const services = [
     {
@@ -50,6 +68,27 @@ export default async function AdminSettingsPage() {
         title="Settings"
         lead="What this site is connected to, and where to change it."
       />
+
+      {missingTables.length > 0 && (
+        <div className="mt-8 flex items-start gap-3 rounded-lg border border-amber-500/35 bg-amber-500/8 px-5 py-4 text-sm leading-relaxed">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+          <span>
+            <strong className="font-semibold">The database is out of date.</strong> These
+            tables are missing:{" "}
+            {missingTables.map((t) => (
+              <code key={t} className="mr-1.5 rounded bg-[rgb(var(--surface-2))] px-1.5 py-0.5 text-xs">
+                {t}
+              </code>
+            ))}
+            <br />
+            Open the Supabase SQL Editor, paste the whole of{" "}
+            <code className="rounded bg-[rgb(var(--surface-2))] px-1.5 py-0.5 text-xs">
+              supabase/schema.sql
+            </code>{" "}
+            and press RUN. It is safe to run more than once.
+          </span>
+        </div>
+      )}
 
       <h2 className="mt-10 font-display text-2xl tracking-[-0.02em]">Connections</h2>
       <ul className="mt-5 space-y-3">

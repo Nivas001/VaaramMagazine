@@ -33,17 +33,17 @@ const FRAMES = [
 ];
 
 /** A miniature advertisement, drawn the same way as the ones in the scene. */
-function Card({ className, tone = "paper" }: { className?: string; tone?: "paper" | "ink" | "ember" }) {
+function Card({ className, tone = "paper" }: { className?: string; tone?: "paper" | "ink" | "wine" }) {
   const tones = {
     paper: "bg-warm-100",
     ink: "bg-warm-800",
-    ember: "bg-ember",
+    wine: "bg-wine",
   } as const;
 
   const rule = {
     paper: "bg-warm-400",
     ink: "bg-warm-500",
-    ember: "bg-white/70",
+    wine: "bg-white/70",
   } as const;
 
   return (
@@ -73,14 +73,14 @@ export function SceneFallback() {
               {i === 0 && (
                 <div className="relative size-full">
                   <Card className="absolute left-[6%] top-[14%] w-[26%] -rotate-12" tone="paper" />
-                  <Card className="absolute left-[38%] top-[4%] w-[26%] rotate-6" tone="ember" />
+                  <Card className="absolute left-[38%] top-[4%] w-[26%] rotate-6" tone="wine" />
                   <Card className="absolute left-[68%] top-[26%] w-[26%] -rotate-3" tone="ink" />
                 </div>
               )}
               {i === 1 && (
                 <div className="flex w-full items-end justify-center gap-2">
                   <Card className="w-[20%] -rotate-3" tone="paper" />
-                  <Card className="w-[20%]" tone="ember" />
+                  <Card className="w-[20%]" tone="wine" />
                   <Card className="w-[20%] rotate-2" tone="ink" />
                   <Card className="w-[20%] rotate-6" tone="paper" />
                 </div>
@@ -88,13 +88,13 @@ export function SceneFallback() {
               {i === 2 && (
                 <div className="grid w-full grid-cols-4 gap-1.5">
                   <Card tone="paper" />
-                  <Card tone="ember" />
+                  <Card tone="wine" />
                   <Card tone="paper" />
                   <Card tone="ink" />
                   <Card tone="ink" />
                   <Card tone="paper" />
                   <Card tone="paper" />
-                  <Card tone="ember" />
+                  <Card tone="wine" />
                 </div>
               )}
               {i === 3 && (
@@ -104,13 +104,13 @@ export function SceneFallback() {
                     <span className="font-display text-[13px] leading-none text-warm-50">
                       Vaaram
                     </span>
-                    <span className="h-px w-full bg-ember" />
+                    <span className="h-px w-full bg-wine" />
                   </div>
                 </div>
               )}
             </div>
 
-            <p className="label-eyebrow mt-6 text-brass-soft">{frame.step}</p>
+            <p className="label-eyebrow mt-6 text-gold-soft">{frame.step}</p>
             <h3 className="mt-3 font-display text-xl tracking-[-0.02em] text-warm-50">
               {frame.title}
             </h3>

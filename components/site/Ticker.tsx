@@ -51,7 +51,7 @@ export function Ticker({ className }: { className?: string }) {
                   {item}
                 </span>
                 <span
-                  className="size-[3px] shrink-0 rotate-45 bg-brass-soft/70"
+                  className="size-[3px] shrink-0 rotate-45 bg-gold-soft/70"
                   aria-hidden
                 />
               </li>

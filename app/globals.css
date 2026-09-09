@@ -6,11 +6,12 @@
    VAARAM MAGAZINE — DESIGN SYSTEM
 
    Vaaram is a weekly advertising magazine, not a newspaper, so the surface
-   language is warm printed paper rather than cold newsprint:
+   language is warm printed paper rather than cold newsprint. The two brand
+   colours are lifted straight from the Vaaram logotype:
      · paper  — a warm off-white with a hint of cream
      · ink    — a near-black carrying a trace of warmth, never pure #000
-     · ember  — the signature accent, a deep printed vermilion
-     · brass  — a muted gold, used only for small editorial labels
+     · wine   — the deep maroon of the wordmark and the bird mark
+     · gold   — the rose gold of the mark's inner feathers
 
    Radii are deliberately mixed: interface chrome is softly rounded, while
    anything representing a printed page keeps a sharp trimmed edge.
@@ -18,16 +19,18 @@
 
 @theme {
   /* ── Type families ─────────────────────────────────────────────────────── */
-  --font-display: var(--font-newsreader);
+  --font-display: var(--font-bricolage);
   --font-sans: var(--font-jakarta);
   --font-tamil: var(--font-tamil), var(--font-jakarta);
 
   /* ── Brand ─────────────────────────────────────────────────────────────── */
-  --color-ember: #c2452f;
-  --color-ember-strong: #a83722;
-  --color-ember-soft: #d9563e;
-  --color-brass: #9c7430;
-  --color-brass-soft: #c39a4d;
+  --color-wine: #8a1332;
+  --color-wine-strong: #6a0d26;
+  --color-wine-soft: #b0334f;
+  --color-wine-glow: #c33150;
+  --color-gold: #b07a5c;
+  --color-gold-soft: #e0b29b;
+  --color-gold-pale: #f0d7c8;
 
   /* ── Warm neutral ramp ─────────────────────────────────────────────────── */
   --color-warm-50: #faf8f4;
@@ -38,9 +41,9 @@
   --color-warm-500: #7d7367;
   --color-warm-600: #5c544b;
   --color-warm-700: #423c36;
-  --color-warm-800: #2a262c;
-  --color-warm-900: #1d1a1f;
-  --color-warm-950: #141215;
+  --color-warm-800: #2b2026;
+  --color-warm-900: #1e151a;
+  --color-warm-950: #150d11;
 
   /* ── Radii ─────────────────────────────────────────────────────────────── */
   --radius-xs: 4px;
@@ -72,9 +75,18 @@
      one at #f3efe8 — the eyebrow type is 11px, so AA applies at normal size. */
   --text-faint: 114 106 95;
   --hairline: 230 224 214;
-  --accent: 194 69 47;
+  --accent: 138 19 50;
+  /* Accent used as TEXT rather than as a fill.
+     One colour cannot do both jobs on a dark ground: a wine dark enough to
+     carry white button text (4.5:1) is too dark to be readable AS text against
+     the page (4.5:1 the other way). So fills keep `--accent` and type takes
+     this, which is the same value in light and a lighter rose in dark. */
+  --accent-text: 138 19 50;
   --accent-contrast: 255 255 255;
-  --label: 133 97 33;
+  --label: 143 91 69;
+  /* The logo mark's two inks, exposed so any ground can retint it. */
+  --mark-primary: 138 19 50;
+  --mark-accent: 176 122 92;
   color-scheme: light;
 }
 
@@ -85,10 +97,13 @@ html.dark {
   --text: 245 242 237;
   --text-muted: 160 152 143;
   --text-faint: 130 122 113;
-  --hairline: 44 40 46;
-  --accent: 217 86 62;
+  --hairline: 46 38 42;
+  --accent: 195 49 80;
+  --accent-text: 217 100 127;
   --accent-contrast: 255 255 255;
-  --label: 195 154 77;
+  --label: 224 178 155;
+  --mark-primary: 214 98 124;
+  --mark-accent: 224 178 155;
   color-scheme: dark;
 }
 
@@ -112,11 +127,11 @@ html.dark {
     overflow-x: hidden;
   }
 
-  /* Headlines are set in the editorial serif, mixed case, tight and large.
-     Uppercase is reserved for small labels only. */
+  /* Headlines are set in a heavy, tight-tracked grotesque, mixed case, tight
+     and large. Uppercase is reserved for small labels only. */
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.06;
     text-wrap: balance;
@@ -153,38 +168,56 @@ html.dark {
   ::-webkit-scrollbar-thumb:hover { background: rgb(var(--text-faint)); }
 }
 
+/**
+ * Any band sitting on the deep wine ground opts in with `on-wine`, and every
+ * token inside it — type, hairlines, the editorial label and the two inks of
+ * the logo mark — flips to its light-on-dark value at once. One class instead
+ * of a dozen colour overrides repeated per component.
+ */
+@utility on-wine {
+  --text: 245 242 237;
+  --text-muted: 196 184 178;
+  --text-faint: 172 158 152;
+  --hairline: 255 255 255;
+  --label: 224 178 155;
+  --accent: 195 49 80;
+  --mark-primary: 224 178 155;
+  --mark-accent: 240 215 200;
+  --mark-eye: 21 13 17;
+}
+
 /* ═══ TYPE SCALE ═══════════════════════════════════════════════════════════
    Fluid sizes, so a headline never needs a breakpoint override.             */
 @utility display-hero {
   font-family: var(--font-display);
   font-size: clamp(2.75rem, 1.2rem + 6.4vw, 6.5rem);
-  line-height: 0.96;
-  letter-spacing: -0.035em;
-  font-weight: 500;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  font-weight: 800;
 }
 
 @utility display-xl {
   font-family: var(--font-display);
   font-size: clamp(2.125rem, 1.2rem + 3.8vw, 4.25rem);
-  line-height: 1.03;
-  letter-spacing: -0.03em;
-  font-weight: 500;
+  line-height: 1.01;
+  letter-spacing: -0.035em;
+  font-weight: 700;
 }
 
 @utility display-lg {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 1.1rem + 2.4vw, 2.9rem);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 700;
 }
 
 @utility display-md {
   font-family: var(--font-display);
   font-size: clamp(1.375rem, 1.05rem + 1.3vw, 1.95rem);
-  line-height: 1.16;
-  letter-spacing: -0.02em;
-  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
+  font-weight: 700;
 }
 
 /** Small uppercase editorial label — the only place uppercase is used. */

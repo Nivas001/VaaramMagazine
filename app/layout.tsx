@@ -5,15 +5,17 @@ import { ThemeProvider } from "@/components/site/ThemeProvider";
 import "./globals.css";
 
 /**
- * Newsreader carries every headline — an editorial serif reads as a magazine
- * rather than a newspaper, which is exactly the distinction Vaaram needs.
+ * Bricolage Grotesque carries every headline — a heavy, tight-tracked
+ * grotesque with real character, replacing the earlier editorial serif.
+ * It's a single variable file (weights 400–800), so one <link> buys the
+ * whole range from a light kicker to the boldest hero line.
  */
-const newsreader = localFont({
-  src: "../public/fonts/newsreader.woff2",
-  weight: "400 600",
-  variable: "--font-newsreader",
+const bricolage = localFont({
+  src: "../public/fonts/bricolage.woff2",
+  weight: "400 800",
+  variable: "--font-bricolage",
   display: "swap",
-  fallback: ["Georgia", "Times New Roman", "serif"],
+  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
 });
 
 /** Plus Jakarta Sans handles the interface and all body copy. */
@@ -99,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en-CA"
       suppressHydrationWarning
-      className={`${newsreader.variable} ${jakarta.variable} ${tamil.variable}`}
+      className={`${bricolage.variable} ${jakarta.variable} ${tamil.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

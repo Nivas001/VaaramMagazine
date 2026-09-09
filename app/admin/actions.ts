@@ -193,3 +193,32 @@ export async function deleteEnquiry(id: string): Promise<ActionResult> {
     return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
   }
 }
+
+/* ── Subscribers ────────────────────────────────────────────────────────── */
+
+/**
+ * Unsubscribing keeps the row and flips the flag. Deleting it would let the
+ * same address be re-added by the next import, which is exactly what the
+ * person asked us not to do.
+ */
+export async function setSubscriberActive(
+  id: string,
+  isActive: boolean
+): Promise<ActionResult> {
+  try {
+    const supabase = await requireAdmin();
+    const { error } = await supabase
+      .from("subscribers")
+      .update({
+        is_active: isActive,
+        unsubscribed_at: isActive ? null : new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/admin/subscribers");
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}

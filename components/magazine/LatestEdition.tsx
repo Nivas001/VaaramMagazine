@@ -75,7 +75,7 @@ export function LatestEdition({
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href={`/archives/${publication.slug}`}
-              className="inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[rgb(var(--accent))] px-7 text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong"
+              className="inline-flex h-[52px] items-center gap-2.5 rounded-full bg-[rgb(var(--accent))] px-7 text-[15px] font-semibold text-white transition-colors hover:bg-wine-strong"
             >
               <BookOpen className="size-[18px]" aria-hidden />
               Read now
@@ -119,7 +119,7 @@ function Fact({
       <dd
         className={cn(
           "mt-2 text-[15px] font-semibold",
-          accent ? "text-[rgb(var(--accent))]" : "text-[rgb(var(--text))]"
+          accent ? "text-[rgb(var(--accent-text))]" : "text-[rgb(var(--text))]"
         )}
       >
         {value}

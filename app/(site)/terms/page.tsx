@@ -65,7 +65,7 @@ export default function TermsPage() {
           <h2 className="font-display text-2xl tracking-[-0.02em] text-[rgb(var(--text))]">Questions</h2>
           <p className="mt-3">
             Contact us at{" "}
-            <a className="font-medium text-[rgb(var(--accent))] underline underline-offset-4" href={`mailto:${siteConfig.contact.email}`}>
+            <a className="font-medium text-[rgb(var(--accent-text))] underline underline-offset-4" href={`mailto:${siteConfig.contact.email}`}>
               {siteConfig.contact.email}
             </a>
             .

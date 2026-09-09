@@ -1,12 +1,15 @@
 import { siteConfig } from "@/site.config";
 import { Eyebrow } from "@/components/ui/Section";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
+import { SearchIllustration } from "@/components/ui/Illustration";
 
 /**
  * What the publication actually is, in as few words as it can be said.
  *
  * The categories are a typographic index rather than a wall of cards — a
- * magazine's contents page, which is exactly what this is.
+ * magazine's contents page, which is exactly what this is. The drawing beside
+ * the copy shows the one thing the words cannot: a reader with the page open,
+ * looking for something.
  */
 export function WhatIsVaaram() {
   return (
@@ -23,6 +26,10 @@ export function WhatIsVaaram() {
           looking for something, and what they find is a business ready to hear from
           them.
         </p>
+
+        <div className="mt-10 hidden max-w-sm border-t border-[rgb(var(--hairline))] pt-9 lg:block">
+          <SearchIllustration className="max-w-[300px]" />
+        </div>
       </Reveal>
 
       <Reveal delay={0.1}>
@@ -42,7 +49,7 @@ export function WhatIsVaaram() {
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-2xl tracking-[-0.02em] transition-colors group-hover:text-[rgb(var(--accent))] sm:text-[26px]">
+                <span className="block font-display text-2xl tracking-[-0.02em] transition-colors group-hover:text-[rgb(var(--accent-text))] sm:text-[26px]">
                   {category.name}
                 </span>
                 <span className="mt-1.5 block text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">

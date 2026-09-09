@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Globe, Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import { Masthead } from "@/components/site/Logo";
-import { BannerAd } from "@/components/ads/AdSlot";
+import { AdSlot } from "@/components/ads/AdSlot";
+import { SubscribeForm } from "@/components/site/SubscribeForm";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -23,7 +24,19 @@ export function Footer() {
     <footer className="border-t border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="py-10">
-          <BannerAd placement="footer" />
+          <AdSlot placement="footer" />
+        </div>
+
+        <div className="grid items-center gap-8 border-t border-[rgb(var(--hairline))] py-11 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
+          <div>
+            <h2 className="font-display text-[26px] leading-tight tracking-[-0.025em]">
+              Never miss an edition
+            </h2>
+            <p className="mt-2.5 max-w-sm text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">
+              One email every {siteConfig.publishDayLabel} with a link to that week&apos;s issue.
+            </p>
+          </div>
+          <SubscribeForm source="footer" />
         </div>
 
         <div className="grid gap-12 border-t border-[rgb(var(--hairline))] py-14 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-16">
@@ -77,6 +90,15 @@ export function Footer() {
                   aria-hidden
                 />
                 {siteConfig.contact.address}
+              </li>
+              <li>
+                <a
+                  href={siteConfig.url}
+                  className="inline-flex items-center gap-2.5 transition-colors hover:text-[rgb(var(--text))]"
+                >
+                  <Globe className="size-4 shrink-0 text-[rgb(var(--text-faint))]" aria-hidden />
+                  {siteConfig.url.replace(/^https?:\/\//, "")}
+                </a>
               </li>
             </ul>
 

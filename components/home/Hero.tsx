@@ -1,151 +1,296 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, Download } from "lucide-react";
 import type { Publication } from "@/lib/types";
 import { siteConfig } from "@/site.config";
-import { formatDate, freshness } from "@/lib/utils";
-import { MagazineCover } from "@/components/magazine/MagazineCover";
+import { formatBytes, formatDate } from "@/lib/utils";
+import { CoverArt, MagazineCover } from "@/components/magazine/MagazineCover";
+import { VaaramMark } from "@/components/site/VaaramMark";
 
 /**
- * The home page opens on the current edition, presented as a physical object
- * under studio light. A visitor should know what Vaaram is, see this week's
- * magazine, and be one click from reading it — without scrolling.
+ * The home page opens on the current edition.
+ *
+ * The band is built as a masthead rather than a marketing hero: an issue line
+ * ruled across the top the way a magazine prints one, the tagline set as the
+ * headline it already is, and the week's magazine standing in front of the two
+ * editions before it — which says "this comes out every week" far faster than
+ * a sentence claiming so.
  *
  * The band pulls itself up behind the sticky header with a negative margin, so
  * the navigation floats over the dark ground rather than sitting on a seam.
  */
-export function Hero({ publication }: { publication: Publication | null }) {
+export function Hero({
+  publication,
+  previous = [],
+}: {
+  publication: Publication | null;
+  /** The editions before this one, shown stacked behind the cover. */
+  previous?: Publication[];
+}) {
+  const issueLine = [
+    publication?.title,
+    publication ? formatDate(publication.edition_date) : null,
+    siteConfig.contact.address,
+  ].filter(Boolean) as string[];
+
   return (
     <section
-      className="relative isolate -mt-16 overflow-hidden bg-warm-950 text-warm-50 sm:-mt-[72px]"
+      className="on-wine relative isolate -mt-16 overflow-hidden bg-warm-950 text-warm-50 sm:-mt-[72px]"
       aria-labelledby="hero-heading"
     >
-      {/* Studio lighting: one warm key light behind the magazine, one cool
-          fill on the opposite side. Both are pure CSS gradients — no images,
-          no canvas, nothing to load. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(58% 62% at 74% 42%, rgba(217,86,62,0.20) 0%, rgba(217,86,62,0) 68%)," +
-            "radial-gradient(50% 55% at 12% 74%, rgba(156,116,48,0.14) 0%, rgba(156,116,48,0) 70%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-black/45"
-      />
+      <HeroGround />
 
-      <div className="mx-auto flex min-h-[min(880px,100svh)] max-w-[88rem] flex-col justify-center px-5 pb-14 pt-24 sm:px-8 sm:pb-24 sm:pt-[136px]">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-16 xl:gap-24">
-          {/* ── Words ─────────────────────────────────────────────────── */}
-          <div className="max-w-xl">
-            <div className="animate-rise" style={{ animationDelay: "0.05s" }}>
-              <p className="label-eyebrow flex items-center gap-3 text-brass-soft">
-                <span className="h-px w-7 bg-brass-soft/60" aria-hidden />
-                This week
-                {publication && (
-                  <>
-                    <span className="text-warm-500" aria-hidden>
-                      ·
-                    </span>
-                    <span className="text-warm-300">{publication.title}</span>
-                  </>
-                )}
-              </p>
+      <div className="mx-auto flex min-h-[min(900px,100svh)] max-w-[88rem] flex-col px-5 pb-12 pt-[104px] sm:px-8 sm:pb-16 sm:pt-[128px]">
+        {/* ── Masthead rule ─────────────────────────────────────────────── */}
+        <div className="hidden items-center gap-5 border-b border-white/12 pb-4 md:flex">
+          <VaaramMark className="size-5 shrink-0" />
+          <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {issueLine.map((entry, i) => (
+              <li key={entry} className="label-eyebrow flex items-center gap-4 whitespace-nowrap text-warm-400">
+                {i > 0 && <span className="h-px w-4 bg-white/20" aria-hidden />}
+                {entry}
+              </li>
+            ))}
+          </ul>
+          <span className="label-eyebrow ml-auto whitespace-nowrap text-gold-soft">Free to read</span>
+        </div>
+
+        <div className="grid flex-1 items-center gap-y-14 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-x-16 xl:gap-x-24">
+          {/* ── Words ───────────────────────────────────────────────────── */}
+          <div className="max-w-[36rem]">
+            <div className="animate-rise" style={{ animationDelay: "0.04s" }}>
+              <LiveBadge publication={publication} />
             </div>
 
-            <div className="animate-rise" style={{ animationDelay: "0.12s" }}>
-              <h1 id="hero-heading" className="display-hero mt-5 text-warm-50 sm:mt-6">
+            <div className="animate-rise" style={{ animationDelay: "0.1s" }}>
+              <h1 id="hero-heading" className="display-hero mt-7 text-warm-50 sm:mt-8">
                 Discover.
                 <br />
                 Connect.
                 <br />
-                <span className="text-ember-soft">Every week.</span>
+                <span className="relative inline-block text-gold-soft">
+                  Every week.
+                  <span
+                    aria-hidden
+                    className="absolute -bottom-1 left-0 h-px w-full bg-gradient-to-r from-gold-soft/70 to-transparent sm:-bottom-2"
+                  />
+                </span>
               </h1>
             </div>
 
-            <div className="animate-rise" style={{ animationDelay: "0.2s" }}>
-              <p className="mt-6 max-w-lg text-[16px] leading-relaxed text-warm-300 sm:mt-7 sm:text-lg">
-                Vaaram is a weekly advertising magazine. Every {siteConfig.publishDayLabel}, a new
-                edition brings local businesses, services, property, jobs and offers together in
-                one place — free to read.
+            <div className="animate-rise" style={{ animationDelay: "0.18s" }}>
+              <p className="mt-8 max-w-[30rem] text-[16.5px] leading-[1.65] text-warm-300 sm:text-[18px]">
+                A weekly advertising magazine. Every {siteConfig.publishDayLabel}, one new
+                edition gathers the businesses, services, property, jobs and offers near
+                you into a single issue — free to read, no sign-up, on any phone.
               </p>
             </div>
 
-            <div className="animate-rise" style={{ animationDelay: "0.28s" }}>
-              <div className="mt-8 flex flex-wrap items-center gap-3 sm:mt-9">
-                {publication ? (
-                  <Link
-                    href={`/archives/${publication.slug}`}
-                    className="inline-flex h-[52px] items-center gap-2.5 rounded-full bg-ember px-7 text-[15px] font-semibold text-white transition-colors hover:bg-ember-soft"
-                  >
-                    <BookOpen className="size-[18px]" aria-hidden />
-                    Read this week&apos;s edition
-                  </Link>
-                ) : (
-                  <Link
-                    href="/archives"
-                    className="inline-flex h-[52px] items-center gap-2.5 rounded-full bg-ember px-7 text-[15px] font-semibold text-white transition-colors hover:bg-ember-soft"
-                  >
-                    <BookOpen className="size-[18px]" aria-hidden />
-                    Browse the archive
-                  </Link>
-                )}
+            <div className="animate-rise" style={{ animationDelay: "0.26s" }}>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Link
+                  href={publication ? `/archives/${publication.slug}` : "/archives"}
+                  className="group inline-flex h-[54px] items-center gap-2.5 rounded-full bg-wine px-7 text-[15px] font-semibold text-white shadow-[0_12px_34px_-14px_rgba(195,49,80,0.95)] transition-colors hover:bg-wine-soft"
+                >
+                  <BookOpen className="size-[18px]" aria-hidden />
+                  {publication ? "Read this week's edition" : "Browse the archive"}
+                  <ArrowRight
+                    className="size-4 transition-transform duration-300 group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
+                </Link>
 
                 <Link
-                  href="/archives"
-                  className="inline-flex h-[52px] items-center gap-2 rounded-full border border-white/20 px-7 text-[15px] font-semibold text-warm-100 transition-colors hover:border-white/45 hover:bg-white/[0.06]"
+                  href="/contact"
+                  className="inline-flex h-[54px] items-center rounded-full border border-white/22 px-7 text-[15px] font-semibold text-warm-100 transition-colors hover:border-white/50 hover:bg-white/[0.06]"
                 >
-                  Browse archives
-                  <ArrowRight className="size-4" aria-hidden />
+                  Advertise with us
                 </Link>
               </div>
             </div>
 
             {publication && (
-              <div className="animate-rise" style={{ animationDelay: "0.36s" }}>
-                <dl className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/10 pt-5 text-sm sm:mt-10 sm:pt-6">
-                  <div className="flex items-baseline gap-2">
-                    <dt className="text-warm-500">Published</dt>
-                    <dd className="font-medium text-warm-200">
-                      {formatDate(publication.edition_date)}
-                    </dd>
-                  </div>
-                  {publication.total_pages && (
-                    <div className="flex items-baseline gap-2">
-                      <dt className="text-warm-500">Pages</dt>
-                      <dd className="font-medium text-warm-200">{publication.total_pages}</dd>
-                    </div>
-                  )}
-                  <div className="flex items-baseline gap-2">
-                    <dt className="sr-only">Availability</dt>
-                    <dd className="font-medium text-warm-200">Free to read</dd>
-                  </div>
+              <div className="animate-rise" style={{ animationDelay: "0.34s" }}>
+                <dl className="mt-11 grid max-w-lg grid-cols-3 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/[0.07]">
+                  <Spec label="Published" value={formatDate(publication.edition_date)} />
+                  <Spec
+                    label="Length"
+                    value={publication.total_pages ? `${publication.total_pages} pages` : "PDF"}
+                  />
+                  <Spec
+                    label="Download"
+                    value={formatBytes(publication.file_size_bytes) ?? "Free"}
+                    Icon={Download}
+                  />
                 </dl>
               </div>
             )}
           </div>
 
-          {/* ── The magazine ──────────────────────────────────────────── */}
+          {/* ── The magazine on its shelf ────────────────────────────────── */}
           {publication && (
-            <div className="animate-rise flex justify-center lg:justify-end" style={{ animationDelay: "0.18s" }}>
-              <Link
-                href={`/archives/${publication.slug}`}
-                aria-label={`Read ${publication.title}`}
-                className="group relative block rounded-sm transition-transform duration-500 hover:-translate-y-1.5"
-              >
-                <MagazineCover publication={publication} size="lg" priority />
-                <span className="label-eyebrow mt-7 flex items-center justify-center gap-2.5 text-warm-400 transition-colors group-hover:text-warm-200 lg:justify-end">
-                  {freshness(publication.edition_date)}
-                  <span className="h-px w-6 bg-current/50" aria-hidden />
-                  Open the edition
-                </span>
-              </Link>
+            <div
+              className="animate-rise flex justify-center lg:justify-end"
+              style={{ animationDelay: "0.16s" }}
+            >
+              <CoverShelf publication={publication} previous={previous} />
             </div>
           )}
         </div>
+
+        {/* ── What is inside, set as a contents line ───────────────────── */}
+        <div
+          className="animate-rise mt-auto border-t border-white/12 pt-5"
+          style={{ animationDelay: "0.42s" }}
+        >
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+            <span className="label-eyebrow text-gold-soft">Inside</span>
+            <ul className="flex flex-wrap items-center gap-2">
+              {siteConfig.categories.map((category) => (
+                <li key={category.name}>
+                  <Link
+                    href="/about"
+                    className="inline-flex h-8 items-center rounded-full border border-white/14 px-3.5 text-[13px] font-medium text-warm-300 transition-colors hover:border-gold-soft/50 hover:text-warm-50"
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Studio lighting. One wine key light behind the magazine, a rose-gold fill on
+ * the opposite side, and the faint column rules of a page before anything is
+ * set on it. All CSS — no images, nothing to download before the hero paints.
+ */
+function HeroGround() {
+  return (
+    <>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(56% 60% at 76% 38%, rgba(195,49,80,0.26) 0%, rgba(195,49,80,0) 68%)," +
+            "radial-gradient(48% 52% at 8% 76%, rgba(224,178,155,0.13) 0%, rgba(224,178,155,0) 70%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px)",
+          backgroundSize: "clamp(96px, 12vw, 168px) 100%",
+          maskImage: "linear-gradient(to bottom, transparent, black 24%, black 70%, transparent)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent, black 24%, black 70%, transparent)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-48 bg-gradient-to-b from-transparent to-black/55"
+      />
+    </>
+  );
+}
+
+/** The one status a reader wants before anything else. */
+function LiveBadge({ publication }: { publication: Publication | null }) {
+  return (
+    <p className="inline-flex items-center gap-2.5 rounded-full border border-white/14 bg-white/[0.05] py-1.5 pl-2.5 pr-4">
+      <span className="relative grid size-4 shrink-0 place-items-center" aria-hidden>
+        <span className="absolute size-4 rounded-full bg-wine-glow/35" />
+        <span className="size-1.5 rounded-full bg-wine-glow" />
+      </span>
+      <span className="label-eyebrow text-warm-200">
+        {publication ? "This week's edition is live" : "New edition every week"}
+      </span>
+    </p>
+  );
+}
+
+function Spec({
+  label,
+  value,
+  Icon,
+}: {
+  label: string;
+  value: string;
+  Icon?: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="bg-warm-950/75 px-4 py-3.5">
+      <dt className="label-eyebrow flex items-center gap-1.5 text-warm-400">
+        {Icon && <Icon className="size-3" aria-hidden />}
+        {label}
+      </dt>
+      <dd className="mt-2 text-[13.5px] font-semibold text-warm-100">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * This week's cover standing in front of the two before it.
+ *
+ * The covers behind are inert artwork rather than links: they exist to show the
+ * publication has a run, and giving them their own tab stops would put three
+ * destinations where a reader only wants one.
+ */
+function CoverShelf({
+  publication,
+  previous,
+}: {
+  publication: Publication;
+  previous: Publication[];
+}) {
+  const behind = previous.slice(0, 2);
+
+  return (
+    <div className="relative w-[min(76vw,380px)] sm:w-[min(44vw,420px)] lg:w-[420px]">
+      {behind.length > 0 && (
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {behind.map((back, i) => (
+            <div
+              key={back.id}
+              className="page-stock absolute aspect-[3/4] overflow-hidden"
+              // The stack fans back to the left, into the gutter between the
+              // copy and the cover. Fanning right would push it past the band's
+              // right edge, where `overflow-hidden` simply cuts it in half.
+              style={{
+                width: `${85 - i * 8}%`,
+                left: `${-7 - i * 9}%`,
+                top: `${7 + i * 5}%`,
+                opacity: 0.38 - i * 0.14,
+                filter: "saturate(0.5)",
+              }}
+            >
+              <CoverArt publication={back} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Link
+        href={`/archives/${publication.slug}`}
+        aria-label={`Read ${publication.title}`}
+        className="group relative block rounded-sm transition-transform duration-500 hover:-translate-y-2"
+      >
+        <MagazineCover publication={publication} size="fluid" priority />
+
+        <span className="label-eyebrow mt-7 flex items-center justify-center gap-2.5 text-warm-400 transition-colors group-hover:text-gold-soft lg:justify-end">
+          Open the edition
+          <ArrowRight
+            className="size-3.5 transition-transform duration-300 group-hover:translate-x-1"
+            aria-hidden
+          />
+        </span>
+      </Link>
+    </div>
   );
 }

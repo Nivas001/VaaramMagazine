@@ -13,7 +13,7 @@ const PdfReader = dynamic(
     loading: () => (
       <div className="grid min-h-[62vh] place-items-center rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]">
         <div className="flex flex-col items-center gap-4 text-[rgb(var(--text-muted))]">
-          <Loader2 className="size-6 animate-spin text-[rgb(var(--accent))]" aria-hidden />
+          <Loader2 className="size-6 animate-spin text-[rgb(var(--accent-text))]" aria-hidden />
           <p className="label-eyebrow">Loading the reader</p>
         </div>
       </div>

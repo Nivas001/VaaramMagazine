@@ -25,7 +25,7 @@ export default function NewIssuePage() {
           <ol className="mt-5 space-y-4 text-sm leading-relaxed text-[rgb(var(--text-muted))]">
             {STEPS.map((line, i) => (
               <li key={i} className="flex gap-3.5">
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[rgb(var(--surface-2))] text-[11px] font-bold text-[rgb(var(--accent))]">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[rgb(var(--surface-2))] text-[11px] font-bold text-[rgb(var(--accent-text))]">
                   {i + 1}
                 </span>
                 {line}

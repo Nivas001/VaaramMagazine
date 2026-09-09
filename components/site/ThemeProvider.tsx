@@ -77,7 +77,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-full border border-[rgb(var(--hairline))]",
         "text-[rgb(var(--text-muted))] transition-colors",
-        "hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent))]",
+        "hover:border-[rgb(var(--accent))] hover:text-[rgb(var(--accent-text))]",
         className
       )}
     >

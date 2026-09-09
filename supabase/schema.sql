@@ -76,6 +76,26 @@ create table if not exists public.enquiries (
 create index if not exists enquiries_created_idx on public.enquiries (created_at desc);
 create index if not exists enquiries_status_idx  on public.enquiries (status, created_at desc);
 
+-- ───────────────────────────────────────────────────────────────────────────
+--  4. SUBSCRIBERS — readers who asked to be told when an edition goes live
+--
+--  Deliberately minimal: an address, where it was collected, and whether it is
+--  still active. No name, no preferences, nothing that would make this a
+--  profile. `email` is unique and stored lower-case, so re-subscribing simply
+--  reactivates the row that is already there.
+-- ───────────────────────────────────────────────────────────────────────────
+create table if not exists public.subscribers (
+  id              uuid primary key default gen_random_uuid(),
+  created_at      timestamptz not null default now(),
+  email           varchar(190) not null unique,
+  source          varchar(40)  not null default 'home',
+  is_active       boolean      not null default true,
+  unsubscribed_at timestamptz
+);
+
+create index if not exists subscribers_active_idx
+  on public.subscribers (is_active, created_at desc);
+
 -- ═══════════════════════════════════════════════════════════════════════════
 --  ROW LEVEL SECURITY
 --  Visitors may read published issues and active banners, and nothing else.
@@ -84,6 +104,7 @@ create index if not exists enquiries_status_idx  on public.enquiries (status, cr
 alter table public.publications enable row level security;
 alter table public.ad_banners   enable row level security;
 alter table public.enquiries    enable row level security;
+alter table public.subscribers  enable row level security;
 
 drop policy if exists "public reads published issues"  on public.publications;
 drop policy if exists "admins manage issues"           on public.publications;
@@ -91,6 +112,7 @@ drop policy if exists "public reads active banners"    on public.ad_banners;
 drop policy if exists "admins manage banners"          on public.ad_banners;
 drop policy if exists "admins read enquiries"          on public.enquiries;
 drop policy if exists "admins manage enquiries"        on public.enquiries;
+drop policy if exists "admins manage subscribers"      on public.subscribers;
 
 create policy "public reads published issues"
   on public.publications for select
@@ -118,6 +140,13 @@ create policy "admins manage banners"
 -- service-role key from a server route, which bypasses RLS by design.
 create policy "admins manage enquiries"
   on public.enquiries for all
+  to authenticated
+  using (true) with check (true);
+
+-- Subscriber addresses are personal data and are never publicly readable. The
+-- signup route writes them with the service-role key, same as enquiries.
+create policy "admins manage subscribers"
+  on public.subscribers for all
   to authenticated
   using (true) with check (true);
 

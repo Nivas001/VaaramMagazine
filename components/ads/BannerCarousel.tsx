@@ -2,14 +2,8 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import type { AdBanner } from "@/lib/types";
+import { SHAPE_ASPECTS, type AdBanner, type BannerShape } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const ASPECTS = {
-  banner: "aspect-[1200/200]",
-  inline: "aspect-[1200/250]",
-  sidebar: "aspect-[6/5]",
-} as const;
 
 /**
  * Rotates through the banners booked for one slot, recording an impression once
@@ -21,7 +15,7 @@ export function BannerCarousel({
   shape = "banner",
 }: {
   banners: AdBanner[];
-  shape?: keyof typeof ASPECTS;
+  shape?: BannerShape;
 }) {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
@@ -77,7 +71,7 @@ export function BannerCarousel({
       onBlurCapture={() => setPaused(false)}
       className={cn(
         "relative overflow-hidden rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]",
-        ASPECTS[shape]
+        SHAPE_ASPECTS[shape]
       )}
     >
       <AnimatePresence mode="wait">

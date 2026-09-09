@@ -7,7 +7,7 @@ type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[rgb(var(--accent))] text-white hover:bg-ember-strong dark:hover:bg-ember " +
+    "bg-[rgb(var(--accent))] text-white hover:bg-wine-strong dark:hover:bg-wine " +
     "shadow-[0_1px_2px_rgba(28,22,16,0.16)]",
   secondary:
     "border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] text-[rgb(var(--text))] " +
@@ -100,7 +100,7 @@ export function TextLink({
   const cls = cn(
     "group inline-flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))]",
     "underline decoration-[rgb(var(--hairline))] decoration-1 underline-offset-[6px]",
-    "transition-colors hover:decoration-[rgb(var(--accent))] hover:text-[rgb(var(--accent))]",
+    "transition-colors hover:decoration-[rgb(var(--accent))] hover:text-[rgb(var(--accent-text))]",
     className
   );
 

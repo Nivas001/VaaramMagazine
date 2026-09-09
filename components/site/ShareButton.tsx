@@ -33,7 +33,7 @@ export function ShareButton({ title }: { title: string }) {
       className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-[rgb(var(--hairline))] px-5 text-sm font-semibold text-[rgb(var(--text))] transition-colors hover:border-[rgb(var(--text-faint))] hover:bg-[rgb(var(--surface-2))]"
     >
       {copied ? (
-        <Check className="size-4 text-[rgb(var(--accent))]" aria-hidden />
+        <Check className="size-4 text-[rgb(var(--accent-text))]" aria-hidden />
       ) : (
         <Share2 className="size-4" aria-hidden />
       )}

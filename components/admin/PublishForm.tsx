@@ -231,7 +231,7 @@ export function PublishForm() {
                   setFile(null);
                   setPageCount(null);
                 }}
-                className="ml-2 grid size-8 shrink-0 place-items-center rounded-full text-[rgb(var(--text-muted))] transition-colors hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent))]"
+                className="ml-2 grid size-8 shrink-0 place-items-center rounded-full text-[rgb(var(--text-muted))] transition-colors hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent-text))]"
                 aria-label="Remove file"
               >
                 <X className="size-4" />
@@ -255,7 +255,7 @@ export function PublishForm() {
       {busy && (
         <div className="mt-5">
           <div className="flex items-center gap-2.5 text-sm font-medium text-[rgb(var(--text-muted))]">
-            <Loader2 className="size-4 animate-spin text-[rgb(var(--accent))]" />
+            <Loader2 className="size-4 animate-spin text-[rgb(var(--accent-text))]" />
             {phaseLabel[phase]}
           </div>
           <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-2))]">
@@ -276,7 +276,7 @@ export function PublishForm() {
       <div className="mt-7 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="title" className={label}>
-            Edition title <span className="text-[rgb(var(--accent))]">*</span>
+            Edition title <span className="text-[rgb(var(--accent-text))]">*</span>
           </label>
           <input
             id="title"
@@ -290,7 +290,7 @@ export function PublishForm() {
 
         <div>
           <label htmlFor="edition" className={label}>
-            Edition <span className="text-[rgb(var(--accent))]">*</span>
+            Edition <span className="text-[rgb(var(--accent-text))]">*</span>
           </label>
           <select id="edition" name="edition" required className={cn(field, "appearance-none")} defaultValue={siteConfig.editions[0].slug}>
             {siteConfig.editions.map((e) => (
@@ -303,7 +303,7 @@ export function PublishForm() {
 
         <div>
           <label htmlFor="editionDate" className={label}>
-            Publication date <span className="text-[rgb(var(--accent))]">*</span>
+            Publication date <span className="text-[rgb(var(--accent-text))]">*</span>
           </label>
           <input
             id="editionDate"
@@ -334,7 +334,7 @@ export function PublishForm() {
       </div>
 
       {error && (
-        <p className="mt-5 flex items-start gap-2 rounded-md bg-[rgb(var(--accent))]/10 px-4 py-3 text-sm text-[rgb(var(--accent))]">
+        <p className="mt-5 flex items-start gap-2 rounded-md bg-[rgb(var(--accent))]/10 px-4 py-3 text-sm text-[rgb(var(--accent-text))]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           {error}
         </p>
@@ -347,7 +347,7 @@ export function PublishForm() {
           type="submit"
           onClick={() => (intent.current = "publish")}
           disabled={busy || !file}
-          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-wine-strong disabled:opacity-50"
         >
           {busy ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />

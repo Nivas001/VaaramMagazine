@@ -212,7 +212,7 @@ function EmptyState({
         <button
           type="button"
           onClick={onReset}
-          className="mt-7 inline-flex h-11 items-center rounded-full bg-[rgb(var(--accent))] px-6 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+          className="mt-7 inline-flex h-11 items-center rounded-full bg-[rgb(var(--accent))] px-6 text-sm font-semibold text-white transition-colors hover:bg-wine-strong"
         >
           Clear filters
         </button>

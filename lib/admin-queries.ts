@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { AdBanner, Enquiry, Publication } from "@/lib/types";
+import type { AdBanner, Enquiry, Publication, Subscriber } from "@/lib/types";
 
 /**
  * Admin reads use the signed-in user's own session (not the service role), so
@@ -49,4 +49,21 @@ export async function adminGetEnquiries(): Promise<Enquiry[]> {
     return [];
   }
   return (data ?? []) as Enquiry[];
+}
+
+export async function adminGetSubscribers(): Promise<Subscriber[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("subscribers")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(2000);
+
+  if (error) {
+    // A project that has not run the latest schema.sql simply has no table
+    // yet — the page says so rather than failing.
+    console.error("[admin] subscribers:", error.message);
+    return [];
+  }
+  return (data ?? []) as Subscriber[];
 }

@@ -23,7 +23,7 @@ export function MagazineCover({
   className,
 }: {
   publication: Publication;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "fluid";
   interactive?: boolean;
   priority?: boolean;
   className?: string;
@@ -64,6 +64,8 @@ export function MagazineCover({
     sm: "w-[150px] sm:w-[180px]",
     md: "w-[220px] sm:w-[280px]",
     lg: "w-[min(78vw,340px)] sm:w-[min(42vw,420px)] lg:w-[440px]",
+    // Fills whatever the parent gives it — used where the caller owns the grid.
+    fluid: "w-full",
   }[size];
 
   return (
@@ -150,8 +152,8 @@ export function CoverArt({
         <p className="font-display text-[clamp(1.5rem,9cqw,3rem)] font-medium leading-none tracking-[-0.04em]">
           Vaaram
         </p>
-        <div className="mt-[4%] h-px w-full bg-ember" aria-hidden />
-        <p className="label-eyebrow mt-[4%] text-[clamp(0.5rem,2.4cqw,0.7rem)] text-ember-soft">
+        <div className="mt-[4%] h-px w-full bg-wine" aria-hidden />
+        <p className="label-eyebrow mt-[4%] text-[clamp(0.5rem,2.4cqw,0.7rem)] text-wine-soft">
           Weekly advertising magazine
         </p>
       </div>

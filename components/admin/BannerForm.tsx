@@ -87,7 +87,8 @@ export function BannerForm() {
     <form ref={formRef} onSubmit={onSubmit} className="rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-6">
       <h2 className="text-lg font-bold">Add a banner</h2>
       <p className="mt-1.5 text-sm text-[rgb(var(--text-muted))]">
-        Upload the advertiser&apos;s artwork and choose where it should appear.
+        Upload the advertiser&apos;s artwork and choose where it should appear. Each
+        placement lists the size that fits it best.
       </p>
 
       <div
@@ -139,7 +140,7 @@ export function BannerForm() {
       <div className="mt-5 grid gap-4">
         <div>
           <label htmlFor="clientName" className={label}>
-            Advertiser name <span className="text-[rgb(var(--accent))]">*</span>
+            Advertiser name <span className="text-[rgb(var(--accent-text))]">*</span>
           </label>
           <input id="clientName" name="clientName" required maxLength={160} className={field} placeholder="e.g. Sri Balaji Motors" />
         </div>
@@ -190,9 +191,9 @@ export function BannerForm() {
       </div>
 
       {busy && (
-        <div className="mt-5 h-2 overflow-hidden rounded-full bg-stone-200 dark:bg-neutral-800">
+        <div className="mt-5 h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-2))]">
           <div
-            className="h-full rounded-full bg-stone-900 dark:bg-stone-100 transition-[width] duration-200"
+            className="h-full rounded-full bg-[rgb(var(--accent))] transition-[width] duration-200"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -208,7 +209,7 @@ export function BannerForm() {
       <button
         type="submit"
         disabled={busy}
-        className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-stone-900 text-sm font-semibold text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+        className="mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-wine-strong disabled:opacity-50"
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
         {busy ? `Uploading — ${progress}%` : "Add banner"}

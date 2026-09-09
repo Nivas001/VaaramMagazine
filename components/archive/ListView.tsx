@@ -30,7 +30,7 @@ export function ListView({ publications }: { publications: Publication[] }) {
 
               <div className="grid min-w-0 flex-1 gap-x-6 gap-y-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                 <div className="min-w-0">
-                  <h3 className="truncate font-display text-xl leading-tight tracking-[-0.02em] transition-colors group-hover:text-[rgb(var(--accent))] sm:text-[22px]">
+                  <h3 className="truncate font-display text-xl leading-tight tracking-[-0.02em] transition-colors group-hover:text-[rgb(var(--accent-text))] sm:text-[22px]">
                     {publication.title}
                   </h3>
                   <p className="mt-1 truncate text-sm text-[rgb(var(--text-muted))]">
@@ -47,7 +47,7 @@ export function ListView({ publications }: { publications: Publication[] }) {
                     <span className="tabular-nums">{publication.total_pages} pages</span>
                   )}
                   {size && <span className="hidden tabular-nums sm:inline">{size}</span>}
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-[rgb(var(--text))] transition-colors group-hover:text-[rgb(var(--accent))]">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-[rgb(var(--text))] transition-colors group-hover:text-[rgb(var(--accent-text))]">
                     Read
                     <ArrowUpRight
                       className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"

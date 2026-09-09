@@ -28,6 +28,20 @@ export default function PrivacyPage() {
         </section>
 
         <section>
+          <h2 className="font-display text-2xl tracking-[-0.02em] text-[rgb(var(--text))]">
+            The weekly email list
+          </h2>
+          <p className="mt-3">
+            If you ask to be told when a new edition is published, we store the email address you
+            typed, the date you gave it and which page on this site you gave it from. Nothing
+            else — no name, no interests, no tracking of what you open. We use it for one thing:
+            sending you a link to the week&apos;s edition. Ask us to remove you, from any of those
+            emails or by writing to us, and the address is switched off the same day and is never
+            added back.
+          </p>
+        </section>
+
+        <section>
           <h2 className="font-display text-2xl tracking-[-0.02em] text-[rgb(var(--text))]">Why we use it</h2>
           <p className="mt-3">
             We use those details for one purpose: to reply to you and, if you go ahead, to
@@ -57,14 +71,17 @@ export default function PrivacyPage() {
           <h2 className="font-display text-2xl tracking-[-0.02em] text-[rgb(var(--text))]">How long we keep it</h2>
           <p className="mt-3">
             Enquiries are kept while we are dealing with them and for a reasonable period
-            afterwards for our records. You can ask us to delete your enquiry at any time.
+            afterwards for our records. You can ask us to delete your enquiry at any time. An
+            unsubscribed email address is kept in a switched-off state rather than deleted, purely
+            so that a later import can never quietly put it back on the list — tell us if you
+            would prefer it removed outright and we will do that instead.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-2xl tracking-[-0.02em] text-[rgb(var(--text))]">Contact us about your data</h2>
           <p className="mt-3">
-            Write to <a className="font-medium text-[rgb(var(--accent))] underline underline-offset-4" href={`mailto:${siteConfig.contact.email}`}>{siteConfig.contact.email}</a>{" "}
+            Write to <a className="font-medium text-[rgb(var(--accent-text))] underline underline-offset-4" href={`mailto:${siteConfig.contact.email}`}>{siteConfig.contact.email}</a>{" "}
             or call {siteConfig.contact.phone} and we will help.
           </p>
         </section>

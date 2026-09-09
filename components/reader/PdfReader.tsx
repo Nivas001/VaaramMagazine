@@ -269,7 +269,7 @@ export function PdfReader({
             download
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-6 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+            className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-6 text-sm font-semibold text-white transition-colors hover:bg-wine-strong"
           >
             <Download className="size-4" aria-hidden /> Download the PDF
           </a>
@@ -332,7 +332,7 @@ export function PdfReader({
             target="_blank"
             rel="noopener noreferrer"
             onClick={onDownload}
-            className="ml-1.5 inline-flex h-9 items-center gap-1.5 rounded-full bg-[rgb(var(--accent))] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-ember-strong"
+            className="ml-1.5 inline-flex h-9 items-center gap-1.5 rounded-full bg-[rgb(var(--accent))] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-wine-strong"
           >
             <Download className="size-3.5" aria-hidden />
             <span className="hidden sm:inline">Download</span>
@@ -353,7 +353,7 @@ export function PdfReader({
       >
         {loading && (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-warm-400">
-            <Loader2 className="size-6 animate-spin text-ember-soft" aria-hidden />
+            <Loader2 className="size-6 animate-spin text-wine-soft" aria-hidden />
             <p className="label-eyebrow">Opening {title}</p>
           </div>
         )}
@@ -366,7 +366,7 @@ export function PdfReader({
           />
           {rendering && !loading && (
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
-              <Loader2 className="size-6 animate-spin text-ember-soft" aria-hidden />
+              <Loader2 className="size-6 animate-spin text-wine-soft" aria-hidden />
             </div>
           )}
         </div>

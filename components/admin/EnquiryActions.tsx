@@ -75,7 +75,7 @@ export function EnquiryActions({
             type="button"
             onClick={() => run(() => onDelete(id))}
             disabled={pending}
-            className={cn(BUTTON, "bg-[rgb(var(--accent))] text-white hover:bg-ember-strong")}
+            className={cn(BUTTON, "bg-[rgb(var(--accent))] text-white hover:bg-wine-strong")}
           >
             <Trash2 className="size-3.5" aria-hidden />
             Confirm delete
@@ -95,7 +95,7 @@ export function EnquiryActions({
           aria-label="Delete enquiry"
           className={cn(
             BUTTON,
-            "ml-auto text-[rgb(var(--text-faint))] hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent))]"
+            "ml-auto text-[rgb(var(--text-faint))] hover:bg-[rgb(var(--accent))]/10 hover:text-[rgb(var(--accent-text))]"
           )}
         >
           <Trash2 className="size-3.5" aria-hidden />

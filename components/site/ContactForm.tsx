@@ -63,7 +63,7 @@ export function ContactForm() {
   if (status === "sent") {
     return (
       <div className="card flex flex-col items-start p-8 sm:p-10">
-        <span className="grid size-11 place-items-center rounded-full bg-[rgb(var(--accent))]/12 text-[rgb(var(--accent))]">
+        <span className="grid size-11 place-items-center rounded-full bg-[rgb(var(--accent))]/12 text-[rgb(var(--accent-text))]">
           <Check className="size-5" aria-hidden />
         </span>
         <h3 className="mt-6 font-display text-2xl tracking-[-0.02em]">Message received</h3>
@@ -74,7 +74,7 @@ export function ContactForm() {
         <button
           type="button"
           onClick={() => setStatus("idle")}
-          className="mt-7 text-sm font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent))]"
+          className="mt-7 text-sm font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent-text))]"
         >
           Send another message
         </button>
@@ -155,7 +155,7 @@ export function ContactForm() {
       {error && (
         <p
           role="alert"
-          className="mt-5 flex items-start gap-2.5 rounded-md border border-[rgb(var(--accent))]/30 bg-[rgb(var(--accent))]/8 px-4 py-3 text-sm text-[rgb(var(--accent))]"
+          className="mt-5 flex items-start gap-2.5 rounded-md border border-[rgb(var(--accent))]/30 bg-[rgb(var(--accent))]/8 px-4 py-3 text-sm text-[rgb(var(--accent-text))]"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {error}
@@ -165,7 +165,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={busy}
-        className="mt-7 inline-flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-60 sm:w-auto sm:px-8"
+        className="mt-7 inline-flex h-[52px] w-full items-center justify-center gap-2.5 rounded-full bg-[rgb(var(--accent))] text-[15px] font-semibold text-white transition-colors hover:bg-wine-strong disabled:opacity-60 sm:w-auto sm:px-8"
       >
         {busy ? (
           <Loader2 className="size-4 animate-spin" aria-hidden />

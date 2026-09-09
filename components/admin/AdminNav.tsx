@@ -7,6 +7,7 @@ import {
   Images,
   LayoutDashboard,
   LogOut,
+  Mail,
   MessageSquare,
   Newspaper,
   Settings,
@@ -21,6 +22,7 @@ const LINKS = [
   { href: "/admin/issues/new", label: "Publish", Icon: FileUp },
   { href: "/admin/enquiries", label: "Enquiries", Icon: MessageSquare },
   { href: "/admin/banners", label: "Banners", Icon: Images },
+  { href: "/admin/subscribers", label: "Readers", Icon: Mail },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
 ];
 

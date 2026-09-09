@@ -225,7 +225,7 @@ export function CalendarView({ publications }: { publications: Publication[] }) 
                   <CoverArt publication={selected} />
                 </div>
 
-                <h4 className="mt-6 font-display text-2xl tracking-[-0.025em] transition-colors group-hover:text-[rgb(var(--accent))]">
+                <h4 className="mt-6 font-display text-2xl tracking-[-0.025em] transition-colors group-hover:text-[rgb(var(--accent-text))]">
                   {selected.title}
                 </h4>
               </Link>
@@ -250,7 +250,7 @@ export function CalendarView({ publications }: { publications: Publication[] }) 
 
               <Link
                 href={`/archives/${selected.slug}`}
-                className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+                className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white transition-colors hover:bg-wine-strong"
               >
                 Read this edition
                 <ArrowRight className="size-4" aria-hidden />

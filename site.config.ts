@@ -122,6 +122,44 @@ export const siteConfig = {
   ],
 
   /**
+   * The questions asked most often before someone gets in touch. They appear
+   * on the Contact page and are published as FAQ structured data, so keep
+   * every answer true — a search engine will quote it verbatim.
+   */
+  faq: [
+    {
+      question: "How much does it cost to advertise?",
+      answer:
+        "It depends on the size you book — from a few classified lines up to a full page. Tell us roughly what you have in mind and we will quote for it; there is no standing rate card on the site because the price moves with the season and the section.",
+    },
+    {
+      question: "What do I need to send you?",
+      answer:
+        "Whatever you already have. A logo, some photos and the words you want to say is plenty — we set the advertisement for you and send a proof back to approve before anything is published.",
+    },
+    {
+      question: "When is the deadline for next week's edition?",
+      answer:
+        "Anything approved before Sunday goes into that week's edition. If it is close to the day, call us — we will tell you honestly whether it will make it.",
+    },
+    {
+      question: "Do readers have to pay or sign up?",
+      answer:
+        "No. Every edition is free to read on this site and free to download as a PDF. There is no account, no paywall and no app.",
+    },
+    {
+      question: "How long does my advertisement stay online?",
+      answer:
+        "Permanently. Your advertisement runs in one week's edition, and that edition stays in the archive — so it is still there, and still findable, long after publication day.",
+    },
+    {
+      question: "Can I advertise on the website as well as in the magazine?",
+      answer:
+        "Yes. Banner slots on the home page, the archive and the reader are sold separately from space inside the printed edition. Ask us for what is free.",
+    },
+  ],
+
+  /**
    * Editions the publication runs. `slug` must match the value chosen when
    * publishing an issue in the admin dashboard, so keep these stable.
    */
