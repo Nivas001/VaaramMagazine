@@ -12,7 +12,7 @@ export async function inspectPdf(file: File): Promise<{
   pageCount: number;
   coverBlob: Blob | null;
 }> {
-  const pdfjs = await import("pdfjs-dist");
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
   const buffer = await file.arrayBuffer();
