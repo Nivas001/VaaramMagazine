@@ -7,5 +7,5 @@ const require = createRequire(import.meta.url);
 const pdfjsRoot = dirname(require.resolve("pdfjs-dist/package.json"));
 
 mkdirSync("public", { recursive: true });
-copyFileSync(join(pdfjsRoot, "build", "pdf.worker.min.mjs"), join("public", "pdf.worker.min.mjs"));
+copyFileSync(join(pdfjsRoot, "legacy", "build", "pdf.worker.min.mjs"), join("public", "pdf.worker.min.mjs"));
 console.log("[pdf] worker copied to public/pdf.worker.min.mjs");
