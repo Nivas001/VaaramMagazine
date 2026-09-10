@@ -22,6 +22,21 @@ export async function adminGetPublications(): Promise<Publication[]> {
   return (data ?? []) as Publication[];
 }
 
+export async function adminGetPublicationById(id: string): Promise<Publication | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("publications")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin] publication by id:", error.message);
+    return null;
+  }
+  return (data ?? null) as Publication | null;
+}
+
 export async function adminGetBanners(): Promise<AdBanner[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

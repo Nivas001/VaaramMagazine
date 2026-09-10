@@ -78,6 +78,64 @@ export async function createPublication(input: {
   }
 }
 
+export async function updatePublication(
+  id: string,
+  input: {
+    title: string;
+    description: string;
+    edition: string;
+    editionDate: string;
+    coverUrl?: string | null;
+    isPublished?: boolean;
+    pdfUrl?: string;
+    pdfKey?: string;
+    fileSizeBytes?: number;
+    totalPages?: number | null;
+  }
+): Promise<ActionResult> {
+  try {
+    const supabase = await requireAdmin();
+
+    const updatePayload: Record<string, unknown> = {
+      title: input.title,
+      description: input.description || null,
+      edition: input.edition,
+      edition_date: input.editionDate,
+    };
+
+    if (input.coverUrl !== undefined) {
+      updatePayload.cover_url = input.coverUrl;
+    }
+
+    if (input.isPublished !== undefined) {
+      updatePayload.is_published = input.isPublished;
+    }
+
+    if (input.pdfUrl && input.pdfKey) {
+      updatePayload.pdf_url = input.pdfUrl;
+      updatePayload.pdf_key = input.pdfKey;
+      if (input.fileSizeBytes !== undefined) {
+        updatePayload.file_size_bytes = input.fileSizeBytes;
+      }
+      if (input.totalPages !== undefined) {
+        updatePayload.total_pages = input.totalPages;
+      }
+    }
+
+    const { error } = await supabase
+      .from("publications")
+      .update(updatePayload)
+      .eq("id", id);
+
+    if (error) return { ok: false, error: error.message };
+
+    refreshPublicPages();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}
+
 export async function togglePublication(id: string, isPublished: boolean): Promise<ActionResult> {
   try {
     const supabase = await requireAdmin();

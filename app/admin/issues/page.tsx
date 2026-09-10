@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, FileUp } from "lucide-react";
+import { ExternalLink, FileUp, Pencil } from "lucide-react";
 import { adminGetPublications } from "@/lib/admin-queries";
 import { deletePublication, togglePublication } from "@/app/admin/actions";
 import { editionLabel, formatBytes } from "@/lib/utils";
@@ -83,6 +83,13 @@ export default async function AdminIssuesPage() {
                       inactiveLabel="Publish"
                       confirmLabel="Delete for good"
                     />
+                    <Link
+                      href={`/admin/issues/${p.id}/edit`}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[rgb(var(--hairline))] bg-[rgb(var(--surface))] px-3.5 text-[13px] font-medium text-[rgb(var(--text))] shadow-xs transition-colors hover:bg-[rgb(var(--surface-3))] hover:text-[rgb(var(--accent-text))]"
+                    >
+                      <Pencil className="size-3.5" aria-hidden />
+                      Edit
+                    </Link>
                     <a
                       href={`/archives/${p.slug}`}
                       target="_blank"

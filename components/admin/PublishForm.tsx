@@ -6,7 +6,9 @@ import {
   AlertTriangle,
   CheckCircle2,
   FileText,
+  Image as ImageIcon,
   Loader2,
+  Upload,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -17,6 +19,7 @@ import { putToStorage, requestTicket } from "./UploadToStorage";
 
 /** Supabase Storage refuses anything larger on this plan. */
 const MAX_PDF_BYTES = 50 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 import { formatBytes } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +38,7 @@ function defaultEditionDate() {
 export function PublishForm() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -45,19 +49,24 @@ export function PublishForm() {
   const intent = useRef<"publish" | "draft">("publish");
   const [pageCount, setPageCount] = useState<number | null>(null);
 
+  // Cover image states: auto-extracted from PDF or custom uploaded
+  const [autoCoverBlob, setAutoCoverBlob] = useState<Blob | null>(null);
+  const [autoCoverPreview, setAutoCoverPreview] = useState<string | null>(null);
+  const [customCoverFile, setCustomCoverFile] = useState<File | null>(null);
+  const [customCoverPreview, setCustomCoverPreview] = useState<string | null>(null);
+
   const busy = phase !== "idle" && phase !== "error" && phase !== "done";
 
-  const pickFile = useCallback((incoming: File | null) => {
+  const pickFile = useCallback(async (incoming: File | null) => {
     setError(null);
     setPageCount(null);
+    setAutoCoverBlob(null);
+    setAutoCoverPreview(null);
     if (!incoming) return;
     if (incoming.type !== "application/pdf") {
       setError("That is not a PDF. Please choose the print-ready PDF of the edition.");
       return;
     }
-    // Matches the ceiling enforced by the upload route and by Supabase Storage
-    // itself, so an oversized edition is refused here rather than failing
-    // halfway through a long upload.
     if (incoming.size > MAX_PDF_BYTES) {
       setError(
         `That PDF is ${formatBytes(incoming.size)}. The limit is 50 MB — export it at a lower image quality and try again.`
@@ -65,6 +74,35 @@ export function PublishForm() {
       return;
     }
     setFile(incoming);
+
+    try {
+      setPhase("reading");
+      const { pageCount: pages, coverBlob } = await inspectPdf(incoming);
+      setPageCount(pages);
+      if (coverBlob) {
+        setAutoCoverBlob(coverBlob);
+        setAutoCoverPreview(URL.createObjectURL(coverBlob));
+      }
+    } catch (err) {
+      console.warn("[publish] PDF inspection notice:", err);
+    } finally {
+      setPhase("idle");
+    }
+  }, []);
+
+  const pickCoverFile = useCallback((incoming: File | null) => {
+    setError(null);
+    if (!incoming) return;
+    if (!/^image\/(jpeg|png|webp)$/i.test(incoming.type)) {
+      setError("Custom cover must be a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (incoming.size > MAX_IMAGE_BYTES) {
+      setError(`Cover image is ${formatBytes(incoming.size)}. Maximum size is 2 MB.`);
+      return;
+    }
+    setCustomCoverFile(incoming);
+    setCustomCoverPreview(URL.createObjectURL(incoming));
   }, []);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -91,31 +129,51 @@ export function PublishForm() {
     setProgress(0);
 
     try {
-      // 1. Read the PDF locally: page count + a cover image from page one.
-      setPhase("reading");
-      const { pageCount: pages, coverBlob } = await inspectPdf(file);
-      setPageCount(pages);
+      // 1. Ensure pageCount and auto cover if not already read
+      let finalPageCount = pageCount;
+      let finalCoverBlob = autoCoverBlob;
+      if (finalPageCount === null) {
+        setPhase("reading");
+        const inspected = await inspectPdf(file);
+        finalPageCount = inspected.pageCount;
+        finalCoverBlob = inspected.coverBlob;
+        setPageCount(finalPageCount);
+      }
 
       // 2. Send the PDF straight to storage.
       setPhase("uploading-pdf");
       const pdfTicket = await requestTicket(file.name, "application/pdf", file.size);
       await putToStorage(pdfTicket, file, setProgress);
 
-      // 3. Send the generated cover (best-effort — never blocks publishing).
+      // 3. Send cover: custom file takes priority, otherwise use auto cover blob.
       let coverUrl: string | null = null;
-      if (coverBlob) {
+      if (customCoverFile) {
+        setPhase("uploading-cover");
+        setProgress(0);
+        try {
+          const coverTicket = await requestTicket(
+            customCoverFile.name,
+            customCoverFile.type,
+            customCoverFile.size
+          );
+          await putToStorage(coverTicket, customCoverFile, setProgress);
+          coverUrl = coverTicket.publicUrl;
+        } catch (coverError) {
+          console.warn("[publish] custom cover upload failed", coverError);
+        }
+      } else if (finalCoverBlob) {
         setPhase("uploading-cover");
         setProgress(0);
         try {
           const coverTicket = await requestTicket(
             file.name.replace(/\.pdf$/i, "-cover.jpg"),
             "image/jpeg",
-            coverBlob.size
+            finalCoverBlob.size
           );
-          await putToStorage(coverTicket, coverBlob, setProgress);
+          await putToStorage(coverTicket, finalCoverBlob, setProgress);
           coverUrl = coverTicket.publicUrl;
         } catch (coverError) {
-          console.warn("[publish] cover upload failed", coverError);
+          console.warn("[publish] auto cover upload failed", coverError);
         }
       }
 
@@ -129,7 +187,7 @@ export function PublishForm() {
         pdfUrl: pdfTicket.publicUrl,
         pdfKey: pdfTicket.objectKey,
         fileSizeBytes: file.size,
-        totalPages: pages,
+        totalPages: finalPageCount,
         coverUrl,
         isPublished: publishNow,
       });
@@ -284,6 +342,81 @@ export function PublishForm() {
           </div>
         </div>
       )}
+
+      {/* ── Cover Thumbnail Section (Optional Custom Artwork) ─────────── */}
+      <div className="mt-6 rounded-2xl border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]/60 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Cover Thumbnail</h3>
+            <p className="mt-0.5 text-xs text-[rgb(var(--text-muted))]">
+              {customCoverFile
+                ? "Using your custom uploaded cover."
+                : file
+                ? "Automatically generated from Page 1 of your PDF. You can upload custom artwork if you prefer."
+                : "Drop a PDF above to preview the front page, or choose a custom cover image."}
+            </p>
+          </div>
+          {customCoverFile && (
+            <button
+              type="button"
+              onClick={() => {
+                setCustomCoverFile(null);
+                setCustomCoverPreview(null);
+              }}
+              className="text-xs font-semibold text-[rgb(var(--accent-text))] underline transition-colors hover:text-wine-strong"
+            >
+              Use PDF Page 1 instead
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-5">
+          {/* Live Cover Preview */}
+          <div className="page-stock aspect-[3/4] w-[76px] shrink-0 overflow-hidden rounded-md border border-[rgb(var(--hairline))] bg-[rgb(var(--surface))] shadow-xs">
+            {customCoverPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={customCoverPreview}
+                alt="Custom cover preview"
+                className="size-full object-cover"
+              />
+            ) : autoCoverPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={autoCoverPreview}
+                alt="Auto-generated cover preview"
+                className="size-full object-cover"
+              />
+            ) : (
+              <div className="flex size-full flex-col items-center justify-center p-2 text-center text-[11px] text-[rgb(var(--text-faint))]">
+                <ImageIcon className="mb-1 size-5 opacity-40" />
+                <span>No cover</span>
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-[200px] flex-1">
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => pickCoverFile(e.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-[rgb(var(--hairline))] bg-[rgb(var(--surface))] px-4 text-xs font-semibold text-[rgb(var(--text))] shadow-xs transition-colors hover:bg-[rgb(var(--surface-3))]"
+            >
+              <Upload className="size-3.5" />
+              {customCoverFile ? "Replace custom cover image" : "Upload custom cover image (optional)"}
+            </button>
+            <p className="mt-2 text-[11px] text-[rgb(var(--text-faint))]">
+              Accepts JPG, PNG or WebP up to 2 MB. If skipped, Page 1 of the PDF is used automatically.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* ── Details ───────────────────────────────────────────────────── */}
       <div className="mt-7 grid gap-4 sm:grid-cols-2">
