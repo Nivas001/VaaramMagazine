@@ -27,7 +27,7 @@ function Form() {
 
   const [mode, setMode] = useState<AuthMode>("password");
   const [step, setStep] = useState<OtpStep>("email");
-  const [email, setEmail] = useState("contact@vaaram.ca");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
@@ -178,7 +178,7 @@ function Form() {
             required
             autoFocus
             autoComplete="username"
-            placeholder="contact@vaaram.ca"
+            placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={cn(field, "mt-2.5")}
@@ -262,7 +262,7 @@ function Form() {
           required
           autoFocus
           autoComplete="username"
-          placeholder="contact@vaaram.ca"
+          placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={cn(field, "mt-3")}
