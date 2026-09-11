@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { getPublications } from "@/lib/queries";
+import { getBanners, getPublications } from "@/lib/queries";
 import { toDate } from "@/lib/utils";
 import { ArchiveBrowser } from "@/components/archive/ArchiveBrowser";
 import { AdSlot } from "@/components/ads/AdSlot";
+import { AdGroup, RailLayout } from "@/components/ads/RailLayout";
 import { Section, Eyebrow } from "@/components/ui/Section";
 import { StackIllustration } from "@/components/ui/Illustration";
 import { SubscribeBand } from "@/components/home/SubscribeBand";
@@ -17,12 +18,29 @@ export const metadata: Metadata = {
 };
 
 export default async function ArchivesPage() {
-  const publications = await getPublications();
+  const [publications, railBanners] = await Promise.all([
+    getPublications(),
+    getBanners("site_rail"),
+  ]);
 
   // The header's three facts are counted from the rows themselves, so they can
   // never claim a run the archive does not actually hold.
   const years = new Set(publications.map((p) => toDate(p.edition_date).getUTCFullYear()));
   const pages = publications.reduce((sum, p) => sum + (p.total_pages ?? 0), 0);
+
+  // The rail in pairs, for the browser to deal into its covers on a narrow
+  // screen. `lg:hidden` because from lg up these same cards already stand in
+  // the rail column beside it.
+  const railGroups = Array.from(
+    { length: Math.ceil(railBanners.length / 2) },
+    (_, i) => (
+      <AdGroup
+        key={railBanners[i * 2].id}
+        banners={railBanners.slice(i * 2, i * 2 + 2)}
+        className="lg:hidden"
+      />
+    )
+  );
 
   const facts = [
     { value: publications.length.toLocaleString("en-CA"), label: "Editions online" },
@@ -61,16 +79,32 @@ export default async function ArchivesPage() {
           </div>
         </div>
 
-        <div className="mt-12">
-          <AdSlot placement="listing_top" />
-        </div>
+        {/* The rail runs beside the archive itself, not beside the header —
+            the header's own two-column grid and illustration need the page's
+            full width. */}
+        <RailLayout
+          banners={railBanners}
+          className="mt-12"
+          // The browser below is one component and cannot be split into blocks,
+          // so it deals the rail into its own cover grid instead.
+          interleave={false}
+        >
+          <div>
+            <AdSlot placement="listing_top" />
+          </div>
 
-        <div className="mt-12 sm:mt-14">
-          <ArchiveBrowser
-            publications={publications}
-            inlineAd={<AdSlot placement="listing_inline" />}
-          />
-        </div>
+          <div className="mt-12 sm:mt-14">
+            <ArchiveBrowser
+              publications={publications}
+              inlineAd={<AdSlot placement="listing_inline" />}
+              railAds={railGroups}
+              // The control bar is sticky and pulls out to the page gutter by
+              // default. Inside the rail's column that would spill into the
+              // gap, so it stays within its column here.
+              bleed={false}
+            />
+          </div>
+        </RailLayout>
       </Section>
 
       <Section className="!pt-0">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { getLatestPublication, getPublications } from "@/lib/queries";
+import { getBanners, getLatestPublication, getPublications } from "@/lib/queries";
 import { siteConfig } from "@/site.config";
 import { Hero } from "@/components/home/Hero";
 import { WhatIsVaaram } from "@/components/home/WhatIsVaaram";
@@ -11,21 +11,28 @@ import { SubscribeBand } from "@/components/home/SubscribeBand";
 import { LatestEdition } from "@/components/magazine/LatestEdition";
 import { EditionCard } from "@/components/magazine/EditionCard";
 import { AdSlot } from "@/components/ads/AdSlot";
+import { RailLayout } from "@/components/ads/RailLayout";
 import { Rule, Section } from "@/components/ui/Section";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [latest, recent, all] = await Promise.all([
+  const [latest, recent, all, rail] = await Promise.all([
     getLatestPublication(),
     getPublications({ limit: 5 }),
     getPublications(),
+    getBanners("site_rail"),
   ]);
 
   // The hero already carries the current edition, so the strip below shows
   // only what came before it.
   const previous = recent.filter((p) => p.id !== latest?.id).slice(0, 4);
+
+  // One fetch, split between the page's two railed stretches so the running
+  // order carries straight down the page rather than restarting halfway.
+  const railTop = rail.slice(0, 5);
+  const railRest = rail.slice(5);
 
   return (
     <>
@@ -37,20 +44,21 @@ export default async function HomePage() {
         <AdSlot placement="home_hero" />
       </Section>
 
-      {latest && (
-        <Section className="!pt-4">
-          <LatestEdition publication={latest} />
-        </Section>
-      )}
-
-      <Rule />
-
-      <Section>
-        <WhatIsVaaram />
-      </Section>
-
-      <Section className="!py-9">
-        <AdSlot placement="home_mid" />
+      {/* ── First railed region ────────────────────────────────────────────
+          The rail cannot simply wrap the whole page: the grey band below and
+          the wine call to action at the foot both run edge to edge, and a
+          full-bleed band cannot sit inside a bounded column. So the page is
+          railed in two stretches with the band left untouched between them,
+          which keeps its existing order exactly as it was. */}
+      <Section className="!pb-0 !pt-4">
+        <RailLayout banners={railTop} showTail={false}>
+          {latest ? <LatestEdition publication={latest} /> : <></>}
+          <Rule />
+          <WhatIsVaaram />
+          <div className="py-9">
+            <AdSlot placement="home_mid" />
+          </div>
+        </RailLayout>
       </Section>
 
       <div className="bg-[rgb(var(--surface-2))]">
@@ -59,56 +67,59 @@ export default async function HomePage() {
         </Section>
       </div>
 
-      <Section>
-        <AdvertiseShowcase />
-      </Section>
+      {/* ── Second railed region ───────────────────────────────────────── */}
+      <Section className="!pb-10">
+        <RailLayout banners={railRest}>
+          <AdvertiseShowcase />
 
-      {/* The feature slot: a full-width panel between the two halves of the
-          page, where a sponsor gets the most room this site sells. */}
-      <Section className="!py-9">
-        <AdSlot placement="home_feature" />
-      </Section>
+          {/* The feature slot: a full-width panel between the two halves of
+              the page, where a sponsor gets the most room this site sells. */}
+          <div className="py-9">
+            <AdSlot placement="home_feature" />
+          </div>
 
-      {all.length > 0 && (
-        <Section className="!pt-6">
-          <PublicationStats publications={all} />
-        </Section>
-      )}
+          {all.length > 0 ? <PublicationStats publications={all} /> : <></>}
 
-      {previous.length > 0 && (
-        <Section className="!pt-10">
-          <Reveal className="flex flex-wrap items-end justify-between gap-6 border-b border-[rgb(var(--hairline))] pb-7">
-            <div>
-              <h2 className="display-md">Previous editions</h2>
-              <p className="mt-2.5 text-[15px] text-[rgb(var(--text-muted))]">
-                Every edition stays online. Nothing is taken down.
-              </p>
+          {previous.length > 0 ? (
+            <div className="pt-10">
+              <Reveal className="flex flex-wrap items-end justify-between gap-6 border-b border-[rgb(var(--hairline))] pb-7">
+                <div>
+                  <h2 className="display-md">Previous editions</h2>
+                  <p className="mt-2.5 text-[15px] text-[rgb(var(--text-muted))]">
+                    Every edition stays online. Nothing is taken down.
+                  </p>
+                </div>
+                <Link
+                  href="/archives"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent-text))] hover:decoration-[rgb(var(--accent))]"
+                >
+                  Browse the full archive
+                  <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </Reveal>
+
+              {/* Three across rather than four: the content column is narrower
+                  now that the rail sits beside it. */}
+              <RevealGroup className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 lg:grid-cols-3">
+                {previous.map((publication) => (
+                  <RevealItem key={publication.id} className="h-full">
+                    <EditionCard publication={publication} />
+                  </RevealItem>
+                ))}
+              </RevealGroup>
             </div>
-            <Link
-              href="/archives"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[rgb(var(--text))] underline decoration-[rgb(var(--hairline))] underline-offset-[6px] transition-colors hover:text-[rgb(var(--accent-text))] hover:decoration-[rgb(var(--accent))]"
-            >
-              Browse the full archive
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </Reveal>
+          ) : (
+            <></>
+          )}
 
-          <RevealGroup className="mt-10 grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 lg:grid-cols-4">
-            {previous.map((publication) => (
-              <RevealItem key={publication.id} className="h-full">
-                <EditionCard publication={publication} />
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </Section>
-      )}
+          <div className="pt-6">
+            <SubscribeBand source="home" />
+          </div>
 
-      <Section className="!pt-6">
-        <SubscribeBand source="home" />
-      </Section>
-
-      <Section className="!py-9">
-        <AdSlot placement="home_closing" />
+          <div className="py-9">
+            <AdSlot placement="home_closing" />
+          </div>
+        </RailLayout>
       </Section>
 
       {/* ── Closing call to action ─────────────────────────────────────── */}

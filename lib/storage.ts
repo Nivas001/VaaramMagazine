@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -125,4 +125,34 @@ export async function createUploadTicket(
     headers: { "Content-Type": contentType },
     provider: "supabase",
   };
+}
+
+/**
+ * Removes one stored object.
+ *
+ * Used when a banner is deleted. Advertisements turn over far faster than
+ * editions do — a weekly magazine might carry a hundred bookings a year — so
+ * unlike a published PDF, their artwork is not worth keeping forever once the
+ * booking is gone.
+ *
+ * Best-effort by design: the caller deletes the database row first and only
+ * then calls this, inside a try/catch. Storage failing must never make a
+ * successful delete look as though it failed.
+ */
+export async function deleteObject(objectKey: string): Promise<void> {
+  if (!objectKey) return;
+
+  if (isR2Configured()) {
+    await r2().send(
+      new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: objectKey,
+      })
+    );
+    return;
+  }
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.storage.from(SUPABASE_BUCKET).remove([objectKey]);
+  if (error) throw new Error(error.message);
 }

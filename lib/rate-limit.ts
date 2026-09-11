@@ -26,20 +26,25 @@ function sweep(now: number) {
   }
 }
 
+/**
+ * `cost` lets one request weigh more than one hit, for an endpoint that accepts
+ * a batch: twenty advertisement impressions arriving together should not cost
+ * the same as a single one. Callers that omit it are unaffected.
+ */
 export function rateLimit(
   key: string,
-  { limit, windowMs }: { limit: number; windowMs: number }
+  { limit, windowMs, cost = 1 }: { limit: number; windowMs: number; cost?: number }
 ): { ok: boolean; retryAfterSeconds: number } {
   const now = Date.now();
   sweep(now);
 
   const hit = buckets.get(key);
   if (!hit || hit.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    return { ok: true, retryAfterSeconds: 0 };
+    buckets.set(key, { count: cost, resetAt: now + windowMs });
+    return { ok: cost <= limit, retryAfterSeconds: 0 };
   }
 
-  hit.count += 1;
+  hit.count += cost;
   if (hit.count > limit) {
     return { ok: false, retryAfterSeconds: Math.ceil((hit.resetAt - now) / 1000) };
   }

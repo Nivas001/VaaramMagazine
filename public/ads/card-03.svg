@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-label="Maple Dental Care">
+  <rect width="1200" height="600" fill="#8a1332"/>
+  <rect x="36" y="36" width="1128" height="528" fill="none" stroke="#b0546c" stroke-width="3.6"/>
+  <text x="600" y="276" text-anchor="middle" fill="#fdf1f3"
+        font-family="Georgia, 'Times New Roman', serif" font-size="78" font-weight="700">Maple Dental Care</text>
+  <text x="600" y="338.7" text-anchor="middle" fill="#e0b29b"
+        font-family="Helvetica, Arial, sans-serif" font-size="33" letter-spacing="2.64">SCARBOROUGH &amp; MARKHAM</text>
+  <text x="1128" y="560.4" text-anchor="end" fill="#b0546c"
+        font-family="Helvetica, Arial, sans-serif" font-size="33">DEMO CARD 03</text>
+</svg>

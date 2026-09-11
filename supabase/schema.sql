@@ -184,6 +184,38 @@ returns void language sql security definer set search_path = public as $$
   update public.ad_banners set clicks = clicks + 1 where id = banner_id;
 $$;
 
+-- A whole side rail's impressions in one statement. A rail can hold twenty
+-- advertisements, and twenty separate round trips per page view would both be
+-- slow and run straight into the website's own rate limit. `= any()` counts an
+-- id once however many times it appears in the array, which is the correct
+-- "once per page view" meaning.
+create or replace function public.increment_banner_impressions(banner_ids uuid[])
+returns void language sql security definer set search_path = public as $$
+  update public.ad_banners set impressions = impressions + 1 where id = any(banner_ids);
+$$;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+--  ORDERING
+--  A rail shows its banners in sort_order. This writes a whole rail's running
+--  order in one statement.
+--
+--  Deliberately NOT security definer, unlike the counters above: those only
+--  ever touch one counter column, whereas this writes admin-controlled data.
+--  Leaving it out means row level security still applies and only a signed-in
+--  admin can reorder anything.
+-- ═══════════════════════════════════════════════════════════════════════════
+create or replace function public.set_banner_order(payload jsonb)
+returns void language sql set search_path = public as $$
+  update public.ad_banners b
+     set sort_order = (e->>'sort_order')::int
+    from jsonb_array_elements(payload) e
+   where b.id = (e->>'id')::uuid;
+$$;
+
+-- Added post-launch, when banners became editable.
+alter table public.ad_banners
+  add column if not exists updated_at timestamptz not null default now();
+
 -- ═══════════════════════════════════════════════════════════════════════════
 --  OPTIONAL: Supabase Storage fallback
 --  Only needed if you are NOT using Cloudflare R2. Creates a public bucket

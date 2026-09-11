@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { DEMO_PUBLICATIONS } from "@/lib/demo-data";
+import { DEMO_BANNERS, DEMO_PUBLICATIONS } from "@/lib/demo-data";
 import type { AdBanner, BannerPlacement, Publication } from "@/lib/types";
 import { safeExternalUrl } from "@/lib/utils";
 
@@ -62,38 +62,92 @@ export const getLatestPublication = cache(async (): Promise<Publication | null> 
   return latest ?? null;
 });
 
+/**
+ * Every live banner, in one query.
+ *
+ * A page now draws on several slots at once — a side rail, three or four wide
+ * strips and the footer grid — and React's `cache` cannot merge those into one
+ * round trip because each call carries a different placement. Fetching the lot
+ * once and filtering in memory turns six queries into one. A weekly magazine
+ * carries tens of banners, not thousands, so the whole set is small.
+ *
+ * The limit is a tripwire rather than an expectation: if it is ever reached,
+ * this needs to go back to querying per placement.
+ */
+const getAllLiveBanners = cache(async (): Promise<AdBanner[]> => {
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("ad_banners")
+    .select("*")
+    .eq("is_active", true)
+    .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+    .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(500);
+
+  if (error) {
+    // A missing table or unconfigured Supabase must never break a page —
+    // the advertisement slot simply renders nothing.
+    console.error("[queries] getAllLiveBanners:", error.message);
+    return [];
+  }
+
+  const rows = (data ?? []) as AdBanner[];
+
+  // Nothing is invented in production. A placeholder edition is a harmless
+  // stand-in, but a placeholder *advertiser* is a commercial claim about a
+  // business that never booked anything, with impression counts behind it that
+  // would be fiction. So the demo banners are strictly a local convenience.
+  if (rows.length === 0 && process.env.NODE_ENV !== "production") {
+    return DEMO_BANNERS;
+  }
+
+  // Sanitised here, at the boundary, rather than only where it is rendered.
+  // These rows are serialised into the page as props for a client component,
+  // so a "javascript:" link left on the object would travel to the browser as
+  // data even though nothing would click it. Cleaning it once, on the server,
+  // means the value never leaves the machine that can still reason about it.
+  return rows.map((banner) => ({
+    ...banner,
+    target_url: safeExternalUrl(banner.target_url),
+  }));
+});
+
+/** A banner runs in one edition only, or in every edition. */
+function runsInEdition(banner: AdBanner, edition?: string) {
+  return !edition || banner.edition === null || banner.edition === edition;
+}
+
 export const getBanners = cache(
-  async (placement: BannerPlacement, edition?: string): Promise<AdBanner[]> => {
-    const supabase = await createClient();
-    const nowIso = new Date().toISOString();
+  async (placement: BannerPlacement, edition?: string): Promise<AdBanner[]> =>
+    (await getAllLiveBanners()).filter(
+      (b) => b.placement === placement && runsInEdition(b, edition)
+    )
+);
 
-    let query = supabase
-      .from("ad_banners")
-      .select("*")
-      .eq("placement", placement)
-      .eq("is_active", true)
-      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
-      .or(`expires_at.is.null,expires_at.gte.${nowIso}`)
-      .order("sort_order", { ascending: true });
+/**
+ * Several placements at once, in the order given — so a thin rail can top
+ * itself up from a fuller one. A banner booked into two of the listed
+ * placements still appears once.
+ */
+export const getBannersFor = cache(
+  async (placements: BannerPlacement[], edition?: string): Promise<AdBanner[]> => {
+    const all = await getAllLiveBanners();
+    const seen = new Set<string>();
+    const out: AdBanner[] = [];
 
-    if (edition) query = query.or(`edition.is.null,edition.eq.${edition}`);
-
-    const { data, error } = await query;
-    if (error) {
-      // A missing table or unconfigured Supabase must never break a page —
-      // the advertisement slot simply renders nothing.
-      console.error("[queries] getBanners:", error.message);
-      return [];
+    for (const placement of placements) {
+      for (const banner of all) {
+        if (banner.placement !== placement) continue;
+        if (!runsInEdition(banner, edition)) continue;
+        if (seen.has(banner.id)) continue;
+        seen.add(banner.id);
+        out.push(banner);
+      }
     }
-
-    // Sanitised here, at the boundary, rather than only where it is rendered.
-    // These rows are serialised into the page as props for a client component,
-    // so a "javascript:" link left on the object would travel to the browser as
-    // data even though nothing would click it. Cleaning it once, on the server,
-    // means the value never leaves the machine that can still reason about it.
-    return ((data ?? []) as AdBanner[]).map((banner) => ({
-      ...banner,
-      target_url: safeExternalUrl(banner.target_url),
-    }));
+    return out;
   }
 );

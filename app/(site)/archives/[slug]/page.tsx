@@ -11,6 +11,7 @@ import { EditionCard } from "@/components/magazine/EditionCard";
 import { DownloadButton } from "@/components/site/DownloadButton";
 import { ShareButton } from "@/components/site/ShareButton";
 import { AdSlot } from "@/components/ads/AdSlot";
+import { AdRail } from "@/components/ads/AdRail";
 import { Section } from "@/components/ui/Section";
 
 export const revalidate = 60;
@@ -126,16 +127,32 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
       </Section>
 
       {/* ── Reader ─────────────────────────────────────────────────────── */}
+      {/* The rail sits on the left, as it does everywhere else on the site.
+          On a phone it falls below the reader: someone who opened an edition
+          came to read it, and the rail is long. */}
       <Section width="wide" className="!pt-0">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <ReaderMount
-            url={publication.pdf_url}
-            title={publication.title}
-            publicationId={publication.id}
-          />
-
+        <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
           <aside className="flex flex-col gap-6">
-            <AdSlot placement="reader_sidebar" edition={publication.edition} />
+            {/* The reading tips come first so they are not buried under a rail
+                of advertisements — they are what a reader needs in the first
+                few seconds, and they are four lines long. */}
+            <div className="card-quiet p-6">
+              <h2 className="label-eyebrow text-[rgb(var(--text-faint))]">Reading this edition</h2>
+              <ul className="mt-4 space-y-2.5 text-sm leading-relaxed text-[rgb(var(--text-muted))]">
+                <li>Swipe left or right to turn pages on a phone.</li>
+                <li>Arrow keys turn pages; press F for full screen.</li>
+                <li>Zoom in to read the fine print in a classified.</li>
+                <li>Download the PDF to keep a copy offline.</li>
+              </ul>
+            </div>
+
+            {/* Bookings made against the retired "reader_sidebar" placement are
+                folded in by getBannersFor, so nothing stops rendering. */}
+            <AdRail
+              placements={["reader_rail", "reader_sidebar", "site_rail"]}
+              edition={publication.edition}
+              showTail={false}
+            />
 
             <div className="card p-6">
               <h2 className="font-display text-xl tracking-[-0.02em]">
@@ -153,17 +170,15 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
-
-            <div className="card-quiet p-6">
-              <h2 className="label-eyebrow text-[rgb(var(--text-faint))]">Reading this edition</h2>
-              <ul className="mt-4 space-y-2.5 text-sm leading-relaxed text-[rgb(var(--text-muted))]">
-                <li>Swipe left or right to turn pages on a phone.</li>
-                <li>Arrow keys turn pages; press F for full screen.</li>
-                <li>Zoom in to read the fine print in a classified.</li>
-                <li>Download the PDF to keep a copy offline.</li>
-              </ul>
-            </div>
           </aside>
+
+          <div className="min-w-0">
+            <ReaderMount
+              url={publication.pdf_url}
+              title={publication.title}
+              publicationId={publication.id}
+            />
+          </div>
         </div>
 
         <div className="mt-10">

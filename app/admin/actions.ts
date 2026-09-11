@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { deleteObject } from "@/lib/storage";
 import { safeExternalUrl, slugify } from "@/lib/utils";
 
 /**
@@ -169,20 +170,45 @@ export async function deletePublication(id: string): Promise<ActionResult> {
 
 /* ── Banners ────────────────────────────────────────────────────────────── */
 
-export async function createBanner(input: {
+type BannerInput = {
   clientName: string;
   targetUrl: string;
-  /** Desktop artwork is required; the other two tiers fall back to it. */
-  imageUrl: string;
-  imageKey: string;
-  imageUrlTablet: string | null;
-  imageKeyTablet: string | null;
-  imageUrlMobile: string | null;
-  imageKeyMobile: string | null;
   placement: string;
   edition: string | null;
+  startsAt: string | null;
   expiresAt: string | null;
-}): Promise<ActionResult> {
+  isActive: boolean;
+  /** Where it sits in its rail. Left out on create to append to the end. */
+  sortOrder?: number | null;
+};
+
+/**
+ * The next free position at the end of a placement's running order.
+ *
+ * Positions step in tens so a banner can later be dropped between two others
+ * by typing a number, without having to renumber everything after it.
+ */
+async function nextSortOrder(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>,
+  placement: string
+) {
+  const { data } = await supabase
+    .from("ad_banners")
+    .select("sort_order")
+    .eq("placement", placement)
+    .order("sort_order", { ascending: false })
+    .limit(1);
+
+  return ((data?.[0]?.sort_order as number | undefined) ?? 0) + 10;
+}
+
+export async function createBanner(
+  input: BannerInput & {
+    /** One artwork now serves every screen; see AD_FORMATS in lib/types.ts. */
+    imageUrl: string;
+    imageKey: string;
+  }
+): Promise<ActionResult> {
   try {
     const supabase = await requireAdmin();
     const { error } = await supabase.from("ad_banners").insert({
@@ -190,14 +216,111 @@ export async function createBanner(input: {
       target_url: safeExternalUrl(input.targetUrl),
       image_url: input.imageUrl,
       image_key: input.imageKey,
-      image_url_tablet: input.imageUrlTablet,
-      image_key_tablet: input.imageKeyTablet,
-      image_url_mobile: input.imageUrlMobile,
-      image_key_mobile: input.imageKeyMobile,
       placement: input.placement,
       edition: input.edition,
+      starts_at: input.startsAt,
       expires_at: input.expiresAt,
-      is_active: true,
+      sort_order:
+        input.sortOrder ?? (await nextSortOrder(supabase, input.placement)),
+      is_active: input.isActive,
+    });
+    if (error) return { ok: false, error: error.message };
+
+    refreshPublicPages();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}
+
+/**
+ * Edit an existing booking.
+ *
+ * Artwork is only touched when replacement artwork was actually uploaded, and
+ * the file it replaces is deliberately left in storage: an admin who swaps an
+ * image and then thinks better of it can be pointed back at the old URL, which
+ * an unrecoverable delete would make impossible. A stranded file costs a few
+ * tens of kilobytes.
+ */
+export async function updateBanner(
+  id: string,
+  input: BannerInput & { imageUrl?: string; imageKey?: string }
+): Promise<ActionResult> {
+  try {
+    const supabase = await requireAdmin();
+
+    const patch: Record<string, unknown> = {
+      client_name: input.clientName,
+      target_url: safeExternalUrl(input.targetUrl),
+      placement: input.placement,
+      edition: input.edition,
+      starts_at: input.startsAt,
+      expires_at: input.expiresAt,
+      is_active: input.isActive,
+      updated_at: new Date().toISOString(),
+    };
+    if (typeof input.sortOrder === "number") patch.sort_order = input.sortOrder;
+    if (input.imageUrl) {
+      patch.image_url = input.imageUrl;
+      patch.image_key = input.imageKey ?? null;
+      // New artwork is one file for every screen, so any per-device artwork
+      // left over from the old three-file form would now contradict it.
+      patch.image_url_tablet = null;
+      patch.image_key_tablet = null;
+      patch.image_url_mobile = null;
+      patch.image_key_mobile = null;
+    }
+
+    const { error } = await supabase.from("ad_banners").update(patch).eq("id", id);
+    if (error) return { ok: false, error: error.message };
+
+    refreshPublicPages();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}
+
+/**
+ * Move a banner one place up or down its rail, by swapping positions with the
+ * neighbour above or below it. Nothing happens at either end.
+ */
+export async function moveBanner(
+  id: string,
+  direction: "up" | "down"
+): Promise<ActionResult> {
+  try {
+    const supabase = await requireAdmin();
+
+    const { data: row, error: readError } = await supabase
+      .from("ad_banners")
+      .select("id, placement, sort_order")
+      .eq("id", id)
+      .maybeSingle();
+    if (readError) return { ok: false, error: readError.message };
+    if (!row) return { ok: false, error: "That banner no longer exists." };
+
+    const { data: siblings, error: listError } = await supabase
+      .from("ad_banners")
+      .select("id, sort_order")
+      .eq("placement", row.placement)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (listError) return { ok: false, error: listError.message };
+
+    const list = (siblings ?? []) as { id: string; sort_order: number }[];
+    const at = list.findIndex((b) => b.id === id);
+    const swapWith = direction === "up" ? at - 1 : at + 1;
+    if (at === -1 || swapWith < 0 || swapWith >= list.length) return { ok: true };
+
+    // Rewritten by index rather than by swapping the two stored numbers, so a
+    // rail whose positions were never set — every one of them still 0 — comes
+    // out correctly ordered instead of doing nothing.
+    const reordered = [...list];
+    [reordered[at], reordered[swapWith]] = [reordered[swapWith], reordered[at]];
+
+    const { error } = await supabase.rpc("set_banner_order", {
+      payload: reordered.map((b, i) => ({ id: b.id, sort_order: (i + 1) * 10 })),
     });
     if (error) return { ok: false, error: error.message };
 
@@ -224,8 +347,30 @@ export async function toggleBanner(id: string, isActive: boolean): Promise<Actio
 export async function deleteBanner(id: string): Promise<ActionResult> {
   try {
     const supabase = await requireAdmin();
+
+    // Read the keys before the row goes, or there is nothing left to tidy up.
+    const { data: row } = await supabase
+      .from("ad_banners")
+      .select("image_key, image_key_tablet, image_key_mobile")
+      .eq("id", id)
+      .maybeSingle();
+
     const { error } = await supabase.from("ad_banners").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
+
+    // Unlike a published edition's PDF, banner artwork is not worth keeping
+    // once the booking is gone — advertisements turn over weekly. Best-effort
+    // only: a storage failure must not make a successful delete look failed.
+    const keys = [row?.image_key, row?.image_key_tablet, row?.image_key_mobile].filter(
+      (key): key is string => Boolean(key)
+    );
+    for (const key of keys) {
+      try {
+        await deleteObject(key);
+      } catch (storageError) {
+        console.error("[admin] deleteBanner artwork:", key, storageError);
+      }
+    }
 
     refreshPublicPages();
     return { ok: true };

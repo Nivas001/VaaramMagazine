@@ -27,10 +27,27 @@ const VIEWS: { id: View; label: string; Icon: typeof LayoutGrid }[] = [
 export function ArchiveBrowser({
   publications,
   inlineAd,
+  railAds,
+  bleed = true,
 }: {
   publications: Publication[];
   /** Rendered on the server and passed in, so no server code reaches the client. */
   inlineAd?: ReactNode;
+  /**
+   * The side rail in groups, for narrow screens only — each node carries
+   * `lg:hidden`, because from `lg` up they already stand in the rail beside
+   * this browser. Rendered on the server and passed in, same as `inlineAd`.
+   */
+  railAds?: ReactNode[];
+  /**
+   * Whether the sticky control bar may pull out to the page gutter.
+   *
+   * It does that with negative margins that assume this sits directly inside a
+   * Section carrying the page's own padding. Inside a narrower column — beside
+   * the advertisement rail — those margins would spill into the column gap, so
+   * that page passes `bleed={false}`.
+   */
+  bleed?: boolean;
 }) {
   const [view, setView] = useState<View>("grid");
   const [query, setQuery] = useState("");
@@ -76,7 +93,12 @@ export function ArchiveBrowser({
   return (
     <div>
       {/* ── Controls ───────────────────────────────────────────────────── */}
-      <div className="sticky top-16 z-30 -mx-5 mb-10 border-b border-[rgb(var(--hairline))] chrome-blur px-5 py-4 sm:top-[72px] sm:-mx-8 sm:px-8">
+      <div
+        className={cn(
+          "sticky top-16 z-30 mb-10 border-b border-[rgb(var(--hairline))] chrome-blur py-4 sm:top-[72px]",
+          bleed && "-mx-5 px-5 sm:-mx-8 sm:px-8"
+        )}
+      >
         <div className="flex flex-wrap items-center gap-3">
           <label className="relative min-w-0 flex-1 sm:max-w-xs">
             <span className="sr-only">Search editions</span>
@@ -181,11 +203,19 @@ export function ArchiveBrowser({
           isFiltered={isFiltered}
         />
       ) : view === "grid" ? (
-        <GridView publications={filtered} inlineAd={inlineAd} />
+        <GridView publications={filtered} inlineAd={inlineAd} railAds={railAds} />
       ) : view === "list" ? (
-        <ListView publications={filtered} />
+        <>
+          <ListView publications={filtered} />
+          {/* The list and calendar have no natural gaps to deal cards into, so
+              on a narrow screen the rail follows them instead. */}
+          <div className="mt-12">{railAds}</div>
+        </>
       ) : (
-        <CalendarView publications={filtered} />
+        <>
+          <CalendarView publications={filtered} />
+          <div className="mt-12">{railAds}</div>
+        </>
       )}
     </div>
   );

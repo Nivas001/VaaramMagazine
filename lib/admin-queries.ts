@@ -37,18 +37,39 @@ export async function adminGetPublicationById(id: string): Promise<Publication |
   return (data ?? null) as Publication | null;
 }
 
+/**
+ * Every banner, grouped the way the admin screen shows them: by placement, and
+ * within a placement in the running order a reader will see them.
+ */
 export async function adminGetBanners(): Promise<AdBanner[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("ad_banners")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("placement", { ascending: true })
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("[admin] banners:", error.message);
     return [];
   }
   return (data ?? []) as AdBanner[];
+}
+
+export async function adminGetBannerById(id: string): Promise<AdBanner | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ad_banners")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[admin] banner:", error.message);
+    return null;
+  }
+  return (data as AdBanner) ?? null;
 }
 
 export async function adminGetEnquiries(): Promise<Enquiry[]> {
