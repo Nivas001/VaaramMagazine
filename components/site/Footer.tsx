@@ -33,7 +33,7 @@ export function Footer() {
               Never miss an edition
             </h2>
             <p className="mt-2.5 max-w-sm text-[15px] leading-relaxed text-[rgb(var(--text-muted))]">
-              One email every {siteConfig.publishDayLabel} with a link to that week&apos;s issue.
+              One email every week with a link to that week&apos;s issue.
             </p>
           </div>
           <SubscribeForm source="footer" />

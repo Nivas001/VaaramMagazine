@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getBanners, getLatestPublication, getPublications } from "@/lib/queries";
-import { siteConfig } from "@/site.config";
 import { Hero } from "@/components/home/Hero";
 import { WhatIsVaaram } from "@/components/home/WhatIsVaaram";
 import { HowItWorks } from "@/components/home/HowItWorks";
@@ -131,8 +130,7 @@ export default async function HomePage() {
             </h2>
             <p className="mx-auto mt-6 max-w-lg text-[17px] leading-relaxed text-warm-300">
               Tell us what you want to advertise and we will put it in front of the
-              people already looking for it — in next {siteConfig.publishDayLabel}&apos;s
-              edition.
+              people already looking for it — in the next edition.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
               <Link

@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import { AlertCircle, Check, Loader2, Send } from "lucide-react";
-import { siteConfig } from "@/site.config";
 import { cn } from "@/lib/utils";
 
 type Status = "idle" | "sending" | "sent" | "error";
@@ -70,7 +69,7 @@ export function SubscribeForm({
         role="status"
       >
         <Check className="size-4 shrink-0 text-[rgb(var(--accent-text))]" aria-hidden />
-        You&apos;re on the list. We&apos;ll email you every {siteConfig.publishDayLabel}.
+        You&apos;re on the list. We&apos;ll email you every week.
       </p>
     );
   }

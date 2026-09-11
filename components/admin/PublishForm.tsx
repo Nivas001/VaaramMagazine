@@ -30,7 +30,7 @@ const field =
 const label =
   "mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-[rgb(var(--text-muted))]";
 
-/** Sunday of the current week — the natural default for a weekly paper. */
+/** Today — editions go out whichever day they're ready, not a fixed weekday. */
 function defaultEditionDate() {
   return new Date().toISOString().slice(0, 10);
 }

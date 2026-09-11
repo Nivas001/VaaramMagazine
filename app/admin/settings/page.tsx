@@ -146,7 +146,6 @@ export default async function AdminSettingsPage() {
       <Panel className="mt-5 divide-y divide-[rgb(var(--hairline))]">
         <Row label="Publication name" value={siteConfig.name} />
         <Row label="Tagline" value={siteConfig.tagline} />
-        <Row label="Publishing day" value={siteConfig.publishDayLabel} />
         <Row label="Contact email" value={siteConfig.contact.email} />
         <Row label="Contact phone" value={siteConfig.contact.phone} />
         <Row label="Address" value={siteConfig.contact.address} />

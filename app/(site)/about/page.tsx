@@ -85,8 +85,8 @@ export default function AboutPage() {
               opened nearby. Every page answers that.
             </p>
             <p>
-              A new edition is published every {siteConfig.publishDayLabel} as a complete
-              PDF. It is free, it needs no account, and every past edition stays online.
+              A new edition is published every week as a complete PDF. It is free, it
+              needs no account, and every past edition stays online.
             </p>
           </Reveal>
         </div>

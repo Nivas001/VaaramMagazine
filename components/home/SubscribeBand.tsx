@@ -1,4 +1,3 @@
-import { siteConfig } from "@/site.config";
 import { SubscribeForm } from "@/components/site/SubscribeForm";
 import { WeekIllustration } from "@/components/ui/Illustration";
 import { Reveal } from "@/components/ui/Reveal";
@@ -14,7 +13,7 @@ export function SubscribeBand({ source = "home" }: { source?: string }) {
     <Reveal className="card-quiet overflow-hidden">
       <div className="grid items-center gap-10 p-8 sm:p-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.75fr)] lg:gap-16">
         <div>
-          <p className="label-eyebrow text-[rgb(var(--label))]">Every {siteConfig.publishDayLabel}</p>
+          <p className="label-eyebrow text-[rgb(var(--label))]">Every week</p>
           <h2 className="display-md mt-4 max-w-lg">
             Get the new edition the moment it is published.
           </h2>

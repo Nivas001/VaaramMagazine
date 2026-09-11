@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { siteConfig } from "@/site.config";
 import { Eyebrow } from "@/components/ui/Section";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 import {
@@ -79,8 +78,8 @@ export function HowItWorks() {
 
       <Reveal delay={0.15}>
         <p className="mt-12 border-t border-[rgb(var(--hairline))] pt-6 text-[15px] text-[rgb(var(--text-muted))]">
-          The cycle runs once a week. Anything approved before {siteConfig.publishDayLabel}{" "}
-          goes into that week&apos;s edition.
+          The cycle runs once a week. Get your advertisement approved in good time and
+          it goes into that week&apos;s edition.
         </p>
       </Reveal>
     </div>

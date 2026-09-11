@@ -90,8 +90,8 @@ export default function OpengraphImage() {
               display: "flex",
             }}
           >
-            A weekly advertising and classifieds magazine. One new edition every{" "}
-            {siteConfig.publishDayLabel} — free to read.
+            A weekly advertising and classifieds magazine. One new edition every week —
+            free to read.
           </div>
           <div style={{ fontSize: 24, color: "#e0b29b", display: "flex" }}>
             {siteConfig.url.replace(/^https?:\/\//, "")}

@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, Download } from "lucide-react";
 import type { Publication } from "@/lib/types";
 import { siteConfig } from "@/site.config";
 import { formatBytes, formatDate } from "@/lib/utils";
-import { CoverArt, MagazineCover } from "@/components/magazine/MagazineCover";
+import { CoverFlip } from "@/components/home/CoverFlip";
 import { VaaramMark } from "@/components/site/VaaramMark";
 
 /**
@@ -79,9 +79,9 @@ export function Hero({
 
             <div className="animate-rise" style={{ animationDelay: "0.18s" }}>
               <p className="mt-8 max-w-[30rem] text-[16.5px] leading-[1.65] text-warm-300 sm:text-[18px]">
-                A weekly advertising magazine. Every {siteConfig.publishDayLabel}, one new
-                edition gathers the businesses, services, property, jobs and offers near
-                you into a single issue — free to read, no sign-up, on any phone.
+                A weekly advertising magazine. One new edition every week gathers the
+                businesses, services, property, jobs and offers near you into a single
+                issue — free to read, no sign-up, on any phone.
               </p>
             </div>
 
@@ -132,7 +132,7 @@ export function Hero({
               className="animate-rise flex justify-center lg:justify-end"
               style={{ animationDelay: "0.16s" }}
             >
-              <CoverShelf publication={publication} previous={previous} />
+              <CoverFlip publication={publication} previous={previous} />
             </div>
           )}
         </div>
@@ -231,66 +231,6 @@ function Spec({
         {label}
       </dt>
       <dd className="mt-2 text-[13.5px] font-semibold text-warm-100">{value}</dd>
-    </div>
-  );
-}
-
-/**
- * This week's cover standing in front of the two before it.
- *
- * The covers behind are inert artwork rather than links: they exist to show the
- * publication has a run, and giving them their own tab stops would put three
- * destinations where a reader only wants one.
- */
-function CoverShelf({
-  publication,
-  previous,
-}: {
-  publication: Publication;
-  previous: Publication[];
-}) {
-  const behind = previous.slice(0, 2);
-
-  return (
-    <div className="relative w-[min(76vw,380px)] sm:w-[min(44vw,420px)] lg:w-[420px]">
-      {behind.length > 0 && (
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          {behind.map((back, i) => (
-            <div
-              key={back.id}
-              className="page-stock absolute aspect-[3/4] overflow-hidden"
-              // The stack fans back to the left, into the gutter between the
-              // copy and the cover. Fanning right would push it past the band's
-              // right edge, where `overflow-hidden` simply cuts it in half.
-              style={{
-                width: `${85 - i * 8}%`,
-                left: `${-7 - i * 9}%`,
-                top: `${7 + i * 5}%`,
-                opacity: 0.38 - i * 0.14,
-                filter: "saturate(0.5)",
-              }}
-            >
-              <CoverArt publication={back} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Link
-        href={`/archives/${publication.slug}`}
-        aria-label={`Read ${publication.title}`}
-        className="group relative block rounded-sm transition-transform duration-500 hover:-translate-y-2"
-      >
-        <MagazineCover publication={publication} size="fluid" priority />
-
-        <span className="label-eyebrow mt-7 flex items-center justify-center gap-2.5 text-warm-400 transition-colors group-hover:text-gold-soft lg:justify-end">
-          Open the edition
-          <ArrowRight
-            className="size-3.5 transition-transform duration-300 group-hover:translate-x-1"
-            aria-hidden
-          />
-        </span>
-      </Link>
     </div>
   );
 }

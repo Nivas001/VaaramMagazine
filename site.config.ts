@@ -29,10 +29,6 @@ export const siteConfig = {
   /** Dates, numbers and currency all follow Canadian conventions. */
   dateLocale: "en-CA",
 
-  /** The day a new edition goes live. 0 = Sunday … 6 = Saturday. */
-  publishDay: 0,
-  publishDayLabel: "Sunday",
-
   contact: {
     email: "contact@vaaram.ca",
     /** PLACEHOLDER — 555 numbers are reserved and can never connect. */
@@ -139,7 +135,7 @@ export const siteConfig = {
     {
       question: "When is the deadline for next week's edition?",
       answer:
-        "Anything approved before Sunday goes into that week's edition. If it is close to the day, call us — we will tell you honestly whether it will make it.",
+        "Editions go out roughly once a week. Send your advertisement in good time and it goes into the next one — if you are cutting it close, call us and we will tell you honestly whether it will make it.",
     },
     {
       question: "Do readers have to pay or sign up?",

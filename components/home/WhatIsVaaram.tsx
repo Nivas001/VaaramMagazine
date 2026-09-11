@@ -21,10 +21,9 @@ export function WhatIsVaaram() {
           opportunities.
         </h2>
         <p className="lead mt-6 max-w-md">
-          One edition, every {siteConfig.publishDayLabel}. Everything inside it is an
-          advertisement — which is the point. People open Vaaram because they are
-          looking for something, and what they find is a business ready to hear from
-          them.
+          One new edition every week. Everything inside it is an advertisement — which
+          is the point. People open Vaaram because they are looking for something, and
+          what they find is a business ready to hear from them.
         </p>
 
         <div className="mt-10 hidden max-w-sm border-t border-[rgb(var(--hairline))] pt-9 lg:block">

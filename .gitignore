@@ -19,3 +19,7 @@ next-env.d.ts
 .idea/
 .claude/
 .env*
+
+# Local record of what scripts/seed-demo-editions.mjs created, so --clear can
+# find it. Specific to whichever database .env.local points at.
+scripts/.demo-editions.json
