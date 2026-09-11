@@ -319,10 +319,33 @@ export async function moveBanner(
     const reordered = [...list];
     [reordered[at], reordered[swapWith]] = [reordered[swapWith], reordered[at]];
 
-    const { error } = await supabase.rpc("set_banner_order", {
-      payload: reordered.map((b, i) => ({ id: b.id, sort_order: (i + 1) * 10 })),
-    });
-    if (error) return { ok: false, error: error.message };
+    // Written as plain row updates rather than a single set_banner_order(jsonb)
+    // statement: that function has to exist in the database, and a project
+    // whose schema.sql was updated without being re-run against the live
+    // database (exactly what happened here) would fail with "Could not find
+    // the function ... in the schema cache" on every reorder. Individual
+    // updates go through the same admin RLS policy every other banner action
+    // already relies on, so this works with no migration required.
+    //
+    // Only rows whose position actually changed are written. That has to be
+    // checked by id, not by array index: after a swap, the banner now sitting
+    // at index i is a *different* banner than the one that sat there before,
+    // so comparing the new value at index i against the old value at index i
+    // silently compares two unrelated banners — and for a plain two-item swap
+    // those happen to be numerically equal, which erased both real changes
+    // the first time this was written.
+    const originalById = new Map(list.map((b) => [b.id, b.sort_order]));
+    const updates = reordered
+      .map((b, i) => ({ id: b.id, sort_order: (i + 1) * 10 }))
+      .filter((b) => b.sort_order !== originalById.get(b.id));
+
+    const results = await Promise.all(
+      updates.map((b) =>
+        supabase.from("ad_banners").update({ sort_order: b.sort_order }).eq("id", b.id)
+      )
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) return { ok: false, error: failed.error.message };
 
     refreshPublicPages();
     return { ok: true };

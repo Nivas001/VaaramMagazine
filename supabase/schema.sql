@@ -196,21 +196,14 @@ $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  ORDERING
---  A rail shows its banners in sort_order. This writes a whole rail's running
---  order in one statement.
---
---  Deliberately NOT security definer, unlike the counters above: those only
---  ever touch one counter column, whereas this writes admin-controlled data.
---  Leaving it out means row level security still applies and only a signed-in
---  admin can reorder anything.
+--  A rail shows its banners in sort_order. Reordering (moveBanner in
+--  app/admin/actions.ts) writes it with plain per-row updates through the
+--  "admins manage banners" policy above rather than a database function —
+--  deliberately, so the feature never depends on a migration having been run
+--  against the live project. If you are reading this because a previous
+--  version of this file defined public.set_banner_order(jsonb) and your
+--  database still has it, it is safe to drop: nothing calls it any more.
 -- ═══════════════════════════════════════════════════════════════════════════
-create or replace function public.set_banner_order(payload jsonb)
-returns void language sql set search_path = public as $$
-  update public.ad_banners b
-     set sort_order = (e->>'sort_order')::int
-    from jsonb_array_elements(payload) e
-   where b.id = (e->>'id')::uuid;
-$$;
 
 -- Added post-launch, when banners became editable.
 alter table public.ad_banners
