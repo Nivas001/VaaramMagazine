@@ -35,7 +35,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero publication={latest} previous={previous} />
+      <Hero publication={latest} />
 
       {/* A leaderboard directly under the hero — the first paid slot a reader
           meets, and the one advertisers ask for by name. */}

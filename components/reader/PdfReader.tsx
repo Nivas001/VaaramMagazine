@@ -63,7 +63,15 @@ export function PdfReader({
   const [rendering, setRendering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
-  const [turnKey, setTurnKey] = useState(0);
+  /**
+   * The page being turned away from, held as a snapshot while it swings.
+   *
+   * `id` becomes the leaf's React key. Without it, paging twice in the same
+   * direction would reuse the same element with the same animation-name, and a
+   * CSS animation only restarts when one of those changes — so the second turn
+   * would inherit the finished clock of the first and never fire its end event.
+   */
+  const [turn, setTurn] = useState<{ id: number; src: string; forward: boolean } | null>(null);
 
   /* ── Load the document once ─────────────────────────────────────────── */
   useEffect(() => {
@@ -196,13 +204,32 @@ export function PdfReader({
   /* ── Navigation ─────────────────────────────────────────────────────── */
   const goTo = useCallback(
     (next: number) => {
-      setPage((current) => {
-        const target = Math.min(Math.max(next, 1), Math.max(numPages, 1));
-        if (target !== current) setTurnKey((k) => k + 1);
-        return target;
-      });
+      const target = Math.min(Math.max(next, 1), Math.max(numPages, 1));
+      if (target === page) return;
+
+      // Photograph the page being left before the canvas re-renders over it.
+      // That snapshot is what actually turns, so the animation never waits on
+      // the next page and never swings a blank sheet.
+      const canvas = canvasRef.current;
+      const still =
+        typeof window !== "undefined" &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (canvas && canvas.width > 0 && still) {
+        try {
+          setTurn({
+            id: Date.now(),
+            src: canvas.toDataURL("image/jpeg", 0.85),
+            forward: target > page,
+          });
+        } catch {
+          /* A tainted canvas only costs the flourish, never the page change. */
+        }
+      }
+
+      setPage(target);
     },
-    [numPages]
+    [numPages, page]
   );
 
   useEffect(() => {
@@ -358,12 +385,32 @@ export function PdfReader({
           </div>
         )}
 
-        <div key={turnKey} className="relative">
+        <div className="pdf-stage relative">
           <canvas
             ref={canvasRef}
             className="pdf-canvas"
             aria-label={`Page ${page} of ${title}`}
           />
+
+          {turn && (
+            <div
+              key={turn.id}
+              aria-hidden
+              className={cn("pdf-leaf", turn.forward ? "pdf-leaf-forward" : "pdf-leaf-back")}
+              // The shading pseudo-element finishes first and reports through
+              // this same handler; only the turn itself ends the leaf.
+              onAnimationEnd={(e) => {
+                if (e.animationName === "page-turn" || e.animationName === "page-turn-back") {
+                  setTurn(null);
+                }
+              }}
+            >
+              {/* A snapshot of a canvas, not a remote asset. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={turn.src} alt="" />
+            </div>
+          )}
+
           {rendering && !loading && (
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
               <Loader2 className="size-6 animate-spin text-wine-soft" aria-hidden />

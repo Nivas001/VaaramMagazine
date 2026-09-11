@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, Download } from "lucide-react";
 import type { Publication } from "@/lib/types";
 import { siteConfig } from "@/site.config";
 import { formatBytes, formatDate } from "@/lib/utils";
-import { CoverFlip } from "@/components/home/CoverFlip";
+import { EditionFlip } from "@/components/home/EditionFlip";
 import { VaaramMark } from "@/components/site/VaaramMark";
 
 /**
@@ -18,14 +18,7 @@ import { VaaramMark } from "@/components/site/VaaramMark";
  * The band pulls itself up behind the sticky header with a negative margin, so
  * the navigation floats over the dark ground rather than sitting on a seam.
  */
-export function Hero({
-  publication,
-  previous = [],
-}: {
-  publication: Publication | null;
-  /** The editions before this one, shown stacked behind the cover. */
-  previous?: Publication[];
-}) {
+export function Hero({ publication }: { publication: Publication | null }) {
   const issueLine = [
     publication?.title,
     publication ? formatDate(publication.edition_date) : null,
@@ -132,7 +125,7 @@ export function Hero({
               className="animate-rise flex justify-center lg:justify-end"
               style={{ animationDelay: "0.16s" }}
             >
-              <CoverFlip publication={publication} previous={previous} />
+              <EditionFlip publication={publication} />
             </div>
           )}
         </div>

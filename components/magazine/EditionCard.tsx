@@ -31,13 +31,15 @@ export function EditionCard({
         href={`/archives/${publication.slug}`}
         className="flex h-full flex-col rounded-lg focus-visible:outline-offset-4"
       >
-        {/* Cover, presented as a trimmed page rather than a rounded thumbnail. */}
-        <div className="relative">
-          <div
-            className="page-stock aspect-[3/4] w-full transition-transform duration-500 ease-out group-hover:-translate-y-1.5"
-            style={{ boxShadow: "var(--shadow-card)" }}
-          >
-            <CoverArt publication={publication} priority={priority} />
+        {/* The edition as an object: a block of pages with a cover on it that
+            lifts off the spine on hover. */}
+        <div className="book relative">
+          <div className="book-body aspect-[3/4] w-full">
+            <div aria-hidden className="page-stack book-leaf book-leaf-1" />
+            <div aria-hidden className="page-stack book-leaf book-leaf-2" />
+            <div className="page-stock book-cover">
+              <CoverArt publication={publication} priority={priority} />
+            </div>
           </div>
           {/* The lift is sold by the shadow growing, not by the card scaling. */}
           <div

@@ -307,6 +307,69 @@ html.dark {
   background: linear-gradient(to right, #cfc7ba 0%, #f2ede4 12%, #fbf9f5 100%);
 }
 
+/* ═══ THE BOOK, OPENING ════════════════════════════════════════════════════
+   Hovering an edition tips it and lifts the cover off the block of pages
+   underneath, the way taking one off a shelf does.
+
+   Everything hinges on the spine and swings by a different amount — cover
+   furthest, the leaves behind it progressively less — so what you actually
+   see is the wedge opening between them. That wedge is the whole effect; the
+   rotation on its own just looks like a skewed rectangle.                  */
+@utility book {
+  perspective: 1500px;
+}
+
+.book-body {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.book-leaf,
+.book-cover {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Set here rather than inline on the element: an inline style outranks every
+   stylesheet rule, so a resting shadow written there could never be replaced
+   by the lifted one below. */
+.book-cover {
+  box-shadow: var(--shadow-card);
+}
+
+/* Pointer devices only. On a phone there is no hover to leave, and a tap
+   would otherwise stick the book open behind the page it navigated to. */
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .book-body {
+    transform: rotateY(-14deg);
+  }
+  .group:hover .book-leaf-1 {
+    transform: rotateY(-6deg);
+  }
+  .group:hover .book-leaf-2 {
+    transform: rotateY(-11deg);
+  }
+  .group:hover .book-cover {
+    transform: rotateY(-20deg);
+    box-shadow: 7px 0 20px -5px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* A snap straight to twenty degrees is worse than not opening at all. */
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .book-body,
+  .group:hover .book-leaf-1,
+  .group:hover .book-leaf-2,
+  .group:hover .book-cover {
+    transform: none;
+  }
+}
+
 /* ═══ MOTION ═══════════════════════════════════════════════════════════════ */
 
 /**
@@ -343,7 +406,68 @@ html.dark {
   }
 }
 
-/* ═══ PDF READER ═══════════════════════════════════════════════════════════ */
+/* ═══ PDF READER ═══════════════════════════════════════════════════════════
+   Turning a page lifts the sheet you were on and swings it off the spine,
+   revealing the page already rendered underneath. The sheet is a snapshot of
+   the canvas taken the moment before it re-rendered, so the turn never waits
+   on the next page and never shows a blank.                                */
+.pdf-stage {
+  perspective: 2400px;
+}
+
+.pdf-leaf {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  z-index: 5;
+  pointer-events: none;
+  animation: page-turn 0.8s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+}
+
+/* Forward hinges on the spine at the left; back swings out to the right, so
+   the two directions read as opposites rather than as the same motion. */
+.pdf-leaf-forward {
+  transform-origin: left center;
+}
+.pdf-leaf-back {
+  transform-origin: right center;
+  animation-name: page-turn-back;
+}
+
+.pdf-leaf img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Light coming off the sheet as it lifts. Without it the page disappears at
+   ninety degrees instead of turning. */
+.pdf-leaf::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.18) 55%, transparent);
+  animation: page-turn-shade 0.48s ease-in forwards;
+}
+.pdf-leaf-back::after {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.18) 55%, transparent);
+}
+
+@keyframes page-turn {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(-178deg); }
+}
+
+@keyframes page-turn-back {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(178deg); }
+}
+
+@keyframes page-turn-shade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .pdf-canvas {
   display: block;
   max-width: 100%;
