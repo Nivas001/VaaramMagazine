@@ -406,74 +406,376 @@ html.dark {
   }
 }
 
-/* ═══ PDF READER ═══════════════════════════════════════════════════════════
-   Turning a page lifts the sheet you were on and swings it off the spine,
-   revealing the page already rendered underneath. The sheet is a snapshot of
-   the canvas taken the moment before it re-rendered, so the turn never waits
-   on the next page and never shows a blank.                                */
-.pdf-stage {
-  perspective: 2400px;
-}
+/* ═══ THE READER ═══════════════════════════════════════════════════════════
+   An open magazine, built out of real layers rather than a picture of one.
 
-.pdf-leaf {
+   The stack, from the reading room inwards:
+
+     .pdf-stage-surface   the room — scrolls, and carries the pan cursor
+       .pdf-book          the open book, and the only element with perspective
+         .pdf-slot        one half of the spread, holding a static page
+         .pdf-gutter      the binding where the two halves meet
+         .pdf-leaf-holder the sheet in motion, hinged on the spine
+         .pdf-corner      the corner a reader reaches for
+
+   Nothing in here animates a colour or a shadow on a timer: every moving part
+   is a transform, so a turn stays on the compositor and a cheap phone still
+   holds sixty frames.                                                       */
+
+/**
+ * Pinned to its frame rather than sized by what is in it.
+ *
+ * The book's dimensions are measured off this element, so if this element in
+ * turn took its height from the book, the two would chase each other through
+ * the ResizeObserver forever and lock the tab. Filling the frame absolutely
+ * makes the measurement one-way: the frame sizes the stage, the stage sizes
+ * the book, and nothing feeds back.
+ */
+.pdf-stage-surface {
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
-  z-index: 5;
+  display: flex;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.05), transparent 60%),
+    linear-gradient(180deg, #1d151b 0%, #140d12 100%);
+}
+
+.pdf-stage-surface[data-tone="night"] {
+  background: linear-gradient(180deg, #08070a 0%, #050406 100%);
+}
+.pdf-stage-surface[data-tone="sepia"] {
+  background: linear-gradient(180deg, #2a211a 0%, #1c1611 100%);
+}
+
+/* At fit size a horizontal drag turns the page, so the browser is asked to
+   keep only the vertical gesture for itself. Zoomed in, every native gesture
+   is handed back — a browser pans and pinches better than we can. */
+.pdf-stage-fit {
+  touch-action: pan-y;
+}
+.pdf-stage-zoomed {
+  touch-action: pan-x pan-y pinch-zoom;
+  cursor: grab;
+}
+.pdf-stage-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* `margin: auto` rather than `justify-content: center`: a centred flex item
+   that outgrows its container has its top and left edges cut off and made
+   unreachable, and a zoomed page always outgrows its container. */
+.pdf-book {
+  position: relative;
+  display: flex;
+  margin: auto;
+  flex: none;
+  transform-style: preserve-3d;
+}
+
+.pdf-slot {
+  position: relative;
+  flex: none;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 26px 60px -26px rgba(0, 0, 0, 0.8);
+}
+.pdf-slot-left { border-radius: 3px 0 0 3px; }
+.pdf-slot-right { border-radius: 0 3px 3px 0; }
+.pdf-slot-only { border-radius: 2px 4px 4px 2px; }
+
+.pdf-slot-empty {
+  width: 100%;
+  background: linear-gradient(180deg, #efe9e0, #ded6c9);
+}
+
+/** The binding. Drawn only where two pages actually meet. */
+.pdf-gutter {
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 46px;
+  transform: translateX(-50%);
   pointer-events: none;
-  animation: page-turn 0.8s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  z-index: 4;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.16) 34%,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(0, 0, 0, 0.16) 66%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
-/* Forward hinges on the spine at the left; back swings out to the right, so
-   the two directions read as opposites rather than as the same motion. */
-.pdf-leaf-forward {
+/** The shadow the turning sheet throws onto the half it is passing over. */
+.pdf-cast {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.pdf-cast-right {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0) 72%);
+}
+.pdf-cast-left {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0) 72%);
+}
+
+.pdf-leaf-holder {
+  position: absolute;
+  top: 0;
+  z-index: 6;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+/* ── The bending sheet ─────────────────────────────────────────────────────
+   Vertical strips, each hinged inside the one before it. See BookLeaf.tsx for
+   the geometry; all this does is make the strips stack in 3D and hide their
+   own backs so the two printed faces never show through each other.         */
+.book-leaf {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.book-leaf-seg {
+  position: absolute;
+  top: 0;
+  height: 100%;
   transform-origin: left center;
-}
-.pdf-leaf-back {
-  transform-origin: right center;
-  animation-name: page-turn-back;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
-.pdf-leaf img {
+.book-leaf-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-color: #fff;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.book-leaf-back {
+  transform: rotateY(180deg);
+}
+
+/**
+ * The light on the sheet. The gradient itself is supplied per strip as a slice
+ * of one gradient spanning the whole leaf (see BookLeaf.tsx) — painting a
+ * separate gradient inside each strip is what turns a curve into a fan.
+ */
+.book-leaf-shade {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+}
+
+/* ── A printed page and everything laid over it ───────────────────────────── */
+.pdf-page {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+
+.pdf-page-img {
   display: block;
   width: 100%;
   height: 100%;
+  /* The raster is cut to the same proportion as the slot, so filling it is
+     exact and avoids the hairline of ground that `contain` would leave. */
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-/* Light coming off the sheet as it lifts. Without it the page disappears at
-   ninety degrees instead of turning. */
-.pdf-leaf::after {
+.pdf-page-blank {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #fbfaf7, #eee8de);
+}
+
+.pdf-page-tone {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+/* Sepia warms the stock. Night dims it rather than inverting it — inverting a
+   page of colour advertisements ruins the artwork the advertiser paid for. */
+.pdf-page[data-tone="sepia"] .pdf-page-tone {
+  background: rgba(196, 146, 84, 0.22);
+  mix-blend-mode: multiply;
+}
+.pdf-page[data-tone="night"] .pdf-page-tone {
+  background: rgba(10, 8, 12, 0.5);
+}
+
+/**
+ * Invisible type, positioned over the glyphs actually printed on the page, so
+ * a reader can select and copy a phone number out of an advertisement.
+ *
+ * It is inert until the reader turns selection on, because a text layer that
+ * is always live swallows the drag that turns the page.
+ */
+.pdf-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 5;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+.pdf-page-selectable .pdf-text-layer {
+  pointer-events: auto;
+  user-select: text;
+  cursor: text;
+}
+.pdf-text-layer span {
+  position: absolute;
+  white-space: pre;
+  transform-origin: 0 0;
+  color: transparent;
+}
+.pdf-text-layer span::selection {
+  background: rgba(195, 49, 80, 0.32);
+  color: transparent;
+}
+
+.pdf-highlight {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: 2px;
+  background: rgba(255, 206, 64, 0.45);
+  mix-blend-mode: multiply;
+}
+.pdf-highlight-active {
+  background: rgba(255, 140, 46, 0.6);
+  box-shadow: 0 0 0 2px rgba(255, 140, 46, 0.75);
+}
+
+/**
+ * Every phone number, address and web address in the edition, made tappable.
+ *
+ * Invisible at rest — an advertisement is artwork and must not be covered in
+ * boxes — and revealed on hover, or all at once while the reader holds the
+ * "show links" toggle.
+ */
+.pdf-link {
+  position: absolute;
+  z-index: 7;
+  display: block;
+  border: 0;
+  padding: 0;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow: inset 0 0 0 0 rgba(195, 49, 80, 0);
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+  cursor: pointer;
+}
+.pdf-link:hover,
+.pdf-link:focus-visible,
+.pdf-page-links-lit .pdf-link {
+  background-color: rgba(195, 49, 80, 0.14);
+  box-shadow: inset 0 0 0 1.5px rgba(195, 49, 80, 0.55);
+}
+
+.pdf-link-icon {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  translate: 0 -50%;
+  opacity: 0;
+  color: rgb(138, 19, 50);
+  transition: opacity 0.16s ease;
+}
+.pdf-link:hover .pdf-link-icon {
+  opacity: 0.95;
+}
+
+/**
+ * The corner of the page. Lifts under the pointer the way a real one does,
+ * and turns the page when clicked — the gesture people try first, before they
+ * look for a button.
+ */
+.pdf-corner {
+  position: absolute;
+  bottom: 0;
+  z-index: 8;
+  width: clamp(46px, 7%, 88px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.pdf-corner-next { right: 0; }
+.pdf-corner-prev { left: 0; }
+
+.pdf-corner::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to left, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.18) 55%, transparent);
-  animation: page-turn-shade 0.48s ease-in forwards;
+  opacity: 0;
+  transform: scale(0.35);
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 7px rgba(0, 0, 0, 0.45));
 }
-.pdf-leaf-back::after {
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.18) 55%, transparent);
+.pdf-corner-next::after {
+  transform-origin: 100% 100%;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(225deg, #ffffff 0%, #efe9df 55%, #d8cfc1 100%);
+}
+.pdf-corner-prev::after {
+  transform-origin: 0 100%;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #efe9df 55%, #d8cfc1 100%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pdf-corner:hover::after,
+  .pdf-corner:focus-visible::after {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-@keyframes page-turn {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(-178deg); }
-}
+/* ── Chrome ───────────────────────────────────────────────────────────────── */
 
-@keyframes page-turn-back {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(178deg); }
-}
-
-@keyframes page-turn-shade {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.pdf-canvas {
+/** The thumbnail rail, and the search results beside it. */
+.pdf-thumb {
+  position: relative;
   display: block;
-  max-width: 100%;
-  height: auto;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28), 0 24px 60px -24px rgba(0, 0, 0, 0.55);
+  width: 100%;
+  border-radius: 3px;
+  background: rgb(var(--surface-2));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.pdf-thumb:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.4);
+}
+.pdf-thumb-current {
+  box-shadow: 0 0 0 2px rgb(var(--accent)), 0 6px 18px -6px rgba(0, 0, 0, 0.45);
+}
+
+/**
+ * Anything mid-turn is a transform, so reduced motion is honoured by the
+ * reader itself dropping to an instant page change rather than by the
+ * stylesheet crushing the duration — see `reducedMotion` in Flipbook.tsx.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .pdf-corner::after {
+    transition: none;
+  }
 }
 
 /** Horizontal chip rails stay scrollable but lose their scrollbar. */

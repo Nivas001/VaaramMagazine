@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "prebuild": "node scripts/copy-pdf-worker.mjs 2>/dev/null || bun scripts/copy-pdf-worker.mjs 2>/dev/null || true"
+    "prebuild": "node scripts/copy-pdf-worker.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",

@@ -49,6 +49,11 @@ export function ReaderMount({
   }, [track]);
 
   return (
-    <PdfReader url={url} title={title} onDownload={() => track("publication_download")} />
+    <PdfReader
+      url={url}
+      title={title}
+      storageKey={publicationId}
+      onDownload={() => track("publication_download")}
+    />
   );
 }

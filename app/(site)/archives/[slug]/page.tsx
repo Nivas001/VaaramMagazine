@@ -139,10 +139,11 @@ export default async function EditionPage({ params }: { params: Promise<{ slug: 
             <div className="card-quiet p-6">
               <h2 className="label-eyebrow text-[rgb(var(--text-faint))]">Reading this edition</h2>
               <ul className="mt-4 space-y-2.5 text-sm leading-relaxed text-[rgb(var(--text-muted))]">
-                <li>Swipe left or right to turn pages on a phone.</li>
-                <li>Arrow keys turn pages; press F for full screen.</li>
-                <li>Zoom in to read the fine print in a classified.</li>
-                <li>Download the PDF to keep a copy offline.</li>
+                <li>Take hold of a page and drag it across to turn it.</li>
+                <li>Zoom in, then drag the page around or scroll it — either works.</li>
+                <li>Tap any phone number or address to call, write or open it.</li>
+                <li>Search the whole edition, or open the pages panel to jump.</li>
+                <li>Arrow keys turn pages, F is full screen, ? lists the rest.</li>
               </ul>
             </div>
 
