@@ -243,6 +243,31 @@ async function writeBanner(
 }
 
 /**
+ * A calendar day typed into the admin, as the instant it actually means.
+ *
+ * Both forms ask for plain days, and a plain day handed to Postgres becomes
+ * midnight at the *start* of it. For a start date that is right. For an end
+ * date it is a day short: "stop showing on 31 December" would take the
+ * advertisement down at one minute past midnight on the 31st, and the
+ * advertiser would lose the last day they paid for — the kind of error nobody
+ * notices until a client counts.
+ *
+ * Anything that is not a bare "YYYY-MM-DD" is passed through untouched, so a
+ * full timestamp from elsewhere keeps its own time.
+ */
+const PLAIN_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function startOfDay(value: string | null) {
+  if (!value) return null;
+  return PLAIN_DAY.test(value) ? `${value}T00:00:00.000Z` : value;
+}
+
+function endOfDay(value: string | null) {
+  if (!value) return null;
+  return PLAIN_DAY.test(value) ? `${value}T23:59:59.999Z` : value;
+}
+
+/**
  * The next free position at the end of a placement's running order.
  *
  * Positions step in tens so a banner can later be dropped between two others
@@ -279,8 +304,8 @@ export async function createBanner(
         image_key: input.imageKey,
         placement: input.placement,
         edition: input.edition,
-        starts_at: input.startsAt,
-        expires_at: input.expiresAt,
+        starts_at: startOfDay(input.startsAt),
+        expires_at: endOfDay(input.expiresAt),
         sort_order:
           input.sortOrder ?? (await nextSortOrder(supabase, input.placement)),
         rotate_seconds: input.rotateSeconds ?? null,
@@ -354,8 +379,8 @@ export async function createBannerBatch(input: {
           image_key: artwork.imageKey,
           placement,
           edition: input.edition,
-          starts_at: input.startsAt,
-          expires_at: input.expiresAt,
+          starts_at: startOfDay(input.startsAt),
+          expires_at: endOfDay(input.expiresAt),
           sort_order: input.sortOrder ?? (await nextSortOrder(supabase, placement)),
           rotate_seconds: input.rotateSeconds ?? null,
           is_active: input.isActive,
@@ -397,8 +422,8 @@ export async function updateBanner(
       target_url: safeExternalUrl(input.targetUrl),
       placement: input.placement,
       edition: input.edition,
-      starts_at: input.startsAt,
-      expires_at: input.expiresAt,
+      starts_at: startOfDay(input.startsAt),
+      expires_at: endOfDay(input.expiresAt),
       is_active: input.isActive,
       updated_at: new Date().toISOString(),
     };

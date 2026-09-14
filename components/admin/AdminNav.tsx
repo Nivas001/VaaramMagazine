@@ -21,7 +21,7 @@ const LINKS = [
   { href: "/admin/issues", label: "Issues", Icon: Newspaper },
   { href: "/admin/issues/new", label: "Publish", Icon: FileUp },
   { href: "/admin/enquiries", label: "Enquiries", Icon: MessageSquare },
-  { href: "/admin/banners", label: "Banners", Icon: Images },
+  { href: "/admin/banners", label: "Website ads", Icon: Images },
   { href: "/admin/subscribers", label: "Readers", Icon: Mail },
   { href: "/admin/settings", label: "Settings", Icon: Settings },
 ];

@@ -27,3 +27,12 @@ scripts/.demo-editions.json
 # Downscaled copies of the screenshots the PDF builders embed. Rebuilt on
 # demand by scripts/make-advertising-guide-pdf.py; the PDF itself is committed.
 documents/_print-cache/
+
+# A borrowed admin session, saved by scripts/capture-ad-admin-screenshots.py
+# so the manual's screenshots can be retaken without a back door into /admin.
+# It is a live credential — it must never be committed.
+documents/.admin-session.json
+
+# Proof sheets: a PDF rendered back out to PNGs for layout review only.
+documents/_proof/
+documents/_proof-ads/

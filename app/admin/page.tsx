@@ -57,7 +57,7 @@ export default async function AdminDashboard() {
         <Stat label="Editions live" value={live.length} hint={`${publications.length} in total`} />
         <Stat label="Edition views" value={views.toLocaleString("en-CA")} />
         <Stat label="New enquiries" value={newEnquiries.length} hint="Waiting for a reply" />
-        <Stat label="Banners running" value={activeBanners.length} />
+        <Stat label="Ads running" value={activeBanners.length} hint="On the website itself" />
         <Stat label="Readers on the list" value={readers.length} hint="Email subscribers" />
       </div>
 
@@ -81,8 +81,8 @@ export default async function AdminDashboard() {
         <QuickAction
           href="/admin/banners"
           Icon={Images}
-          title="Manage banners"
-          body={`${activeBanners.length} running on the site.`}
+          title="Website ads"
+          body={`${activeBanners.length} running. See what is free to sell.`}
         />
         <QuickAction
           href="/admin/subscribers"
