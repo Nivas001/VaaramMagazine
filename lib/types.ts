@@ -33,6 +33,13 @@ export type AdBanner = {
   placement: BannerPlacement;
   edition: string | null;
   sort_order: number;
+  /**
+   * How long this advertisement stays on screen in a rotating slot, in
+   * seconds. Set per banner in the admin so a busy card can be given longer
+   * than a plain one. Optional, and absent entirely on databases where the
+   * column has not been added yet — see `bannerSeconds` for the fallback.
+   */
+  rotate_seconds?: number | null;
   is_active: boolean;
   starts_at: string | null;
   expires_at: string | null;
@@ -53,6 +60,10 @@ export type BannerPlacement =
   // Side rails — unlimited, ordered by sort_order.
   | "site_rail"
   | "reader_rail"
+  // The home page's opening screen — the slots a reader meets first.
+  | "home_top"
+  | "hero_left"
+  | "hero_right"
   // Wide strips — one at a time, rotating.
   | "home_hero"
   | "home_mid"
@@ -79,7 +90,7 @@ export type BannerPlacement =
 export type AdRenderMode = "carousel" | "stack" | "grid";
 
 /**
- * The two artwork proportions the whole site sells.
+ * The three artwork proportions the whole site sells.
  *
  * The proportion is deliberately CONSTANT at every screen size. That is the
  * entire reason an advertiser supplies one file instead of three: only the
@@ -91,7 +102,7 @@ export type AdRenderMode = "carousel" | "stack" | "grid";
  * The class strings are written out literally because Tailwind reads them at
  * build time and cannot see a value assembled at runtime.
  */
-export type AdFormat = "card" | "strip";
+export type AdFormat = "card" | "strip" | "skyscraper";
 
 export const AD_FORMATS: Record<
   AdFormat,
@@ -119,12 +130,41 @@ export const AD_FORMATS: Record<
     height: 300,
     hint: "1650 × 300 px — a wide billboard. On a phone this is only about 64px tall, so use a logo and three or four words. Never a phone number.",
   },
+  skyscraper: {
+    label: "Tall tower",
+    className: "aspect-[1/2]",
+    width: 600,
+    height: 1200,
+    hint: "600 × 1200 px — a tall upright tower, twice as high as it is wide. It stands beside the top of the home page, so set it the way a shop window is set: name, one line, a number.",
+  },
 };
 
 /** "1200 × 600 px" — the short size shown beside an upload zone. */
 export function formatSize(format: AdFormat) {
   const { width, height } = AD_FORMATS[format];
   return `${width} × ${height} px`;
+}
+
+/* ── How long a rotating advertisement stays on screen ────────────────────── */
+
+/** Used when an advertisement has no time of its own set against it. */
+export const DEFAULT_ROTATE_SECONDS = 7;
+/** Below this a rotation flickers; above it a slot reads as a dead image. */
+export const MIN_ROTATE_SECONDS = 3;
+export const MAX_ROTATE_SECONDS = 60;
+
+/**
+ * The dwell time for one banner, in milliseconds.
+ *
+ * An administrator may set this per banner, so a card carrying an address and
+ * a phone number can be given fifteen seconds while a plain logo takes four.
+ * Anything missing, out of range or left over from before the column existed
+ * falls back to the house default rather than stopping the rotation.
+ */
+export function bannerMs(banner: AdBanner) {
+  const seconds = Number(banner.rotate_seconds);
+  if (!Number.isFinite(seconds) || seconds <= 0) return DEFAULT_ROTATE_SECONDS * 1000;
+  return Math.min(Math.max(seconds, MIN_ROTATE_SECONDS), MAX_ROTATE_SECONDS) * 1000;
 }
 
 /**
@@ -143,7 +183,12 @@ export function bannerArtwork(banner: AdBanner) {
   return { desktop, tablet, mobile };
 }
 
-export type PlacementGroup = "Side rails" | "Wide strips" | "Footer" | "Retired";
+export type PlacementGroup =
+  | "Home hero"
+  | "Side rails"
+  | "Wide strips"
+  | "Footer"
+  | "Retired";
 
 export const BANNER_PLACEMENTS: {
   value: BannerPlacement;
@@ -155,9 +200,45 @@ export const BANNER_PLACEMENTS: {
   mode: AdRenderMode;
   /** The artwork proportion this slot renders at. */
   format: AdFormat;
+  /**
+   * For a rotating slot, how many of them stand side by side or stacked.
+   *
+   * One is a plain carousel. More than one deals the bookings round-robin
+   * across that many frames, so the first few advertisements in the running
+   * order are all on screen at once and the rest cycle in behind them. The
+   * count is clamped by how many are actually booked, so a slot asking for
+   * four and given two renders two.
+   */
+  slots?: number;
   /** Hidden from the admin's dropdown; existing rows still render. */
   legacy?: true;
 }[] = [
+  {
+    value: "home_top",
+    label: "Home — leaderboard, above everything",
+    hint: "The wide strip across the very top of the home page, above the headline. The first thing anyone sees.",
+    group: "Home hero",
+    mode: "carousel",
+    format: "strip",
+  },
+  {
+    value: "hero_left",
+    label: "Home — tower, left of the headline",
+    hint: "Two tall upright frames down the left of the opening screen. Book as many as you like: they take turns in those frames, in the order you set.",
+    group: "Home hero",
+    mode: "carousel",
+    format: "skyscraper",
+    slots: 2,
+  },
+  {
+    value: "hero_right",
+    label: "Home — cards, right of the headline",
+    hint: "Four cards down the right of the opening screen. Book as many as you like: they take turns in those four frames, in the order you set.",
+    group: "Home hero",
+    mode: "carousel",
+    format: "card",
+    slots: 4,
+  },
   {
     value: "site_rail",
     label: "Side rail — every page",

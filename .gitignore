@@ -23,3 +23,7 @@ next-env.d.ts
 # Local record of what scripts/seed-demo-editions.mjs created, so --clear can
 # find it. Specific to whichever database .env.local points at.
 scripts/.demo-editions.json
+
+# Downscaled copies of the screenshots the PDF builders embed. Rebuilt on
+# demand by scripts/make-advertising-guide-pdf.py; the PDF itself is committed.
+documents/_print-cache/

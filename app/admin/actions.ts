@@ -180,7 +180,66 @@ type BannerInput = {
   isActive: boolean;
   /** Where it sits in its rail. Left out on create to append to the end. */
   sortOrder?: number | null;
+  /** Seconds on screen in a rotating slot. Null falls back to the default. */
+  rotateSeconds?: number | null;
 };
+
+/**
+ * Columns added after the first release, which a database that has not had the
+ * latest schema.sql run against it will not have.
+ *
+ * Reading one of these is already safe — `select *` simply does not return it.
+ * Writing one is not: Postgres rejects the whole statement, and an
+ * administrator saving an unrelated change to a banner would be told their
+ * edit failed for a reason that has nothing to do with what they typed.
+ *
+ * So a write carrying one of these is tried as-is and, if the column turns out
+ * not to exist, tried again without it. Everything the administrator could see
+ * on the form is saved either way; only the setting the database cannot hold
+ * yet is dropped. Running schema.sql makes it stick, with nothing to re-enter.
+ */
+const OPTIONAL_COLUMNS = ["rotate_seconds"] as const;
+
+function missingColumn(message: string | undefined) {
+  if (!message) return null;
+  return (
+    OPTIONAL_COLUMNS.find(
+      (column) =>
+        message.includes(`'${column}'`) ||
+        message.includes(`"${column}"`) ||
+        message.includes(`column ${column}`) ||
+        message.includes(`ad_banners.${column}`)
+    ) ?? null
+  );
+}
+
+/**
+ * Runs a banner write, retrying without any column the database turns out not
+ * to have. Returns the final error message, or null on success.
+ */
+async function writeBanner(
+  payload: Record<string, unknown>,
+  run: (payload: Record<string, unknown>) => PromiseLike<{ error: { message: string } | null }>
+): Promise<string | null> {
+  const attempt = { ...payload };
+
+  // At most one pass per optional column, plus the first — bounded, so a
+  // message this never learns to recognise cannot spin.
+  for (let i = 0; i <= OPTIONAL_COLUMNS.length; i += 1) {
+    const { error } = await run(attempt);
+    if (!error) return null;
+
+    const column = missingColumn(error.message);
+    if (!column || !(column in attempt)) return error.message;
+
+    console.warn(
+      `[admin] ad_banners.${column} is missing — saved without it. Run supabase/schema.sql.`
+    );
+    delete attempt[column];
+  }
+
+  return "Could not save the banner.";
+}
 
 /**
  * The next free position at the end of a placement's running order.
@@ -211,20 +270,24 @@ export async function createBanner(
 ): Promise<ActionResult> {
   try {
     const supabase = await requireAdmin();
-    const { error } = await supabase.from("ad_banners").insert({
-      client_name: input.clientName,
-      target_url: safeExternalUrl(input.targetUrl),
-      image_url: input.imageUrl,
-      image_key: input.imageKey,
-      placement: input.placement,
-      edition: input.edition,
-      starts_at: input.startsAt,
-      expires_at: input.expiresAt,
-      sort_order:
-        input.sortOrder ?? (await nextSortOrder(supabase, input.placement)),
-      is_active: input.isActive,
-    });
-    if (error) return { ok: false, error: error.message };
+    const failure = await writeBanner(
+      {
+        client_name: input.clientName,
+        target_url: safeExternalUrl(input.targetUrl),
+        image_url: input.imageUrl,
+        image_key: input.imageKey,
+        placement: input.placement,
+        edition: input.edition,
+        starts_at: input.startsAt,
+        expires_at: input.expiresAt,
+        sort_order:
+          input.sortOrder ?? (await nextSortOrder(supabase, input.placement)),
+        rotate_seconds: input.rotateSeconds ?? null,
+        is_active: input.isActive,
+      },
+      (payload) => supabase.from("ad_banners").insert(payload)
+    );
+    if (failure) return { ok: false, error: failure };
 
     refreshPublicPages();
     return { ok: true };
@@ -260,6 +323,7 @@ export async function updateBanner(
       updated_at: new Date().toISOString(),
     };
     if (typeof input.sortOrder === "number") patch.sort_order = input.sortOrder;
+    if (input.rotateSeconds !== undefined) patch.rotate_seconds = input.rotateSeconds;
     if (input.imageUrl) {
       patch.image_url = input.imageUrl;
       patch.image_key = input.imageKey ?? null;
@@ -271,8 +335,10 @@ export async function updateBanner(
       patch.image_key_mobile = null;
     }
 
-    const { error } = await supabase.from("ad_banners").update(patch).eq("id", id);
-    if (error) return { ok: false, error: error.message };
+    const failure = await writeBanner(patch, (payload) =>
+      supabase.from("ad_banners").update(payload).eq("id", id)
+    );
+    if (failure) return { ok: false, error: failure };
 
     refreshPublicPages();
     return { ok: true };

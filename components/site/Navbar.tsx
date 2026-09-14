@@ -71,8 +71,10 @@ export function Navbar() {
       <nav
         aria-label="Primary"
         className={cn(
-          "mx-auto flex max-w-[88rem] items-center justify-between gap-4 px-5 sm:px-8",
-          "h-16 sm:h-[72px]",
+          "mx-auto flex w-full max-w-[1760px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8",
+          // Tall enough to carry the wordmark at the size the masthead is
+          // meant to be read at; the hero's negative margin matches.
+          "h-[68px] sm:h-[84px]",
           // Over the dark hero every child inherits the light-on-dark palette.
           overlay && "[--text:245_242_237] [--text-muted:190_182_172] [--text-faint:170_162_152] [--hairline:255_255_255]"
         )}
@@ -188,7 +190,7 @@ function MobileDrawer({
           transition={{ duration: reduce ? 0 : 0.22 }}
           className="fixed inset-0 z-[60] bg-[rgb(var(--surface))] md:hidden"
         >
-          <div className="flex h-16 items-center justify-between px-5">
+          <div className="flex h-[68px] items-center justify-between px-4">
             <Logo size="md" />
             <button
               type="button"

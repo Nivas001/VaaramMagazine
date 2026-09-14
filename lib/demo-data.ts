@@ -120,7 +120,9 @@ function demoBanner(
   n: number,
   placement: AdBanner["placement"],
   artwork: string,
-  sortOrder: number
+  sortOrder: number,
+  /** Seconds on screen in a rotating frame. Left unset for static slots. */
+  rotateSeconds?: number
 ): AdBanner {
   return {
     id: demoId(n),
@@ -136,6 +138,7 @@ function demoBanner(
     placement,
     edition: null,
     sort_order: sortOrder,
+    rotate_seconds: rotateSeconds ?? null,
     is_active: true,
     starts_at: null,
     expires_at: null,
@@ -146,8 +149,24 @@ function demoBanner(
 
 const card = (i: number) => `/ads/card-${String(i).padStart(2, "0")}.svg`;
 const strip = (i: number) => `/ads/strip-${String(i).padStart(2, "0")}.svg`;
+const tower = (i: number) => `/ads/tower-${String(i).padStart(2, "0")}.svg`;
 
 export const DEMO_BANNERS: AdBanner[] = [
+  // ── The home page's opening screen ──────────────────────────────────────
+  // Three leaderboards taking turns across the top.
+  ...Array.from({ length: 3 }, (_, i) =>
+    demoBanner(80 + i, "home_top", strip(i + 4), (i + 1) * 10, 6 + i * 2)
+  ),
+  // Six towers for the two frames down the left — enough to prove that a
+  // frame holding more than one booking rotates through them.
+  ...Array.from({ length: 6 }, (_, i) =>
+    demoBanner(84 + i, "hero_left", tower(i + 1), (i + 1) * 10, 5 + i)
+  ),
+  // Eight cards for the four frames down the right.
+  ...Array.from({ length: 8 }, (_, i) =>
+    demoBanner(92 + i, "hero_right", card(i + 5), (i + 1) * 10, 6 + (i % 3) * 3)
+  ),
+
   // The main rail — deliberately long, to prove a rail of this depth behaves
   // at every width.
   ...Array.from({ length: 14 }, (_, i) =>

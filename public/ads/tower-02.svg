@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1200" viewBox="0 0 600 1200" role="img" aria-label="Ravi Plumbing">
+  <rect width="600" height="1200" fill="#eee4da"/>
+  <rect x="36" y="36" width="528" height="1128" fill="none" stroke="#c8b6a4" stroke-width="7.2"/>
+  <text x="300" y="551.28" text-anchor="middle" fill="#1e151a"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Ravi</text>
+  <text x="300" y="648.72" text-anchor="middle" fill="#1e151a"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Plumbing</text>
+  <text x="300" y="781.16" text-anchor="middle" fill="#8a1332"
+        font-family="Helvetica, Arial, sans-serif" font-size="35" letter-spacing="2.1">24-HOUR CALL-OUT</text>
+  <text x="300" y="1128" text-anchor="middle" fill="#c8b6a4"
+        font-family="Helvetica, Arial, sans-serif" font-size="33">DEMO TOWER 02</text>
+</svg>

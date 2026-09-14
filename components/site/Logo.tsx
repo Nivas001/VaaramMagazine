@@ -27,10 +27,10 @@ export function Logo({
   className?: string;
 }) {
   const dimensions = {
-    sm: { w: 78, h: 30, class: "h-[30px] w-[78px]" },
-    md: { w: 120, h: 46, class: "h-[40px] w-[104px] sm:h-[46px] sm:w-[120px]" },
-    lg: { w: 167, h: 64, class: "h-[54px] w-[141px] sm:h-[64px] sm:w-[167px]" },
-    xl: { w: 208, h: 80, class: "h-[70px] w-[182px] sm:h-[80px] sm:w-[208px]" },
+    sm: { w: 94, h: 36, class: "h-[36px] w-[94px]" },
+    md: { w: 146, h: 56, class: "h-[46px] w-[120px] sm:h-[56px] sm:w-[146px]" },
+    lg: { w: 188, h: 72, class: "h-[60px] w-[157px] sm:h-[72px] sm:w-[188px]" },
+    xl: { w: 234, h: 90, class: "h-[78px] w-[203px] sm:h-[90px] sm:w-[234px]" },
   }[size];
 
   return (

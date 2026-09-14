@@ -97,7 +97,7 @@ export function Footer() {
                   className="inline-flex items-center gap-2.5 transition-colors hover:text-[rgb(var(--text))]"
                 >
                   <Globe className="size-4 shrink-0 text-[rgb(var(--text-faint))]" aria-hidden />
-                  {siteConfig.url.replace(/^https?:\/\//, "")}
+                  {siteConfig.url.replace(/^https?:\/\/(www\.)?/, "")}
                 </a>
               </li>
             </ul>

@@ -4,9 +4,6 @@
  *
  *  This is the only file you need to edit to change the words, the contact
  *  details and the publishing rhythm of the whole website.
- *
- *  Anything marked PLACEHOLDER is deliberately fake and must be replaced with
- *  the real detail before the site goes live.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -31,12 +28,11 @@ export const siteConfig = {
 
   contact: {
     email: "contact@vaaram.ca",
-    /** PLACEHOLDER — 555 numbers are reserved and can never connect. */
-    phone: "+1 647 555 0199",
-    /** PLACEHOLDER — digits only, used to build the wa.me deep link. */
-    whatsapp: "16475550199",
-    /** PLACEHOLDER — replace with the real street address. */
-    address: "Toronto, Ontario, Canada",
+    phone: "+1 905 965 6611",
+    /** Digits only, used to build the wa.me deep link. Same line as above. */
+    whatsapp: "19059656611",
+    /** No street address is published yet — the country is all we claim. */
+    address: "Canada",
     hours: "Monday – Saturday, 9:00 AM – 6:00 PM ET",
   },
 

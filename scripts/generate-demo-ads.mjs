@@ -4,8 +4,9 @@
  * These stand in for real bookings while the banners table is empty, so the
  * rails, strips and footer grid can be laid out and checked at every screen
  * size before a single client has been signed. They are a couple of kilobytes
- * each and are drawn at the exact proportions the site sells — a 2:1 card and
- * an 11:2 strip — so what they prove about the layout is true of real artwork.
+ * each and are drawn at the exact proportions the site sells — a 2:1 card, an
+ * 11:2 strip and a 1:2 tower — so what they prove about the layout is true of
+ * real artwork.
  *
  * They are never shown in production; see getAllLiveBanners in lib/queries.ts.
  *
@@ -21,6 +22,7 @@ mkdirSync(OUT, { recursive: true });
 /** Matches AD_FORMATS in lib/types.ts. */
 const CARD = { w: 1200, h: 600 };
 const STRIP = { w: 1650, h: 300 };
+const TOWER = { w: 600, h: 1200 };
 
 /** Four schemes, rotated so neighbours in a rail never look alike. */
 const SCHEMES = [
@@ -60,21 +62,57 @@ const NAMES = [
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/**
+ * A tower is a narrow column, so its name is stacked a word to a line rather
+ * than run across a width it does not have.
+ */
+function drawTower({ w, h, scheme, name, tagline, index }) {
+  const s = SCHEMES[scheme % SCHEMES.length];
+  const pad = Math.round(w * 0.12);
+  const words = name.split(" ");
+  const size = Math.round(w * 0.145);
+  const tagSize = Math.round(size * 0.4);
+  const top = h / 2 - ((words.length - 1) * size * 1.12) / 2;
+
+  const lines = words
+    .map(
+      (word, i) =>
+        `<text x="${w / 2}" y="${top + i * size * 1.12}" text-anchor="middle" fill="${s.ink}"
+        font-family="Georgia, 'Times New Roman', serif" font-size="${size}" font-weight="700">${esc(word)}</text>`
+    )
+    .join("\n  ");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(name)}">
+  <rect width="${w}" height="${h}" fill="${s.bg}"/>
+  <rect x="${pad / 2}" y="${pad / 2}" width="${w - pad}" height="${h - pad}" fill="none" stroke="${s.rule}" stroke-width="${Math.max(2, w * 0.012)}"/>
+  ${lines}
+  <text x="${w / 2}" y="${top + words.length * size * 1.12 + tagSize}" text-anchor="middle" fill="${s.accent}"
+        font-family="Helvetica, Arial, sans-serif" font-size="${tagSize}" letter-spacing="${tagSize * 0.06}">${esc(tagline.toUpperCase())}</text>
+  <text x="${w / 2}" y="${h - pad}" text-anchor="middle" fill="${s.rule}"
+        font-family="Helvetica, Arial, sans-serif" font-size="${Math.round(w * 0.055)}">DEMO TOWER ${String(index).padStart(2, "0")}</text>
+</svg>`;
+}
+
 function draw({ w, h, scheme, name, tagline, index, kind }) {
   const s = SCHEMES[scheme % SCHEMES.length];
-  const pad = Math.round(h * 0.12);
-  const titleSize = kind === "card" ? Math.round(h * 0.13) : Math.round(h * 0.2);
+  const pad = Math.round(Math.min(w, h) * 0.12);
+  const titleSize =
+    kind === "tower"
+      ? Math.round(w * 0.13)
+      : kind === "card"
+        ? Math.round(h * 0.13)
+        : Math.round(h * 0.2);
   const tagSize = Math.round(titleSize * 0.42);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(name)}">
   <rect width="${w}" height="${h}" fill="${s.bg}"/>
-  <rect x="${pad / 2}" y="${pad / 2}" width="${w - pad}" height="${h - pad}" fill="none" stroke="${s.rule}" stroke-width="${Math.max(2, h * 0.006)}"/>
+  <rect x="${pad / 2}" y="${pad / 2}" width="${w - pad}" height="${h - pad}" fill="none" stroke="${s.rule}" stroke-width="${Math.max(2, Math.min(w, h) * 0.006)}"/>
   <text x="${w / 2}" y="${h * 0.46}" text-anchor="middle" fill="${s.ink}"
         font-family="Georgia, 'Times New Roman', serif" font-size="${titleSize}" font-weight="700">${esc(name)}</text>
   <text x="${w / 2}" y="${h * 0.46 + tagSize * 1.9}" text-anchor="middle" fill="${s.accent}"
         font-family="Helvetica, Arial, sans-serif" font-size="${tagSize}" letter-spacing="${tagSize * 0.08}">${esc(tagline.toUpperCase())}</text>
   <text x="${w - pad}" y="${h - pad * 0.55}" text-anchor="end" fill="${s.rule}"
-        font-family="Helvetica, Arial, sans-serif" font-size="${Math.round(h * 0.055)}">DEMO ${kind.toUpperCase()} ${String(index).padStart(2, "0")}</text>
+        font-family="Helvetica, Arial, sans-serif" font-size="${Math.round(Math.min(w, h) * 0.055)}">DEMO ${kind.toUpperCase()} ${String(index).padStart(2, "0")}</text>
 </svg>`;
 }
 
@@ -95,6 +133,16 @@ for (let i = 0; i < 8; i += 1) {
   writeFileSync(
     join(OUT, `strip-${String(index).padStart(2, "0")}.svg`),
     draw({ ...STRIP, scheme: i + 1, name, tagline, index, kind: "strip" })
+  );
+  made += 1;
+}
+
+for (let i = 0; i < 8; i += 1) {
+  const [name, tagline] = NAMES[(i * 5 + 2) % NAMES.length];
+  const index = i + 1;
+  writeFileSync(
+    join(OUT, `tower-${String(index).padStart(2, "0")}.svg`),
+    drawTower({ ...TOWER, scheme: i + 2, name, tagline, index })
   );
   made += 1;
 }

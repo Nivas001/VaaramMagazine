@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1200" viewBox="0 0 600 1200" role="img" aria-label="Kumar Auto Glass">
+  <rect width="600" height="1200" fill="#150d11"/>
+  <rect x="36" y="36" width="528" height="1128" fill="none" stroke="#3d2c33" stroke-width="7.2"/>
+  <text x="300" y="502.56" text-anchor="middle" fill="#faf8f4"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Kumar</text>
+  <text x="300" y="600" text-anchor="middle" fill="#faf8f4"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Auto</text>
+  <text x="300" y="697.44" text-anchor="middle" fill="#faf8f4"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Glass</text>
+  <text x="300" y="829.8800000000001" text-anchor="middle" fill="#e0b29b"
+        font-family="Helvetica, Arial, sans-serif" font-size="35" letter-spacing="2.1">INSURANCE APPROVED</text>
+  <text x="300" y="1128" text-anchor="middle" fill="#3d2c33"
+        font-family="Helvetica, Arial, sans-serif" font-size="33">DEMO TOWER 08</text>
+</svg>

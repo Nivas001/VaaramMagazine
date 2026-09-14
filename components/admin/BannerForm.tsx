@@ -7,6 +7,9 @@ import { siteConfig } from "@/site.config";
 import {
   AD_FORMATS,
   BANNER_PLACEMENTS,
+  DEFAULT_ROTATE_SECONDS,
+  MAX_ROTATE_SECONDS,
+  MIN_ROTATE_SECONDS,
   formatSize,
   placementSpec,
   type BannerPlacement,
@@ -95,6 +98,7 @@ export function BannerForm() {
 
       setStage("Saving");
       const sortOrder = String(data.get("sortOrder") ?? "").trim();
+      const rotateSeconds = String(data.get("rotateSeconds") ?? "").trim();
       const result = await createBanner({
         clientName,
         targetUrl: String(data.get("targetUrl") ?? "").trim(),
@@ -105,6 +109,7 @@ export function BannerForm() {
         startsAt: String(data.get("startsAt") ?? "") || null,
         expiresAt: String(data.get("expiresAt") ?? "") || null,
         sortOrder: sortOrder ? Number(sortOrder) : null,
+        rotateSeconds: rotateSeconds ? Number(rotateSeconds) : null,
         isActive: data.get("isActive") !== null,
       });
 
@@ -158,10 +163,16 @@ export function BannerForm() {
         </select>
         <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
           {spec.hint}
-          {spec.mode !== "carousel" && (
+          {spec.mode !== "carousel" ? (
             <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
               This slot shows every banner booked into it, so you can add as many
               as you like.
+            </span>
+          ) : (
+            <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
+              {spec.slots && spec.slots > 1
+                ? `Banners here take turns in ${spec.slots} frames, in the order below.`
+                : "Banners here take turns in one frame, in the order below."}
             </span>
           )}
         </p>
@@ -254,8 +265,38 @@ export function BannerForm() {
               className={field}
               placeholder="Added to the end"
             />
+            <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
+              Lower numbers come first.
+            </p>
           </div>
         </div>
+
+        {spec.mode === "carousel" && (
+          <div>
+            <label htmlFor="rotateSeconds" className={label}>
+              Seconds on screen{" "}
+              <span className="font-normal normal-case tracking-normal opacity-70">
+                (optional)
+              </span>
+            </label>
+            <input
+              id="rotateSeconds"
+              name="rotateSeconds"
+              type="number"
+              min={MIN_ROTATE_SECONDS}
+              max={MAX_ROTATE_SECONDS}
+              step={1}
+              className={field}
+              placeholder={`${DEFAULT_ROTATE_SECONDS} seconds`}
+            />
+            <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
+              How long this one holds its frame before the next takes over.
+              Leave it blank for {DEFAULT_ROTATE_SECONDS} seconds. Give an
+              advertisement carrying an address or a phone number longer —
+              anything from {MIN_ROTATE_SECONDS} to {MAX_ROTATE_SECONDS}.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
