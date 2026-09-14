@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/server";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 import { siteConfig } from "@/site.config";
@@ -14,7 +15,7 @@ function clean(value: unknown, max: number) {
 /**
  * Enquiries are written to Postgres first — that is the record of truth and it
  * is what the admin dashboard reads. The email notification is best-effort:
- * if Web3Forms is not configured, or is down, the enquiry is still safe.
+ * if Resend is not configured, or is down, the enquiry is still safe.
  */
 export async function POST(request: Request) {
   // Generous enough that a person correcting a typo is never blocked, tight
@@ -81,20 +82,26 @@ export async function POST(request: Request) {
   }
 
   // Optional email copy.
-  const key = process.env.WEB3FORMS_ACCESS_KEY;
+  const key = process.env.RESEND_API_KEY;
   if (key) {
     try {
-      await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          ...enquiry,
-          access_key: key,
-          from_name: `${siteConfig.name} website`,
-          // Overrides the plain `subject` above so the inbox shows context.
-          subject: `New enquiry: ${enquiry.subject}`,
-        }),
+      const resend = new Resend(key);
+      const { error } = await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || "Vaaram Magazine <onboarding@resend.dev>",
+        to: siteConfig.contact.email,
+        replyTo: enquiry.email || undefined,
+        subject: `New enquiry: ${enquiry.subject}`,
+        text: [
+          `${enquiry.name} — ${enquiry.phone}${enquiry.email ? ` — ${enquiry.email}` : ""}`,
+          enquiry.edition ? `Edition: ${enquiry.edition}` : null,
+          enquiry.category ? `Category: ${enquiry.category}` : null,
+          "",
+          enquiry.message,
+        ]
+          .filter((line) => line !== null)
+          .join("\n"),
       });
+      if (error) throw new Error(error.message);
     } catch (error) {
       console.error("[contact] email notification failed (enquiry was saved):", error);
     }

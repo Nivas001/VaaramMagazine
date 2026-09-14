@@ -15,7 +15,7 @@ Set aside about **an hour** for the first run through.
 | **Supabase** | Database + your admin login | Free | No |
 | **Cloudflare R2** | Stores the PDFs and banner images | Free up to 10 GB | **Yes** — but you are not charged inside the free limits |
 | **Vercel** | Runs the website | Free | No |
-| **Web3Forms** *(optional)* | Emails you a copy of each enquiry | Free | No |
+| **Resend** *(optional)* | Emails you a copy of each enquiry | Free up to 3,000/month | No |
 | Your domain registrar | Your web address | ~₹800–1,200/year | Yes |
 
 > **About the Cloudflare card.** R2 asks for a card even on the free plan. It is
@@ -223,10 +223,15 @@ contains a job that prevents this — you just need to give it the keys.
 Every enquiry is already saved and visible at `/admin/enquiries`. This step just
 also sends them to your inbox.
 
-1. Go to **web3forms.com**, enter your email, get an access key emailed to you.
-2. Add it to Vercel as `WEB3FORMS_ACCESS_KEY` and redeploy.
+1. Go to **resend.com** → sign up with `contact@vaaram.ca` → **API Keys** → create one.
+2. Add it to Vercel as `RESEND_API_KEY` and redeploy.
+3. Optional but recommended: **Domains → Add Domain**, add `vaaram.ca`, and add the
+   DNS records Resend shows you at your registrar. Once it verifies, set
+   `RESEND_FROM_EMAIL` in Vercel to something like
+   `Vaaram Magazine <notifications@vaaram.ca>` and redeploy — until then it
+   sends from Resend's shared test address, which works but looks less official.
 
-Free plan: 250 enquiries a month.
+Free plan: 3,000 enquiries a month (100/day).
 
 ---
 
@@ -319,7 +324,7 @@ to show the advertiser at renewal time.
 | No sign-in code arrives | Check the address exists under Supabase → Authentication → Users, and that the email provider is enabled. Codes expire after a few minutes — request a new one. |
 | New issue doesn't appear | Wait one minute and refresh — pages cache for 60 seconds. Also check it isn't saved as a Draft. |
 | PDF won't open in the reader | Confirm the PDF opens normally on your computer, and that the bucket's public access is on (step 4.2). |
-| Enquiry emails not arriving | Check `WEB3FORMS_ACCESS_KEY` in Vercel, and your spam folder. The enquiry is still saved in `/admin/enquiries` either way. |
+| Enquiry emails not arriving | Check `RESEND_API_KEY` in Vercel, and your spam folder. The enquiry is still saved in `/admin/enquiries` either way. |
 
 ---
 
@@ -335,7 +340,8 @@ R2_ACCESS_KEY_ID=                 ← Part 4.4
 R2_SECRET_ACCESS_KEY=             ← Part 4.4  (secret!)
 R2_BUCKET_NAME=adexpress-media    ← Part 4.1
 NEXT_PUBLIC_R2_PUBLIC_URL=        ← Part 4.2
-WEB3FORMS_ACCESS_KEY=             ← Part 7 (optional)
+RESEND_API_KEY=                   ← Part 7 (optional)
+RESEND_FROM_EMAIL=                ← Part 7 (optional, once domain verified)
 ```
 
 The same values must also be added in Vercel under

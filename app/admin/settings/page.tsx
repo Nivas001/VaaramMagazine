@@ -101,8 +101,8 @@ export default async function AdminSettingsPage() {
     {
       name: "Email notifications",
       detail: "A copy of each enquiry sent to your inbox",
-      ready: Boolean(process.env.WEB3FORMS_ACCESS_KEY),
-      missing: "WEB3FORMS_ACCESS_KEY",
+      ready: Boolean(process.env.RESEND_API_KEY),
+      missing: "RESEND_API_KEY",
       optional: true,
     },
   ];

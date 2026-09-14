@@ -264,7 +264,7 @@ ENV_VARS = [
     ("NEXT_PUBLIC_SUPABASE_URL", "Yes", "Supabase → Project Settings → Data API"),
     ("NEXT_PUBLIC_SUPABASE_ANON_KEY", "Yes*", "The public key. *Or the PUBLISHABLE one — whichever pair your dashboard shows."),
     ("SUPABASE_SERVICE_ROLE_KEY", "Yes*", "The secret key. Never prefix with NEXT_PUBLIC_. *Or SUPABASE_SECRET_KEY."),
-    ("WEB3FORMS_ACCESS_KEY", "No", "Emails you a copy of each enquiry. Enquiries save either way."),
+    ("RESEND_API_KEY", "No", "Emails you a copy of each enquiry. Enquiries save either way."),
     ("R2_* and NEXT_PUBLIC_R2_PUBLIC_URL", "No", "Leave every one blank. That is what keeps storage on Supabase."),
 ]
 
