@@ -41,14 +41,20 @@ export function BannerForm() {
 
   // Off by default: one placement at a time is the common case, and the
   // dropdown above stays the simplest possible form for it. Turning this on
-  // swaps the dropdown for a checklist — see `selected` below — so the same
-  // artwork can be booked into several placements from one upload instead of
-  // repeating the whole form once per placement.
+  // swaps the dropdown for a checklist — see `selected` below — so a booking
+  // can go into several placements from one form instead of repeating the
+  // whole thing once per placement.
   const [multi, setMulti] = useState(false);
   const [selected, setSelected] = useState<Set<BannerPlacement>>(new Set());
 
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  // Keyed by AdFormat rather than a single file: a card and a strip are
+  // different shapes, not the same photo at a different size, so a booking
+  // that spans both shapes needs its own image for each — see the note on the
+  // artwork section below. In the common single-placement case this map only
+  // ever holds one entry.
+  const [filesByFormat, setFilesByFormat] = useState<Partial<Record<AdFormat, File>>>({});
+  const [previewsByFormat, setPreviewsByFormat] = useState<Partial<Record<AdFormat, string>>>({});
+
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
@@ -58,20 +64,21 @@ export function BannerForm() {
   const spec = useMemo(() => placementSpec(placement), [placement]);
 
   // What is actually being booked into right now, single- or multi-mode —
-  // everything below (artwork size, the rotation field) is driven from this
+  // everything below (artwork slots, the rotation field) is driven from this
   // one list rather than branching twice.
   const activePlacements = multi ? [...selected] : [placement];
   const anyCarousel = activePlacements.some((p) => placementSpec(p).mode === "carousel");
   const neededFormats = useMemo(() => {
     const set = new Set(activePlacements.map((p) => placementSpec(p).format));
-    // Falls back to a single format so the artwork hint always has something
-    // to describe, even for the instant between turning multi mode on and
-    // checking a first box — submission itself is still blocked separately.
+    // Falls back to a single format so the artwork section always has
+    // something to show, even for the instant between turning multi mode on
+    // and checking a first box — submission itself is still blocked
+    // separately by the "choose at least one placement" check.
     return set.size > 0 ? [...set] : (["card"] as AdFormat[]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multi, placement, selected]);
 
-  function pick(incoming: File | null) {
+  function pickFor(format: AdFormat, incoming: File | null) {
     setError(null);
     if (!incoming) return;
     if (!IMAGE_TYPES.includes(incoming.type)) {
@@ -84,13 +91,26 @@ export function BannerForm() {
       );
       return;
     }
-    setFile(incoming);
-    setPreview(URL.createObjectURL(incoming));
+    setFilesByFormat((prev) => ({ ...prev, [format]: incoming }));
+    setPreviewsByFormat((prev) => ({ ...prev, [format]: URL.createObjectURL(incoming) }));
   }
 
-  function clear() {
-    setFile(null);
-    setPreview(null);
+  function clearFor(format: AdFormat) {
+    setFilesByFormat((prev) => {
+      const next = { ...prev };
+      delete next[format];
+      return next;
+    });
+    setPreviewsByFormat((prev) => {
+      const next = { ...prev };
+      delete next[format];
+      return next;
+    });
+  }
+
+  function resetArtwork() {
+    setFilesByFormat({});
+    setPreviewsByFormat({});
   }
 
   function toggleMulti() {
@@ -116,8 +136,14 @@ export function BannerForm() {
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file) {
-      setError("Choose the artwork for this advertisement.");
+
+    const missing = neededFormats.filter((f) => !filesByFormat[f]);
+    if (missing.length > 0) {
+      setError(
+        neededFormats.length > 1
+          ? `Choose artwork for: ${missing.map((f) => AD_FORMATS[f].label).join(", ")}.`
+          : "Choose the artwork for this advertisement."
+      );
       return;
     }
 
@@ -150,16 +176,19 @@ export function BannerForm() {
     try {
       if (multi) {
         const targets = [...selected];
-        const formats = [...new Set(targets.map((p) => placementSpec(p).format))];
         const artworkByFormat: Partial<Record<AdFormat, { imageUrl: string; imageKey: string }>> = {};
 
-        // Redrawn once per *shape*, not once per placement — two placements
-        // that both take a card share the one upload.
-        for (let i = 0; i < formats.length; i += 1) {
-          const format = formats[i];
-          const tag = formats.length > 1 ? ` (${AD_FORMATS[format].label}, ${i + 1} of ${formats.length})` : "";
+        // One upload per shape needed, using the image chosen for that shape
+        // — not one photo redrawn into every shape, which looks fine between
+        // two similar rectangles but leaves a strip mostly blank once it is
+        // stretched into a tower.
+        for (let i = 0; i < neededFormats.length; i += 1) {
+          const format = neededFormats[i];
+          const source = filesByFormat[format];
+          if (!source) continue; // already validated above; narrows the type
+          const tag = neededFormats.length > 1 ? ` (${AD_FORMATS[format].label}, ${i + 1} of ${neededFormats.length})` : "";
           setStage(`Preparing artwork${tag}`);
-          const resized = await normaliseAdArtwork(file, format);
+          const resized = await normaliseAdArtwork(source, format);
           setStage(`Uploading artwork${tag}`);
           const ticket = await requestTicket(resized.name, resized.type, resized.size);
           await putToStorage(ticket, resized, setProgress);
@@ -183,13 +212,16 @@ export function BannerForm() {
 
         setBookedCount(result.created);
         formRef.current?.reset();
-        clear();
+        resetArtwork();
         setSelected(new Set());
         setMulti(false);
         setPlacement("site_rail");
       } else {
+        const source = filesByFormat[spec.format];
+        if (!source) throw new Error("Choose the artwork for this advertisement.");
+
         setStage("Preparing artwork");
-        const artwork = await normaliseAdArtwork(file, spec.format);
+        const artwork = await normaliseAdArtwork(source, spec.format);
         setStage("Uploading artwork");
         const ticket = await requestTicket(artwork.name, artwork.type, artwork.size);
         await putToStorage(ticket, artwork, setProgress);
@@ -211,7 +243,7 @@ export function BannerForm() {
         if (!result.ok) throw new Error(result.error);
 
         formRef.current?.reset();
-        clear();
+        resetArtwork();
         setPlacement("site_rail");
       }
 
@@ -232,11 +264,11 @@ export function BannerForm() {
     >
       <h2 className="text-lg font-bold">Add a banner</h2>
       <p className="mt-1.5 text-sm text-[rgb(var(--text-muted))]">
-        Choose where it appears first — the artwork size below changes to match
-        what you picked.
+        Choose where it appears first — the artwork asked for below changes to
+        match what you picked.
       </p>
 
-      {/* Placement leads, because it decides the size hint underneath. */}
+      {/* Placement leads, because it decides the artwork asked for underneath. */}
       <div className="mt-5">
         <div className="flex items-baseline justify-between gap-3">
           <label htmlFor="placement" className={label}>
@@ -309,9 +341,9 @@ export function BannerForm() {
             ) : (
               <>
                 This creates a separate booking in each of the {selected.size}{" "}
-                placement{selected.size > 1 ? "s" : ""} checked — the same photo,
-                resized to fit each one — so any single one can be reordered or
-                removed later without touching the others.
+                placement{selected.size > 1 ? "s" : ""} checked, so any single
+                one can be reordered or removed later without touching the
+                others.
               </>
             )
           ) : (
@@ -334,39 +366,69 @@ export function BannerForm() {
         </p>
       </div>
 
-      {/* ── Artwork, one file for every screen ─────────────────────────── */}
-      <div className="mt-6">
-        <p className={label}>
-          Artwork <span className="text-[rgb(var(--accent-text))]">*</span>
-        </p>
-        <p className="-mt-0.5 mb-3 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
-          {neededFormats.length > 1 ? (
-            <>
-              One image is all you need — it is redrawn into{" "}
-              {neededFormats
-                .map((f) => `${AD_FORMATS[f].label} (${formatSize(f)})`)
-                .join(" and ")}{" "}
-              automatically, and the same picture is used on phones, tablets and
-              desktops.
-            </>
-          ) : (
-            <>
-              One image is all you need. {AD_FORMATS[neededFormats[0]].hint} It is
-              resized for you on upload, and the same picture is used on phones,
-              tablets and desktops — only the space around it changes.
-            </>
-          )}
-        </p>
+      {/* ── Artwork ──────────────────────────────────────────────────────
+          One upload zone per shape actually needed, not one photo forced
+          into every shape. A card and a strip are different proportions —
+          the same picture letterboxed into both would fill the card fine and
+          leave the strip mostly blank either side. When two or more shapes
+          are needed the admin supplies artwork drawn for each one; the
+          common single-placement case still shows exactly the one zone it
+          always has. */}
+      {neededFormats.length > 1 ? (
+        <div className="mt-6">
+          <p className={label}>
+            Artwork — one image per shape <span className="text-[rgb(var(--accent-text))]">*</span>
+          </p>
+          <p className="-mt-0.5 mb-3 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
+            The placements checked above use {neededFormats.length} different
+            shapes, so each needs its own image — the same advertiser,
+            composed for that frame, rather than one photo stretched to fit
+            all of them.
+          </p>
 
-        <UploadZone
-          size={neededFormats.map((f) => formatSize(f)).join(" and ")}
-          file={file}
-          preview={preview}
-          busy={busy}
-          onPick={pick}
-          onClear={clear}
-        />
-      </div>
+          <div className="space-y-4">
+            {neededFormats.map((format) => (
+              <div key={format}>
+                <p className="mb-1.5 text-[12.5px] font-semibold text-[rgb(var(--text))]">
+                  {AD_FORMATS[format].label} artwork
+                </p>
+                <p className="mb-2 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
+                  {AD_FORMATS[format].hint}
+                </p>
+                <UploadZone
+                  title={`${AD_FORMATS[format].label} image`}
+                  size={formatSize(format)}
+                  file={filesByFormat[format] ?? null}
+                  preview={previewsByFormat[format] ?? null}
+                  busy={busy}
+                  onPick={(f) => pickFor(format, f)}
+                  onClear={() => clearFor(format)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="mt-6">
+          <p className={label}>
+            Artwork <span className="text-[rgb(var(--accent-text))]">*</span>
+          </p>
+          <p className="-mt-0.5 mb-3 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
+            One image is all you need. {AD_FORMATS[neededFormats[0]].hint} It is
+            resized for you on upload, and the same picture is used on phones,
+            tablets and desktops — only the space around it changes.
+          </p>
+
+          <UploadZone
+            size={formatSize(neededFormats[0])}
+            file={filesByFormat[neededFormats[0]] ?? null}
+            preview={previewsByFormat[neededFormats[0]] ?? null}
+            busy={busy}
+            onPick={(f) => pickFor(neededFormats[0], f)}
+            onClear={() => clearFor(neededFormats[0])}
+          />
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4">
         <div>
@@ -549,6 +611,7 @@ export function BannerForm() {
 
 /** The artwork slot: pick a file, see it, or take it back out. */
 export function UploadZone({
+  title = "Advertisement image",
   size,
   file,
   preview,
@@ -556,6 +619,8 @@ export function UploadZone({
   onPick,
   onClear,
 }: {
+  /** Overridden when a form asks for more than one shape at once. */
+  title?: string;
   size: string;
   file: File | null;
   preview: string | null;
@@ -576,7 +641,7 @@ export function UploadZone({
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <p className="text-[13px] font-semibold">Advertisement image</p>
+        <p className="text-[13px] font-semibold">{title}</p>
         <p className="text-[11px] tabular-nums text-[rgb(var(--text-faint))]">
           {size} · JPG, PNG or WebP · under 2 MB
         </p>
