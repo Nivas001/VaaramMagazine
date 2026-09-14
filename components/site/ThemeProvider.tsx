@@ -16,8 +16,9 @@ const ThemeContext = createContext<{
 
 /**
  * Reads whatever the inline script in app/layout.tsx already applied, so the
- * provider and the pre-paint script can never disagree. Until a visitor picks
- * a side explicitly, the operating system preference wins.
+ * provider and the pre-paint script can never disagree. Light is always the
+ * default; dark only ever applies after a visitor clicks the toggle, and the
+ * site never follows the OS preference.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
@@ -26,18 +27,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
     setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
-  }, []);
-
-  // Follow the system while the visitor has not made an explicit choice.
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = (e: MediaQueryListEvent) => {
-      if (localStorage.getItem(STORAGE_KEY)) return;
-      document.documentElement.classList.toggle("dark", e.matches);
-      setTheme(e.matches ? "dark" : "light");
-    };
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
   }, []);
 
   const toggleTheme = useCallback(() => {

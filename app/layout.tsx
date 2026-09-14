@@ -86,12 +86,12 @@ export const viewport: Viewport = {
 
 /**
  * Applied before first paint so a visitor who chose dark never sees a flash of
- * the light theme. Kept deliberately tiny and dependency-free.
+ * the light theme. Light is always the default — the site never follows the
+ * OS preference, only an explicit choice made with the theme toggle.
  */
 const themeScript = `
 try {
-  var stored = localStorage.getItem('vaaram-theme');
-  var dark = stored === 'dark' || (!stored && matchMedia('(prefers-color-scheme: dark)').matches);
+  var dark = localStorage.getItem('vaaram-theme') === 'dark';
   document.documentElement.classList.toggle('dark', dark);
 } catch (e) {}
 `;
