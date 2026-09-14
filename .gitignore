@@ -36,3 +36,8 @@ documents/.admin-session.json
 # Proof sheets: a PDF rendered back out to PNGs for layout review only.
 documents/_proof/
 documents/_proof-ads/
+
+# A signed-in admin browser profile, kept so the documentation screenshots can
+# be retaken without signing in again. It is a live credential — never commit.
+documents/.admin-profile/
+documents/v1-testing/admin-settings.txt
