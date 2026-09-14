@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { deleteObject } from "@/lib/storage";
+import { placementSpec, type BannerPlacement } from "@/lib/types";
 import { safeExternalUrl, slugify } from "@/lib/utils";
 
 /**
@@ -297,6 +298,85 @@ export async function createBanner(
 }
 
 /**
+ * The same booking, placed into several placements at once.
+ *
+ * One row per placement is still what gets written — sort order, expiry and
+ * per-banner rotation timing are all placement-specific, and an admin who
+ * wants to remove or reorder the booking in just one of them later needs
+ * separate rows to do it to. What this saves is everything upstream of that:
+ * the artwork is uploaded once per *shape* needed (not once per placement —
+ * two placements that both take a card share the one upload), and every
+ * other field is typed once.
+ *
+ * Best-effort rather than transactional: Supabase's REST API has no
+ * multi-table transaction for this app to reach for (see the note on
+ * moveBanner below), so a failure partway through leaves whatever was
+ * already written in place. The error message says how many succeeded before
+ * the failure, so the admin knows whether to retry the rest by hand rather
+ * than assuming nothing happened.
+ */
+export async function createBannerBatch(input: {
+  clientName: string;
+  targetUrl: string;
+  edition: string | null;
+  startsAt: string | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  rotateSeconds?: number | null;
+  /** Applied literally to every placement, or left to append to each one's own end. */
+  sortOrder?: number | null;
+  placements: string[];
+  /** One uploaded artwork per distinct AdFormat the chosen placements need. */
+  artworkByFormat: Record<string, { imageUrl: string; imageKey: string }>;
+}): Promise<{ ok: true; created: number } | { ok: false; error: string }> {
+  try {
+    const supabase = await requireAdmin();
+    const targetUrl = safeExternalUrl(input.targetUrl);
+
+    if (input.placements.length === 0) {
+      return { ok: false, error: "Choose at least one placement." };
+    }
+
+    let created = 0;
+    for (const placement of input.placements) {
+      const spec = placementSpec(placement as BannerPlacement);
+      const artwork = input.artworkByFormat[spec.format];
+      if (!artwork) {
+        const where = created > 0 ? `Booked into ${created} so far. ` : "";
+        return { ok: false, error: `${where}No ${spec.format} artwork was prepared for "${spec.label}".` };
+      }
+
+      const failure = await writeBanner(
+        {
+          client_name: input.clientName,
+          target_url: targetUrl,
+          image_url: artwork.imageUrl,
+          image_key: artwork.imageKey,
+          placement,
+          edition: input.edition,
+          starts_at: input.startsAt,
+          expires_at: input.expiresAt,
+          sort_order: input.sortOrder ?? (await nextSortOrder(supabase, placement)),
+          rotate_seconds: input.rotateSeconds ?? null,
+          is_active: input.isActive,
+        },
+        (payload) => supabase.from("ad_banners").insert(payload)
+      );
+      if (failure) {
+        const where = created > 0 ? `Booked into ${created} before this failed. ` : "";
+        return { ok: false, error: `${where}${spec.label}: ${failure}` };
+      }
+      created += 1;
+    }
+
+    refreshPublicPages();
+    return { ok: true, created };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}
+
+/**
  * Edit an existing booking.
  *
  * Artwork is only touched when replacement artwork was actually uploaded, and
@@ -342,6 +422,87 @@ export async function updateBanner(
 
     refreshPublicPages();
     return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
+  }
+}
+
+/**
+ * Books an existing banner's artwork into further placements, without asking
+ * for it again.
+ *
+ * Only offered — by the admin UI, and enforced again here — between
+ * placements that share an artwork format. The image already sitting in
+ * storage was drawn to one exact shape (see normaliseAdArtwork), and putting
+ * it into a placement of a different shape would either crop it or surround
+ * it in a band of white that was never part of the design. An admin wanting
+ * that needs to upload artwork suited to the new shape, which is exactly what
+ * editing that placement's own booking already does.
+ *
+ * Each target becomes its own row with its own id, sort order and impression
+ * count — editable, reorderable and deletable independently of the booking it
+ * was copied from and of every other one made alongside it.
+ */
+export async function duplicateBanner(
+  id: string,
+  placements: string[]
+): Promise<{ ok: true; created: number } | { ok: false; error: string }> {
+  try {
+    const supabase = await requireAdmin();
+    if (placements.length === 0) {
+      return { ok: false, error: "Choose at least one placement." };
+    }
+
+    const { data: source, error: readError } = await supabase
+      .from("ad_banners")
+      .select(
+        "client_name, target_url, image_url, image_key, placement, edition, starts_at, expires_at, is_active, rotate_seconds"
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (readError) return { ok: false, error: readError.message };
+    if (!source) return { ok: false, error: "That banner no longer exists." };
+
+    const sourceFormat = placementSpec(source.placement as BannerPlacement).format;
+    const mismatched = placements.filter(
+      (p) => placementSpec(p as BannerPlacement).format !== sourceFormat
+    );
+    if (mismatched.length > 0) {
+      const labels = mismatched.map((p) => placementSpec(p as BannerPlacement).label);
+      return {
+        ok: false,
+        error: `${labels.join(", ")} use a different artwork shape than this booking — edit a new booking there with artwork sized for it instead.`,
+      };
+    }
+
+    let created = 0;
+    for (const placement of placements) {
+      const failure = await writeBanner(
+        {
+          client_name: source.client_name,
+          target_url: source.target_url,
+          image_url: source.image_url,
+          image_key: source.image_key,
+          placement,
+          edition: source.edition,
+          starts_at: source.starts_at,
+          expires_at: source.expires_at,
+          sort_order: await nextSortOrder(supabase, placement),
+          rotate_seconds: source.rotate_seconds ?? null,
+          is_active: source.is_active,
+        },
+        (payload) => supabase.from("ad_banners").insert(payload)
+      );
+      if (failure) {
+        const where = created > 0 ? `Booked into ${created} before this failed. ` : "";
+        const label = placementSpec(placement as BannerPlacement).label;
+        return { ok: false, error: `${where}${label}: ${failure}` };
+      }
+      created += 1;
+    }
+
+    refreshPublicPages();
+    return { ok: true, created };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Something went wrong." };
   }
