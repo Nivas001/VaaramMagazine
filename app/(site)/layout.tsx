@@ -27,8 +27,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       telephone: siteConfig.contact.phone,
       address: {
         "@type": "PostalAddress",
-        addressLocality: "Toronto",
-        addressRegion: "ON",
         addressCountry: "CA",
       },
     },

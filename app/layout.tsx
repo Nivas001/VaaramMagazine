@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     "Vaaram",
     "weekly advertising magazine",
     "classifieds Canada",
-    "local business directory Toronto",
+    "local business directory Canada",
     "advertise locally",
     "weekly edition PDF",
   ],

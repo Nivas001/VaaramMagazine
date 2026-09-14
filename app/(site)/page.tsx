@@ -17,11 +17,16 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [latest, recent, all, rail] = await Promise.all([
+  const [latest, recent, all, rail, heroTop, heroLeft, heroRight] = await Promise.all([
     getLatestPublication(),
     getPublications({ limit: 5 }),
     getPublications(),
     getBanners("site_rail"),
+    // The three slots framing the opening screen. All of these resolve from
+    // one cached read, so asking for them separately costs nothing.
+    getBanners("home_top"),
+    getBanners("hero_left"),
+    getBanners("hero_right"),
   ]);
 
   // The hero already carries the current edition, so the strip below shows
@@ -35,11 +40,14 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero publication={latest} />
+      <Hero
+        publication={latest}
+        ads={{ top: heroTop, left: heroLeft, right: heroRight }}
+      />
 
       {/* A leaderboard directly under the hero — the first paid slot a reader
           meets, and the one advertisers ask for by name. */}
-      <Section className="!py-9">
+      <Section width="wide" className="!py-9">
         <AdSlot placement="home_hero" />
       </Section>
 
@@ -49,7 +57,7 @@ export default async function HomePage() {
           full-bleed band cannot sit inside a bounded column. So the page is
           railed in two stretches with the band left untouched between them,
           which keeps its existing order exactly as it was. */}
-      <Section className="!pb-0 !pt-4">
+      <Section width="wide" className="!pb-0 !pt-4">
         <RailLayout banners={railTop} showTail={false}>
           {latest ? <LatestEdition publication={latest} /> : <></>}
           <Rule />
@@ -61,13 +69,13 @@ export default async function HomePage() {
       </Section>
 
       <div className="bg-[rgb(var(--surface-2))]">
-        <Section>
+        <Section width="wide">
           <HowItWorks />
         </Section>
       </div>
 
       {/* ── Second railed region ───────────────────────────────────────── */}
-      <Section className="!pb-10">
+      <Section width="wide" className="!pb-10">
         <RailLayout banners={railRest}>
           <AdvertiseShowcase />
 

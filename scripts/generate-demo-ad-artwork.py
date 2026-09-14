@@ -6,10 +6,11 @@
  Draws the artwork used to fill roughly 60% of the website's advertising
  slots so the client can see a real, populated site rather than an empty one.
 
- Two shapes only, because the site sells exactly two:
+ Three shapes, because the site sells exactly three:
 
-   · card  — 1200 x 600 px (2:1).  Side rails and the footer grid.
+   · card  — 1200 x 600 px (2:1).  Side rails, hero cards, the footer grid.
    · strip — 1650 x 300 px (11:2). The wide billboard slots.
+   · tower —  600 x 1200 px (1:2). The upright frames beside the home headline.
 
  Everything is drawn with fonts that exist on Windows and with characters
  those fonts actually carry, so nothing lands as a missing-glyph box.
@@ -28,6 +29,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 FONTS = "C:/Windows/Fonts/"
 CARD_W, CARD_H = 1200, 600
 STRIP_W, STRIP_H = 1650, 300
+TOWER_W, TOWER_H = 600, 1200
 
 
 def sans(size, weight="bold"):
@@ -45,6 +47,21 @@ def width(draw, text, font):
 
 def centred(draw, y, text, font, fill, box_w):
     draw.text(((box_w - width(draw, text, font)) / 2, y), text, font=font, fill=fill)
+
+
+def wrap(draw, text, font, box_w):
+    """Greedy word wrap. A tower is 600px wide — nothing long fits on one line."""
+    words, lines, line = text.split(), [], ""
+    for word in words:
+        trial = f"{line} {word}".strip()
+        if line and width(draw, trial, font) > box_w:
+            lines.append(line)
+            line = word
+        else:
+            line = trial
+    if line:
+        lines.append(line)
+    return lines
 
 
 def gradient(size, top, bottom):
@@ -263,6 +280,91 @@ CARDS = [
         "place": "3300 Kennedy Rd, Unit 8, Scarborough ON",
         "web": "kandanelectronics.ca",
     },
+
+{
+        "file": "card-15-riverside-optical.jpg",
+        "ink": (12, 36, 48), "ink2": (24, 66, 86),
+        "accent": (158, 220, 232), "badge": (32, 124, 148),
+        "eyebrow": "EYE EXAMS  ·  WALK-INS WELCOME",
+        "name": "RIVERSIDE OPTICAL",
+        "tagline": "Glasses, contacts and full eye examinations",
+        "points": ["Same-day single-vision lenses", "Children's eye tests covered by OHIP",
+                   "Designer and budget frames in stock"],
+        "offer": "SECOND PAIR HALF PRICE ALL SEASON",
+        "phone": "(905) 555-0171",
+        "place": "88 Kennedy Rd S, Brampton ON",
+        "web": "riversideoptical.ca",
+    },
+    {
+        "file": "card-16-summit-roofing.jpg",
+        "ink": (36, 22, 12), "ink2": (68, 44, 24),
+        "accent": (240, 198, 132), "badge": (182, 96, 32),
+        "eyebrow": "LICENSED & FULLY INSURED",
+        "name": "SUMMIT ROOFING",
+        "tagline": "Roof repairs, replacement and eavestrough",
+        "points": ["Free written estimates", "Ten-year workmanship warranty",
+                   "Emergency leak call-outs"],
+        "offer": "BOOK BEFORE WINTER AND SAVE $400",
+        "phone": "(647) 555-0149",
+        "place": "Serving Toronto, Peel and York",
+        "web": "summitroofing.ca",
+    },
+    {
+        "file": "card-17-anjali-daycare.jpg",
+        "ink": (48, 16, 40), "ink2": (86, 32, 70),
+        "accent": (246, 192, 220), "badge": (176, 52, 124),
+        "eyebrow": "LICENSED HOME CHILDCARE",
+        "name": "ANJALI DAYCARE",
+        "tagline": "Warm, licensed care for infants and toddlers",
+        "points": ["Hot meals and snacks included", "Tamil and English spoken",
+                   "Open 7 AM to 6:30 PM weekdays"],
+        "offer": "FIRST WEEK FREE FOR NEW FAMILIES",
+        "phone": "(416) 555-0155",
+        "place": "Markham & Unionville",
+        "web": "anjalidaycare.ca",
+    },
+    {
+        "file": "card-18-tamilnet-wireless.jpg",
+        "ink": (14, 24, 44), "ink2": (26, 46, 82),
+        "accent": (172, 208, 250), "badge": (40, 92, 172),
+        "eyebrow": "PHONES  ·  PLANS  ·  REPAIRS",
+        "name": "TAMILNET WIRELESS",
+        "tagline": "Phones, plans and same-day screen repairs",
+        "points": ["All carriers compared in store", "Screen and battery while you wait",
+                   "International calling plans"],
+        "offer": "FREE SCREEN PROTECTOR WITH ANY REPAIR",
+        "phone": "(905) 555-0182",
+        "place": "2360 Eglinton Ave E, Scarborough ON",
+        "web": "tamilnetwireless.ca",
+    },
+    {
+        "file": "card-19-kavitha-photography.jpg",
+        "ink": (24, 18, 34), "ink2": (46, 36, 64),
+        "accent": (214, 196, 246), "badge": (112, 78, 176),
+        "eyebrow": "WEDDINGS  ·  EVENTS  ·  PORTRAITS",
+        "name": "KAVITHA PHOTOGRAPHY",
+        "tagline": "Wedding, event and family photography",
+        "points": ["Full-day wedding coverage", "Same-week preview gallery",
+                   "Albums printed in Canada"],
+        "offer": "FREE ENGAGEMENT SHOOT WITH ANY WEDDING",
+        "phone": "(416) 555-0108",
+        "place": "Studio in Mississauga, travels GTA-wide",
+        "web": "kavithaphoto.ca",
+    },
+    {
+        "file": "card-20-northway-hvac.jpg",
+        "ink": (16, 30, 38), "ink2": (32, 58, 72),
+        "accent": (168, 214, 226), "badge": (44, 116, 140),
+        "eyebrow": "TSSA CERTIFIED  ·  24-HOUR SERVICE",
+        "name": "NORTHWAY HEATING & COOLING",
+        "tagline": "Furnaces, air conditioning and water heaters",
+        "points": ["Free replacement quotes", "Annual maintenance plans",
+                   "Rebate paperwork handled for you"],
+        "offer": "$89 FURNACE TUNE-UP BEFORE NOVEMBER",
+        "phone": "(905) 555-0143",
+        "place": "Serving Durham, Toronto and York",
+        "web": "northwayhvac.ca",
+    },
 ]
 
 STRIPS = [
@@ -306,7 +408,178 @@ STRIPS = [
         "line": "Weddings and receptions to 600 guests  ·  Free parking",
         "cta": "lakeviewbanquet.ca",
     },
+
+{
+        "file": "strip-06-crown-auto-sales.jpg",
+        "ink": (18, 22, 30), "ink2": (36, 44, 58),
+        "accent": (224, 200, 148), "badge": (166, 128, 52),
+        "name": "CROWN AUTO SALES",
+        "line": "Certified pre-owned cars and vans  ·  Financing on the spot",
+        "cta": "(905) 555-0117",
+    },
+    {
+        "file": "strip-07-kanchi-grocers.jpg",
+        "ink": (14, 42, 28), "ink2": (28, 78, 50),
+        "accent": (198, 238, 178), "badge": (74, 154, 82),
+        "name": "KANCHI GROCERS",
+        "line": "Spices, fresh fish and sweets  ·  Free delivery over $60",
+        "cta": "kanchigrocers.ca",
+    },
 ]
+
+
+# -- The towers, for the upright frames beside the home-page headline --------
+TOWERS = [
+    {
+        "file": "tower-01-meridian-realty.jpg",
+        "ink": (14, 30, 52), "ink2": (28, 58, 96),
+        "accent": (196, 216, 244), "badge": (44, 98, 176),
+        "eyebrow": "BROKERAGE",
+        "name": "MERIDIAN REALTY",
+        "tagline": "Buying, selling and leasing across the GTA",
+        "points": ["Free home valuation", "First-time buyer guidance",
+                   "Rentals and property management"],
+        "offer": "NO LISTING FEE UNTIL IT SELLS",
+        "phone": "(905) 555-0164",
+        "place": "220 Bayly St W, Ajax ON",
+        "web": "meridianrealty.ca",
+    },
+    {
+        "file": "tower-02-thendral-sweets.jpg",
+        "ink": (58, 20, 14), "ink2": (98, 40, 26),
+        "accent": (244, 204, 148), "badge": (188, 78, 38),
+        "eyebrow": "SINCE 2004",
+        "name": "THENDRAL SWEETS",
+        "tagline": "Sweets and savouries made fresh every morning",
+        "points": ["Wedding and festival trays", "Same-day bulk orders",
+                   "Delivery across Peel and Durham"],
+        "offer": "10% OFF TRAYS ORDERED A WEEK AHEAD",
+        "phone": "(416) 555-0193",
+        "place": "1190 Brimley Rd, Scarborough ON",
+        "web": "thendralsweets.ca",
+    },
+    {
+        "file": "tower-03-northgate-dental.jpg",
+        "ink": (10, 44, 46), "ink2": (20, 80, 84),
+        "accent": (164, 228, 226), "badge": (26, 138, 140),
+        "eyebrow": "NEW PATIENTS WELCOME",
+        "name": "NORTHGATE DENTAL",
+        "tagline": "Family dentistry, evenings and Saturdays",
+        "points": ["Direct insurance billing", "Emergency appointments",
+                   "Children seen from age two"],
+        "offer": "FREE CHECK-UP FOR NEW FAMILIES",
+        "phone": "(647) 555-0126",
+        "place": "75 Bramalea Rd, Brampton ON",
+        "web": "northgatedental.ca",
+    },
+    {
+        "file": "tower-04-vanni-tailors.jpg",
+        "ink": (44, 16, 50), "ink2": (78, 32, 88),
+        "accent": (236, 198, 248), "badge": (142, 66, 174),
+        "eyebrow": "ALTERATIONS & BESPOKE",
+        "name": "VANNI TAILORS",
+        "tagline": "Suits, sarees and bridal fitting by appointment",
+        "points": ["Same-week alterations", "Blouse and lehenga stitching",
+                   "Suit hire for weddings"],
+        "offer": "FREE FITTING WITH ANY BRIDAL ORDER",
+        "phone": "(905) 555-0138",
+        "place": "44 Steeles Ave W, Vaughan ON",
+        "web": "vannitailors.ca",
+    },
+]
+
+
+def draw_tower(spec):
+    """A narrow upright column. Everything the card says, set down the page
+    rather than across it, and wrapped -- 600px carries about four words."""
+    img = gradient((TOWER_W, TOWER_H), spec["ink"], spec["ink2"])
+    d = ImageDraw.Draw(img)
+    acc, badge = spec["accent"], spec["badge"]
+    white, muted = (255, 255, 255), (198, 208, 226)
+    inner = TOWER_W - 96
+
+    d.rectangle([8, 8, TOWER_W - 9, TOWER_H - 9], outline=acc, width=3)
+    d.rectangle([22, 22, TOWER_W - 23, TOWER_H - 23], outline=(*acc, 90), width=1)
+
+    # Eyebrow pill
+    f_eye = sans(22, "bold")
+    ew = width(d, spec["eyebrow"], f_eye)
+    px, py = (TOWER_W - ew) / 2 - 24, 56
+    d.rounded_rectangle([px, py, px + ew + 48, py + 46], radius=23, fill=badge)
+    d.text((px + 24, py + 10), spec["eyebrow"], font=f_eye, fill=white)
+
+    # ── The middle block ────────────────────────────────────────────────
+    # Measured before it is drawn, then centred in the room between the
+    # eyebrow and the footer rule. A tower is 1200px tall and the copy is
+    # rarely more than half that, so anchoring it to the top leaves a dead
+    # band down the middle of a paid advertisement.
+    f_name = sans(56, "bold")
+    f_tag = serif(26)
+    f_pt = sans(24, "regular")
+    f_off = sans(23, "bold")
+
+    name_lines = wrap(d, spec["name"], f_name, inner)
+    tag_lines = wrap(d, spec["tagline"], f_tag, inner)
+    point_lines = [wrap(d, point, f_pt, inner - 40) for point in spec["points"]]
+    offer_lines = wrap(d, spec["offer"], f_off, inner - 40)
+
+    block_h = (
+        len(name_lines) * 64
+        + 16 + len(tag_lines) * 36
+        + 26 + 44
+        + sum(len(lines) * 32 + 12 for lines in point_lines)
+        + 18 + 30 + len(offer_lines) * 32
+    )
+    top, bottom = 150, TOWER_H - 232 - 40
+    y = top + max(0, (bottom - top - block_h) / 2)
+
+    for line in name_lines:
+        centred(d, y, line, f_name, acc, TOWER_W)
+        y += 64
+
+    y += 16
+    for line in tag_lines:
+        centred(d, y, line, f_tag, white, TOWER_W)
+        y += 36
+
+    # Divider with a centre diamond
+    y += 26
+    d.line([(72, y), (TOWER_W - 72, y)], fill=acc, width=2)
+    d.polygon([(TOWER_W / 2, y - 8), (TOWER_W / 2 + 9, y), (TOWER_W / 2, y + 8),
+               (TOWER_W / 2 - 9, y)], fill=acc)
+
+    # Service points
+    y += 44
+    for lines in point_lines:
+        d.ellipse([64, y + 8, 76, y + 20], fill=acc)
+        for line in lines:
+            d.text((94, y), line, font=f_pt, fill=white)
+            y += 32
+        y += 12
+
+    # Offer box
+    y += 18
+    d.rectangle([54, y, TOWER_W - 54, y + 30 + len(offer_lines) * 32], outline=acc, width=2)
+    oy = y + 15
+    for line in offer_lines:
+        centred(d, oy, line, f_off, acc, TOWER_W)
+        oy += 32
+
+    # The details that make the advertisement work, pinned to the foot
+    base = TOWER_H - 232
+    d.line([(48, base), (TOWER_W - 48, base)], fill=acc, width=2)
+    d.text((62, base + 20), "CALL", font=sans(18, "bold"), fill=acc)
+    d.text((62, base + 46), spec["phone"], font=sans(44, "bold"), fill=white)
+    d.text((62, base + 112), "FIND US", font=sans(18, "bold"), fill=acc)
+    f_small = sans(20, "regular")
+    py2 = base + 138
+    for line in wrap(d, spec["place"], f_small, inner):
+        d.text((62, py2), line, font=f_small, fill=muted)
+        py2 += 26
+    d.text((62, py2 + 6), spec["web"], font=sans(22, "bold"), fill=acc)
+
+    img.save(OUT_DIR / spec["file"], "JPEG", quality=88, optimize=True)
+    return spec["file"]
 
 
 def draw_card(spec):
@@ -399,4 +672,6 @@ if __name__ == "__main__":
         print("card  ", draw_card(spec))
     for spec in STRIPS:
         print("strip ", draw_strip(spec))
-    print(f"\n{len(CARDS)} cards + {len(STRIPS)} strips -> {OUT_DIR}")
+    for spec in TOWERS:
+        print("tower ", draw_tower(spec))
+    print(f"\n{len(CARDS)} cards + {len(STRIPS)} strips + {len(TOWERS)} towers -> {OUT_DIR}")

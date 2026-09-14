@@ -101,8 +101,16 @@ const getAllLiveBanners = cache(async (): Promise<AdBanner[]> => {
   // stand-in, but a placeholder *advertiser* is a commercial claim about a
   // business that never booked anything, with impression counts behind it that
   // would be fiction. So the demo banners are strictly a local convenience.
-  if (rows.length === 0 && process.env.NODE_ENV !== "production") {
-    return DEMO_BANNERS;
+  //
+  // Topped up a placement at a time rather than only when the whole table is
+  // empty. Once a single real booking exists — which is true of every
+  // developer's database within a day of starting — a whole-table check stops
+  // filling anything, and a slot added later can then never be looked at
+  // locally without hand-writing rows for it.
+  if (process.env.NODE_ENV !== "production") {
+    const booked = new Set(rows.map((b) => b.placement));
+    const filler = DEMO_BANNERS.filter((b) => !booked.has(b.placement));
+    if (filler.length > 0) rows.push(...filler);
   }
 
   // Sanitised here, at the boundary, rather than only where it is rendered.

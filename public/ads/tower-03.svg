@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1200" viewBox="0 0 600 1200" role="img" aria-label="Murugan Sweets">
+  <rect width="600" height="1200" fill="#f3efe8"/>
+  <rect x="36" y="36" width="528" height="1128" fill="none" stroke="#cec4b4" stroke-width="7.2"/>
+  <text x="300" y="551.28" text-anchor="middle" fill="#150d11"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Murugan</text>
+  <text x="300" y="648.72" text-anchor="middle" fill="#150d11"
+        font-family="Georgia, 'Times New Roman', serif" font-size="87" font-weight="700">Sweets</text>
+  <text x="300" y="781.16" text-anchor="middle" fill="#8a1332"
+        font-family="Helvetica, Arial, sans-serif" font-size="35" letter-spacing="2.1">MADE FRESH DAILY</text>
+  <text x="300" y="1128" text-anchor="middle" fill="#cec4b4"
+        font-family="Helvetica, Arial, sans-serif" font-size="33">DEMO TOWER 03</text>
+</svg>

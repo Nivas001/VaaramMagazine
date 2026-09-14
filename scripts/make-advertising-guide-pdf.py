@@ -7,7 +7,7 @@
  advertisements on the website itself.
 
    · What the website sells, and how it differs from space inside the PDF
-   · The two artwork shapes, and the eleven places an advertisement can go
+   · The three artwork shapes, and the fourteen places an advertisement can go
    · The side rail — the long column of advertisements — in full
    · A worked example: one advertiser booked from start to finish, on camera
    · Managing a booking afterwards: order, hide, edit, expire, delete
@@ -379,7 +379,8 @@ def slot_map():
     col_w = (CONTENT_W - 8 * mm) / 3.0
 
     home = [
-        ("content", "hero — this week's edition"),
+        ("slot", "12", "home_top", False),
+        ("content", "hero — this week's edition, with 13 down its left and 14 down its right"),
         ("slot", "1", "home_hero", True),
         ("content", "the current edition in full"),
         ("slot", "2", "home_mid", True),
@@ -513,17 +514,21 @@ def shape_diagram():
                 Paragraph(note, ParagraphStyle("sn", fontName=BODY, fontSize=7.8,
                                                leading=11, textColor=MUTED))]
 
-    left = shape(40, 20, colors.HexColor("#EFE3E7"), "Card — 2:1", "1200 × 600 px",
-                 "Every side-rail advertisement and every footer advertisement. "
-                 "This is the shape the side deck is built from.")
-    right = shape(77, 14, colors.HexColor("#E9EEF4"), "Wide strip — 11:2", "1650 × 300 px",
-                  "The wide billboard slots across the page. On a phone this is only "
-                  "about 64 px tall, so a logo and four words — never a phone number.")
+    left = shape(34, 17, colors.HexColor("#EFE3E7"), "Card — 2:1", "1200 × 600 px",
+                 "Every side-rail advertisement, the four cards beside the home-page "
+                 "headline, and every footer advertisement.")
+    middle = shape(58, 10.5, colors.HexColor("#E9EEF4"), "Wide strip — 11:2", "1650 × 300 px",
+                   "The wide billboard slots across the page. On a phone this is only "
+                   "about 64 px tall, so a logo and four words — never a phone number.")
+    right = shape(17, 34, colors.HexColor("#EDE7DC"), "Tower — 1:2", "600 × 1200 px",
+                  "The tall upright frames down the left of the home page opening "
+                  "screen. Narrow: a name, one line, a number, set large.")
 
-    t = Table([[left, right]], colWidths=[CONTENT_W * 0.36, CONTENT_W * 0.64])
+    t = Table([[left, middle, right]],
+              colWidths=[CONTENT_W * 0.27, CONTENT_W * 0.46, CONTENT_W * 0.27])
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"),
                            ("LEFTPADDING", (0, 0), (0, -1), 0),
-                           ("LEFTPADDING", (1, 0), (1, -1), 5 * mm),
+                           ("LEFTPADDING", (1, 0), (-1, -1), 4 * mm),
                            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                            ("TOPPADDING", (0, 0), (-1, -1), 0),
                            ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
@@ -590,7 +595,7 @@ def build():
     s.append(Paragraph("Advertising on the<br/>Vaaram website.", S["cover_title"]))
     s.append(Paragraph(
         "The website sells advertising space of its own, separate from the space inside the weekly PDF. "
-        "This guide covers that product only: the eleven places an advertisement can appear, the two "
+        "This guide covers that product only: the fourteen places an advertisement can appear, the three "
         "artwork sizes, and exactly how one is posted from the admin dashboard and what happens on the "
         "website when it is. One advertiser is booked from start to finish, photographed at every step.",
         S["cover_sub"]))
@@ -599,10 +604,10 @@ def build():
 
     s.extend(callout(
         "WHAT IS ON THE LIVE WEBSITE RIGHT NOW",
-        "Nineteen demonstration advertisements have been booked onto "
+        "Thirty-one demonstration advertisements have been booked onto "
         "<font name='Mono' color='#8A1332'>vaaram-magazine.vercel.app</font> so that the site can be "
         "seen doing this job rather than described doing it.<br/><br/>"
-        "They fill <b>seven of the eleven sellable placements — roughly 60%</b>. The remaining four are "
+        "They fill <b>ten of the fourteen sellable placements</b>. The remaining four are "
         "deliberately left empty so you can see, in the same visit, exactly what an unsold slot looks "
         "like: it shows Vaaram's own <i>&ldquo;This space could be your advertisement&rdquo;</i> panel "
         "rather than a blank box.<br/><br/>"
@@ -636,7 +641,7 @@ def build():
         ["Part", "What it covers"],
         [["<b>1 — What the website sells</b>",
           "The difference between an advertisement in the magazine and one on the website · the two "
-          "artwork shapes · a map of all eleven placements · <b>the side rail in full</b> · what an "
+          "artwork shapes · a map of all fourteen placements · <b>the side rail in full</b> · what an "
           "unsold slot does"],
          ["<b>2 — Posting an advertisement</b>",
           "Signing in · finding the Banners screen · the five steps, each photographed · what happens "
@@ -656,12 +661,15 @@ def build():
         "The banner system has been rebuilt since <i>Product &amp; Administrator Documentation v1.0</i> "
         "was written. Three things in that document are now out of date, and this guide is the correct "
         "one on all three:<br/><br/>"
-        "<b>1.</b> There are now <b>eleven</b> sellable placements, not ten — the two side rails are new, "
-        "and the old <i>Reader — beside the pages</i> slot has been retired.<br/>"
+        "<b>1.</b> There are now <b>fourteen</b> sellable placements, not ten — the two side rails and "
+        "the three home-page opening slots are new, and the old <i>Reader — beside the pages</i> slot "
+        "has been retired.<br/>"
         "<b>2.</b> A banner now takes <b>one image, not three</b>. The old form asked for separate "
         "desktop, tablet and phone artwork at six different sizes.<br/>"
-        "<b>3.</b> There are now only <b>two artwork sizes</b> in total — 1200 × 600 and 1650 × 300 — "
-        "and the website resizes what you upload to fit.",
+        "<b>3.</b> There are <b>three artwork sizes</b> in total — 1200 × 600, 1650 × 300 and "
+        "600 × 1200 — and the website resizes what you upload to fit.<br/>"
+        "<b>4.</b> Any slot whose advertisements share a frame now lets you set <b>how many seconds "
+        "each one holds it</b>, a banner at a time.",
         kind="amber"))
 
     s.append(PageBreak())
@@ -676,7 +684,7 @@ def build():
         ["", "In the weekly PDF", "On the website"],
         [["What it is",
           "A printed advertisement on a page of the edition — full page down to a few classified lines.",
-          "A picture on the website itself, in one of eleven fixed places, which can be clicked."],
+          "A picture on the website itself, in one of fourteen fixed places, which can be clicked."],
          ["Who makes it",
           "You lay it out and send the advertiser a proof.",
           "The advertiser supplies one image, or you make one for them."],
@@ -699,9 +707,9 @@ def build():
         kind="blue"))
 
     s.append(Spacer(1, 2 * mm))
-    s.append(Paragraph("1.1  The two artwork shapes — and only two", S["h2"]))
+    s.append(Paragraph("1.1  The three artwork shapes — and only three", S["h2"]))
     s.append(Paragraph(
-        "Whatever slot is booked, the artwork is one of exactly two shapes. This is the single most "
+        "Whatever slot is booked, the artwork is one of exactly three shapes. This is the single most "
         "useful thing to know when talking to an advertiser, because it is the whole of what you need "
         "to ask them for.",
         S["body"]))
@@ -721,8 +729,8 @@ def build():
 
     s.append(PageBreak())
 
-    # ── The eleven placements ───────────────────────────────────────────────
-    s.append(Paragraph("1.2  The eleven placements, and where each one sits", S["h2"]))
+    # ── The fourteen placements ───────────────────────────────────────────────
+    s.append(Paragraph("1.2  The fourteen placements, and where each one sits", S["h2"]))
     s.append(Paragraph(
         "Every sellable position on the website is below. The map shows them in place on the three "
         "pages that carry them; the table underneath gives the exact name each one has in the "
@@ -733,39 +741,58 @@ def build():
 
     s.extend(table(
         ["#", "As it appears in the dropdown", "Shape", "Holds", "Where it lands"],
-        [["1", "Home — under the hero", "Strip", "One at a time",
+        [["1", "Home — under the hero", "Strip", "Sharing 1 frame",
           "The first advertisement a reader meets. The most asked-for slot."],
-         ["2", "Home — mid page", "Strip", "One at a time",
+         ["2", "Home — mid page", "Strip", "Sharing 1 frame",
           "Between the current edition and &ldquo;how it works&rdquo;. Also used on the About page."],
-         ["3", "Home — feature block", "Strip", "One at a time",
+         ["3", "Home — feature block", "Strip", "Sharing 1 frame",
           "The full-width panel halfway down the home page."],
-         ["4", "Home — above the closing call", "Strip", "One at a time",
+         ["4", "Home — above the closing call", "Strip", "Sharing 1 frame",
           "The last thing before &ldquo;Get your business discovered&rdquo;."],
-         ["5", "Archive — above the editions", "Strip", "One at a time",
+         ["5", "Archive — above the editions", "Strip", "Sharing 1 frame",
           "The top of the archive, above the covers."],
-         ["6", "Archive — between editions", "Strip", "One at a time",
+         ["6", "Archive — between editions", "Strip", "Sharing 1 frame",
           "Inside the cover grid, after the eighth edition."],
-         ["7", "Reader — above the pages", "Strip", "One at a time",
+         ["7", "Reader — above the pages", "Strip", "Sharing 1 frame",
           "Directly above the magazine pages. Seen by everyone who actually reads."],
          ["8", "<b>Side rail — beside the reader</b>", "<b>Card</b>", "<b>Any number</b>",
           "<b>The column beside the pages of an edition, where readers stay longest. Tops itself up "
           "from the every-page rail when it is short.</b>"],
-         ["9", "Reader — under the pages", "Strip", "One at a time",
+         ["9", "Reader — under the pages", "Strip", "Sharing 1 frame",
           "Below the last page, before &ldquo;more from the archive&rdquo;."],
          ["10", "<b>Side rail — every page</b>", "<b>Card</b>", "<b>Any number</b>",
           "<b>The main rail. The long column of advertisements down the side of the home page and the "
           "archive. This is the side deck.</b>"],
          ["11", "Every page — above the footer", "Card", "Any number",
-          "A wrapping grid at the foot of every page of the site. The highest view count available."]],
+          "A wrapping grid at the foot of every page of the site. The highest view count available."],
+         ["12", "<b>Home — leaderboard, above everything</b>", "<b>Strip</b>",
+          "<b>Sharing 1 frame</b>",
+          "<b>Across the very top of the home page, above the headline. The first thing anyone "
+          "sees on the site.</b>"],
+         ["13", "<b>Home — tower, left of the headline</b>", "<b>Tower</b>",
+          "<b>Sharing 2 frames</b>",
+          "<b>Two tall upright frames down the left of the opening screen, beside the headline and "
+          "this week's cover.</b>"],
+         ["14", "<b>Home — cards, right of the headline</b>", "<b>Card</b>",
+          "<b>Sharing 4 frames</b>",
+          "<b>Four cards down the right of the opening screen — four advertisers on screen at "
+          "once, before a reader has scrolled at all.</b>"]],
         # 11mm on the index column: "11" wraps to two lines in anything less.
         [11 * mm, CONTENT_W * 0.27, 14 * mm, 20 * mm, CONTENT_W * 0.38]))
 
     s.extend(callout(
-        "&ldquo;ONE AT A TIME&rdquo; VERSUS &ldquo;ANY NUMBER&rdquo; — THE MOST IMPORTANT LINE IN THE TABLE",
-        "<b>One at a time.</b> Book two advertisers into the same strip and they take turns, changing "
-        "every seven seconds, with small dots showing how many are sharing it. Both are counted "
-        "properly. But only one is on screen at any moment, so a strip should not be sold to more than "
-        "three or four advertisers at once.<br/><br/>"
+        "&ldquo;SHARING A FRAME&rdquo; VERSUS &ldquo;ANY NUMBER&rdquo; — THE MOST IMPORTANT LINE IN THE TABLE",
+        "<b>Sharing a frame.</b> Book two advertisers into the same strip and they take turns in it, "
+        "with small dots showing how many are sharing. Both are counted properly, but only one is on "
+        "screen at a time, so a single frame should not be sold to more than three or four "
+        "advertisers at once. How long each one holds the frame is <b>yours to set, per banner</b>, "
+        "in <i>Seconds on screen</i>; left blank it is seven seconds. The running order decides who "
+        "is showing when the page opens.<br/><br/>"
+        "<b>Several frames sharing one running order.</b> The three home-page opening slots work the "
+        "same way but with more than one frame — two towers, four cards — and the bookings are dealt "
+        "across them in turn. With four frames, the first four advertisements in your order are the "
+        "four on screen when a reader arrives, and the rest cycle in behind them. So a slot with "
+        "four frames comfortably carries eight or twelve bookings.<br/><br/>"
         "<b>Any number.</b> The two side rails and the footer grid show <i>every</i> advertisement booked "
         "into them, one under another, in the order you set. There is no limit and no rotation. "
         "<b>This is why the side rail is the placement to sell hardest</b> — it is the only one where "
@@ -1153,10 +1180,10 @@ def build():
     # ═════════════════════════════════════════ PART 4 ═══════════════════════
     s.extend(section_header(
         "Part 4", "What is on the live site today",
-        "Nineteen demonstration bookings are running on the live website now. This is the complete "
+        "Thirty-one demonstration bookings are running on the live website now. This is the complete "
         "list of what was booked, where, and — just as deliberately — what was left empty."))
 
-    s.append(Paragraph("4.1  The seven placements that were filled", S["h2"]))
+    s.append(Paragraph("4.1  The ten placements that were filled", S["h2"]))
 
     s.extend(table(
         ["Placement", "Bookings", "Who", "What it demonstrates"],
@@ -1180,7 +1207,20 @@ def build():
          ["Archive — above the editions", "1", "Lakeview Banquet Hall",
           "A strip on a page other than the home page."],
          ["Reader — above the pages", "1", "Harbour Travel",
-          "A strip inside an edition, where readers actually are."]],
+          "A strip inside an edition, where readers actually are."],
+         ["<b>Home — leaderboard, above everything</b>", "2",
+          "Crown Auto Sales · Kanchi Grocers",
+          "<b>Two advertisers sharing the single frame at the very top of the site, at eight and "
+          "six seconds each.</b>"],
+         ["<b>Home — tower, left of the headline</b>", "4",
+          "Meridian Realty · Thendral Sweets · Northgate Dental · Vanni Tailors",
+          "<b>Four advertisers in two upright frames. Two are on screen at any moment and the other "
+          "two cycle in behind them.</b>"],
+         ["<b>Home — cards, right of the headline</b>", "6",
+          "Riverside Optical · Summit Roofing · Anjali Daycare · TamilNet Wireless · "
+          "Kavitha Photography · Northway Heating &amp; Cooling",
+          "<b>Six advertisers in four card frames, each holding its place for a different number of "
+          "seconds — the clearest demonstration of the running order on the site.</b>"]],
         [CONTENT_W * 0.20, 14 * mm, CONTENT_W * 0.30, CONTENT_W * 0.38]))
 
     s.append(Paragraph("4.2  The four placements left open — on purpose", S["h2"]))
@@ -1219,12 +1259,12 @@ def build():
 
     s.extend(callout(
         "CLEARING THE DEMONSTRATION BOOKINGS BEFORE YOU GO LIVE",
-        "Every one of these nineteen is an invented business, and none of them should be on the site "
+        "Every one of these thirty-one is an invented business, and none of them should be on the site "
         "when the first real advertiser is. There are two ways to remove them:<br/><br/>"
-        "<b>By hand</b> — Admin " + ARROW + " Banners, press <b>Delete</b> on each and confirm. Nineteen presses, "
+        "<b>By hand</b> — Admin " + ARROW + " Banners, press <b>Delete</b> on each and confirm. Thirty-one presses, "
         "about two minutes, and you get to see the site empty out as you go.<br/><br/>"
         "<b>All at once</b> — ask us to run <font name='Mono' color='#8A1332'>node "
-        "scripts/seed-demo-banners.mjs --clear</font>, which removes exactly these nineteen and nothing "
+        "scripts/seed-demo-banners.mjs --clear</font>, which removes exactly these thirty-one and nothing "
         "you have added yourself. Each demonstration booking is tagged, which is how it knows the "
         "difference.",
         kind="amber"))
@@ -1242,8 +1282,9 @@ def build():
     s.extend(table(
         ["Field", "Required", "Rules, and what happens if you leave it"],
         [["<b>Where it appears</b>", "Yes",
-          "One of the eleven placements. Choose it first — it decides the artwork size asked for "
-          "below. Defaults to <i>Side rail — every page</i>."],
+          "One of the fourteen placements. Choose it first — it decides the artwork size asked for "
+          "below, and whether <i>Seconds on screen</i> appears at all. Defaults to "
+          "<i>Side rail — every page</i>."],
          ["<b>Artwork</b>", "Yes",
           "One JPG, PNG or WebP, under 2 MB. Resized to the slot's exact size on upload. A PDF, SVG "
           "or HEIC file is refused."],
@@ -1258,8 +1299,14 @@ def build():
           "<i>Show in all editions</i> is the normal answer, and the default."],
          ["Position", "No",
           "A number. Lower numbers sit higher up. Leave it empty and the booking is added to the end. "
-          "Counting in tens — 10, 20, 30 — leaves room to slot something in between later. Ignored by "
-          "the rotating strip slots."],
+          "Counting in tens — 10, 20, 30 — leaves room to slot something in between later. In a slot "
+          "whose advertisements share frames it decides the running order instead — who is on screen "
+          "when the page opens, and who follows."],
+         ["<b>Seconds on screen</b>", "No",
+          "<b>Only shown for slots whose advertisements share a frame.</b> How long this one holds "
+          "its frame before the next takes over. Blank means seven seconds; anything from 3 to 60 is "
+          "accepted. Give a card carrying an address or a phone number longer than a card carrying "
+          "a logo."],
          ["Start showing on", "No",
           "A date. Empty means it starts now."],
          ["Stop showing on", "No",
@@ -1275,9 +1322,10 @@ def build():
 
     s.extend(table(
         ["Rule", "Detail"],
-        [["Two sizes only",
-          "<b>1200 × 600 px</b> for a card — the two side rails and the footer. "
-          "<b>1650 × 300 px</b> for a wide strip — every other slot."],
+        [["Three sizes only",
+          "<b>1200 × 600 px</b> for a card — the two side rails, the four cards beside the home-page "
+          "headline, and the footer. <b>1650 × 300 px</b> for a wide strip — the billboard slots. "
+          "<b>600 × 1200 px</b> for a tower — the two upright frames down the left of the home page."],
          ["One file per advertisement",
           "The same picture is used on phones, tablets and desktops. You do not need separate versions."],
          ["Under 2 MB",
@@ -1290,7 +1338,11 @@ def build():
           "trimmed, so no phone number is ever cut off."],
          ["Strips are tiny on a phone",
           "A 1650 × 300 strip is about 64 px tall on a phone. A logo and three or four words. Never "
-          "put a phone number or an address on a strip — put it on a card."]],
+          "put a phone number or an address on a strip — put it on a card."],
+         ["Towers are narrow everywhere",
+          "A tower is about 150 px wide on a desktop and narrower again on a phone. Set it the way a "
+          "shop window is set: the name large, one line under it, and the number. Nothing small, and "
+          "no paragraph."]],
         [CONTENT_W * 0.24, CONTENT_W * 0.76]))
 
     s.extend(callout(
@@ -1304,12 +1356,13 @@ def build():
         kind="green"))
 
     s.append(Spacer(1, 1 * mm))
-    s.append(Paragraph("Examples of the two shapes, at the sizes the site asks for", S["h3"]))
+    s.append(Paragraph("Examples of the shapes, at the sizes the site asks for", S["h3"]))
 
     s.extend(art_row(["card-01-sri-balaji-motors.jpg", "card-05-apex-mortgages.jpg",
                       "card-08-maple-dental.jpg"],
-                     "Three of the demonstration cards — 1200 × 600 px. This is the shape the side rail "
-                     "and the footer use.", height=24 * mm))
+                     "Three of the demonstration cards — 1200 × 600 px. This is the shape the side "
+                     "rails, the footer and the four cards beside the home-page headline use.",
+                     height=24 * mm))
 
     s.extend(art_row(["strip-01-vasantham-supermarket.jpg"],
                      "A demonstration wide strip — 1650 × 300 px. Note how little it can carry.",

@@ -2,7 +2,13 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { adminGetBanners } from "@/lib/admin-queries";
 import { deleteBanner, toggleBanner } from "@/app/admin/actions";
-import { AD_FORMATS, BANNER_PLACEMENTS, placementSpec, type AdBanner } from "@/lib/types";
+import {
+  AD_FORMATS,
+  BANNER_PLACEMENTS,
+  DEFAULT_ROTATE_SECONDS,
+  placementSpec,
+  type AdBanner,
+} from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { BannerForm } from "@/components/admin/BannerForm";
 import { MoveButtons } from "@/components/admin/MoveButtons";
@@ -50,10 +56,16 @@ export default async function AdminBannersPage() {
                     {rows.filter((b) => b.is_active).length} of {rows.length} showing
                     <span className="mx-2" aria-hidden>·</span>
                     {AD_FORMATS[spec.format].label}
-                    {spec.mode !== "carousel" && (
+                    {spec.mode !== "carousel" ? (
                       <>
                         <span className="mx-2" aria-hidden>·</span>
                         in this order
+                      </>
+                    ) : (
+                      <>
+                        <span className="mx-2" aria-hidden>·</span>
+                        taking turns in {spec.slots ?? 1}{" "}
+                        {(spec.slots ?? 1) === 1 ? "frame" : "frames"}
                       </>
                     )}
                   </p>
@@ -67,7 +79,9 @@ export default async function AdminBannersPage() {
                       position={i + 1}
                       isFirst={i === 0}
                       isLast={i === rows.length - 1}
-                      ordered={spec.mode !== "carousel"}
+                      // Order decides which bookings are on screen first in a
+                      // rotating slot, so it is worth showing there too.
+                      ordered={spec.mode !== "carousel" || (spec.slots ?? 1) > 1 || rows.length > 1}
                     />
                   ))}
                 </div>
@@ -131,6 +145,16 @@ function BannerRow({
             <p className="mt-1.5 text-[13px] text-[rgb(var(--text-faint))]">
               {b.starts_at ? `From ${formatDate(b.starts_at)}` : "From now"}
               {b.expires_at ? ` until ${formatDate(b.expires_at)}` : " — no end date"}
+            </p>
+          )}
+
+          {spec.mode === "carousel" && (
+            <p className="mt-1.5 text-[13px] text-[rgb(var(--text-faint))]">
+              {b.rotate_seconds ? (
+                <>{b.rotate_seconds} seconds on screen</>
+              ) : (
+                <>{DEFAULT_ROTATE_SECONDS} seconds on screen (default)</>
+              )}
             </p>
           )}
 

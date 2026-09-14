@@ -15,6 +15,10 @@
  *
  *  Run:  node scripts/seed-demo-banners.mjs          — book everything
  *        node scripts/seed-demo-banners.mjs --clear  — remove the demo rows
+ *        node scripts/seed-demo-banners.mjs --only=hero_left,hero_right
+ *                                                    — book just those slots,
+ *          for topping up a database that already carries the earlier ones
+ *          without booking every advertiser a second time
  *
  *  Every row is tagged DEMO_TAG in its target_url query string, so --clear can
  *  find and remove precisely these bookings and nothing the publisher added.
@@ -61,7 +65,8 @@ const DEMO_TARGET = `https://vaaram-magazine.vercel.app/contact?ref=${DEMO_TAG}`
 
 // ── The bookings ─────────────────────────────────────────────────────────────
 //  FILLED  : site_rail, reader_rail, footer, home_hero, home_mid, listing_top,
-//            reader_top          — 7 of the 11 sellable placements (~64%)
+//            reader_top, home_top, hero_left, hero_right
+//                                — 10 of the 14 sellable placements (~71%)
 //  LEFT OPEN: home_feature, home_closing, listing_inline, reader_below
 //            — 4 placements that keep showing the house "book this slot" panel
 const BOOKINGS = [
@@ -95,6 +100,31 @@ const BOOKINGS = [
   { art: "strip-03-tamil-arts-academy.jpg",    client: "Tamil Arts Academy",    placement: "home_mid",    order: 20 },
   { art: "strip-04-harbour-travel.jpg",        client: "Harbour Travel",        placement: "reader_top",  order: 10 },
   { art: "strip-05-lakeview-banquet.jpg",      client: "Lakeview Banquet Hall", placement: "listing_top", order: 10 },
+
+  // ── The home page's opening screen ───────────────────────────────────────
+  //  Every one of these slots shares its frames between more advertisers than
+  //  it has frames, which is the whole point of them: the running order below
+  //  decides who is on screen when a reader arrives, and `seconds` decides how
+  //  long each one holds its place before the next takes over.
+
+  // The leaderboard across the very top. Two advertisers, one frame.
+  { art: "strip-06-crown-auto-sales.jpg",  client: "Crown Auto Sales",    placement: "home_top",   order: 10, seconds: 8 },
+  { art: "strip-07-kanchi-grocers.jpg",    client: "Kanchi Grocers",      placement: "home_top",   order: 20, seconds: 6 },
+
+  // The towers down the left. Four advertisers, two frames.
+  { art: "tower-01-meridian-realty.jpg",   client: "Meridian Realty",     placement: "hero_left",  order: 10, seconds: 9 },
+  { art: "tower-02-thendral-sweets.jpg",   client: "Thendral Sweets",     placement: "hero_left",  order: 20, seconds: 7 },
+  { art: "tower-03-northgate-dental.jpg",  client: "Northgate Dental",    placement: "hero_left",  order: 30, seconds: 10 },
+  { art: "tower-04-vanni-tailors.jpg",     client: "Vanni Tailors",       placement: "hero_left",  order: 40, seconds: 6 },
+
+  // The cards down the right. Six advertisers, four frames — so four are on
+  // screen at once and the last two cycle in behind the first two.
+  { art: "card-15-riverside-optical.jpg",   client: "Riverside Optical",   placement: "hero_right", order: 10, seconds: 8 },
+  { art: "card-16-summit-roofing.jpg",      client: "Summit Roofing",      placement: "hero_right", order: 20, seconds: 7 },
+  { art: "card-17-anjali-daycare.jpg",      client: "Anjali Daycare",      placement: "hero_right", order: 30, seconds: 9 },
+  { art: "card-18-tamilnet-wireless.jpg",   client: "TamilNet Wireless",   placement: "hero_right", order: 40, seconds: 7 },
+  { art: "card-19-kavitha-photography.jpg", client: "Kavitha Photography", placement: "hero_right", order: 50, seconds: 11 },
+  { art: "card-20-northway-hvac.jpg",       client: "Northway Heating & Cooling", placement: "hero_right", order: 60, seconds: 8 },
 ];
 
 // ── Storage ──────────────────────────────────────────────────────────────────
@@ -170,10 +200,27 @@ async function main() {
   console.log("Checking storage…");
   await ensureBucket();
 
-  console.log(`\nBooking ${BOOKINGS.length} demonstration advertisements…\n`);
+  /**
+   * `--only=a,b` books just those placements.
+   *
+   * The full run is not idempotent — it inserts, it does not upsert — so on a
+   * database that already carries the earlier bookings, running it again would
+   * put every advertiser on the site twice. This is the way to add a slot that
+   * did not exist when the rest were booked.
+   */
+  const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+  const only = onlyArg ? new Set(onlyArg.slice(7).split(",").map((p) => p.trim())) : null;
+  const bookings = only ? BOOKINGS.filter((b) => only.has(b.placement)) : BOOKINGS;
+
+  if (bookings.length === 0) {
+    console.error("No demonstration bookings match " + onlyArg);
+    process.exit(1);
+  }
+
+  console.log(`\nBooking ${bookings.length} demonstration advertisements…\n`);
   const byPlacement = {};
 
-  for (const b of BOOKINGS) {
+  for (const b of bookings) {
     const art = await uploadArtwork(b.art);
     await insertBanner({
       client_name: b.client,
@@ -183,6 +230,9 @@ async function main() {
       placement: b.placement,
       edition: null,
       sort_order: b.order,
+      // Null leaves it on the site's own default, which is what a booking in a
+      // slot that does not rotate should carry.
+      rotate_seconds: b.seconds ?? null,
       is_active: b.active !== false,
       starts_at: null,
       expires_at: b.expires ?? null,
@@ -192,11 +242,14 @@ async function main() {
     console.log(`  ${b.placement.padEnd(13)} ${b.client}${flag}`);
   }
 
-  const SELLABLE = 11;
+  const SELLABLE = 14;
   const filled = Object.keys(byPlacement).length;
-  console.log(`\n${BOOKINGS.length} bookings across ${filled} of ${SELLABLE} sellable placements ` +
-    `(${Math.round((filled / SELLABLE) * 100)}%).`);
-  console.log(`Still open, showing the house panel: ${SELLABLE - filled} placements.`);
+  console.log(`\n${bookings.length} bookings across ${filled} placement(s).`);
+  if (!only) {
+    console.log(`${filled} of ${SELLABLE} sellable placements filled ` +
+      `(${Math.round((filled / SELLABLE) * 100)}%). Still open, showing the ` +
+      `house panel: ${SELLABLE - filled}.`);
+  }
 }
 
 main().catch((err) => {

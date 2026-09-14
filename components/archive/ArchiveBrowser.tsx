@@ -95,7 +95,7 @@ export function ArchiveBrowser({
       {/* ── Controls ───────────────────────────────────────────────────── */}
       <div
         className={cn(
-          "sticky top-16 z-30 mb-10 border-b border-[rgb(var(--hairline))] chrome-blur py-4 sm:top-[72px]",
+          "sticky top-[68px] z-30 mb-10 border-b border-[rgb(var(--hairline))] chrome-blur py-4 sm:top-[84px]",
           bleed && "-mx-5 px-5 sm:-mx-8 sm:px-8"
         )}
       >

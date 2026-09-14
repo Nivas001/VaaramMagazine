@@ -12,14 +12,15 @@ import { siteConfig } from "@/site.config";
 import { VaaramMark } from "@/components/site/VaaramMark";
 import { cn } from "@/lib/utils";
 import { AdCard } from "./AdCard";
-import { BannerCarousel } from "./BannerCarousel";
+import { AdRotatorStack } from "./AdRotator";
 
 /**
  * A paid placement on the website itself — separate from the advertisements
  * printed inside the weekly PDF.
  *
  * What a slot renders is decided by its placement, in lib/types.ts:
- *   · "carousel" — one banner at a time, rotating. A single wide strip.
+ *   · "carousel" — banners taking turns in one frame, or in the handful of
+ *                  frames the placement asks for. A wide strip is one frame.
  *   · "stack"    — every banner booked, one under another. This is what lets a
  *                  side rail hold any number of advertisements.
  *   · "grid"     — every banner booked, wrapping across columns.
@@ -67,7 +68,11 @@ export async function AdSlot({
       {label && <AdLabel plural={spec.mode !== "carousel" && banners.length > 1} />}
 
       {spec.mode === "carousel" && (
-        <BannerCarousel banners={banners} format={spec.format} />
+        <AdRotatorStack
+          banners={banners}
+          format={spec.format}
+          slots={spec.slots ?? 1}
+        />
       )}
 
       {spec.mode === "stack" && (
@@ -137,6 +142,7 @@ export function AdLabel({ plural = false }: { plural?: boolean }) {
 const HOUSE_HEIGHTS: Record<AdFormat, string> = {
   card: "min-h-[190px]",
   strip: "min-h-[140px] sm:min-h-[120px]",
+  skyscraper: "min-h-[300px]",
 };
 
 export function HouseAd({
@@ -149,7 +155,7 @@ export function HouseAd({
   /** A rail already carries one label; its tail does not need another. */
   labelled?: boolean;
 }) {
-  const upright = format === "card";
+  const upright = format !== "strip";
 
   return (
     <aside

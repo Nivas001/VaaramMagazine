@@ -60,6 +60,12 @@ alter table public.ad_banners add column if not exists image_key_tablet text;
 alter table public.ad_banners add column if not exists image_url_mobile text;
 alter table public.ad_banners add column if not exists image_key_mobile text;
 
+-- How long this advertisement stays on screen in a rotating slot. Null means
+-- the house default. The site reads and writes this defensively, so a database
+-- that has not had this line run against it keeps working — the admin simply
+-- cannot set a per-banner time until it has.
+alter table public.ad_banners add column if not exists rotate_seconds integer;
+
 create index if not exists ad_banners_lookup_idx
   on public.ad_banners (placement, is_active, sort_order);
 

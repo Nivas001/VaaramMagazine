@@ -7,6 +7,9 @@ import { siteConfig } from "@/site.config";
 import {
   AD_FORMATS,
   BANNER_PLACEMENTS,
+  DEFAULT_ROTATE_SECONDS,
+  MAX_ROTATE_SECONDS,
+  MIN_ROTATE_SECONDS,
   formatSize,
   placementSpec,
   type AdBanner,
@@ -42,6 +45,9 @@ export function EditBannerForm({ banner }: { banner: AdBanner }) {
   const [targetUrl, setTargetUrl] = useState(banner.target_url ?? "");
   const [edition, setEdition] = useState(banner.edition ?? "");
   const [sortOrder, setSortOrder] = useState(String(banner.sort_order ?? 0));
+  const [rotateSeconds, setRotateSeconds] = useState(
+    banner.rotate_seconds ? String(banner.rotate_seconds) : ""
+  );
   const [startsAt, setStartsAt] = useState(dateValue(banner.starts_at));
   const [expiresAt, setExpiresAt] = useState(dateValue(banner.expires_at));
   const [isActive, setIsActive] = useState(banner.is_active);
@@ -125,6 +131,7 @@ export function EditBannerForm({ banner }: { banner: AdBanner }) {
         startsAt: startsAt || null,
         expiresAt: expiresAt || null,
         sortOrder: sortOrder === "" ? null : Number(sortOrder),
+        rotateSeconds: rotateSeconds === "" ? null : Number(rotateSeconds),
         isActive,
         ...artwork,
       });
@@ -236,6 +243,13 @@ export function EditBannerForm({ banner }: { banner: AdBanner }) {
           </select>
           <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
             {spec.hint}
+            {spec.mode === "carousel" && (
+              <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
+                {spec.slots && spec.slots > 1
+                  ? `Banners here take turns in ${spec.slots} frames, in the order set below.`
+                  : "Banners here take turns in one frame, in the order set below."}
+              </span>
+            )}
           </p>
         </div>
 
@@ -308,6 +322,33 @@ export function EditBannerForm({ banner }: { banner: AdBanner }) {
             </p>
           </div>
         </div>
+
+        {spec.mode === "carousel" && (
+          <div>
+            <label htmlFor="rotateSeconds" className={label}>
+              Seconds on screen{" "}
+              <span className="font-normal normal-case tracking-normal opacity-70">
+                (optional)
+              </span>
+            </label>
+            <input
+              id="rotateSeconds"
+              type="number"
+              min={MIN_ROTATE_SECONDS}
+              max={MAX_ROTATE_SECONDS}
+              step={1}
+              value={rotateSeconds}
+              onChange={(e) => setRotateSeconds(e.target.value)}
+              className={field}
+              placeholder={`${DEFAULT_ROTATE_SECONDS} seconds`}
+            />
+            <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
+              How long this one holds its frame before the next takes over.
+              Leave it blank for {DEFAULT_ROTATE_SECONDS} seconds. Anything from{" "}
+              {MIN_ROTATE_SECONDS} to {MAX_ROTATE_SECONDS}.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
