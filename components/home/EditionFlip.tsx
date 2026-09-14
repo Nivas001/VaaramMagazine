@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import type { Publication } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { observeVisible } from "@/lib/ad-impressions";
 import { PdfBook } from "@/lib/pdf-book";
 import { BookLeaf, type LeafHandle } from "@/components/reader/BookLeaf";
@@ -54,7 +55,7 @@ export function EditionFlip({ publication }: { publication: Publication }) {
   );
   const [paused, setPaused] = useState(false);
   const [inView, setInView] = useState(false);
-  const [spread, setSpread] = useState(false);
+  const [spread, setSpread] = useState(true);
   const [reduce, setReduce] = useState(false);
 
   useEffect(() => observeVisible(ref.current, setInView), []);
@@ -144,7 +145,7 @@ export function EditionFlip({ publication }: { publication: Publication }) {
    * face going away, the face coming down, and the half revealed behind it.
    */
   const canTurn =
-    rightOf(index) !== null &&
+    (rightOf(index) !== null || (index === 0 && Boolean(publication.cover_url))) &&
     rightOf(index + 1) !== null &&
     (!spread || leftOf(index + 1) !== null);
 
@@ -163,7 +164,7 @@ export function EditionFlip({ publication }: { publication: Publication }) {
 
       const sheet = {
         key: Date.now(),
-        front: rightOf(index),
+        front: rightOf(index) || (index === 0 ? publication.cover_url || null : null),
         back: spread ? leftOf(index + 1) : null,
       };
       setTurning(sheet);
@@ -194,11 +195,13 @@ export function EditionFlip({ publication }: { publication: Publication }) {
   /* Switching between one page and two must never land on a missing spread. */
   useEffect(() => setIndex(0), [spread]);
 
-  const open = loaded >= (spread ? 3 : 2) && ratio !== null;
   // While a sheet is in the air the halves underneath already show where the
   // turn is going, so it never sweeps over a blank.
   const shownLeft = leftOf(index);
-  const shownRight = turning ? rightOf(index + 1) : rightOf(index);
+  const coverImage = publication.cover_url || null;
+  const currentRight = rightOf(index) || (index === 0 ? coverImage : null);
+  const nextRight = rightOf(index + 1);
+  const shownRight = turning ? nextRight : currentRight;
   const shownPage = spread ? (leftOf(index) ? index * 2 : 1) : index + 1;
 
   return (
@@ -209,9 +212,9 @@ export function EditionFlip({ publication }: { publication: Publication }) {
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
       className={
-        open && spread
+        spread
           ? "relative w-full max-w-[560px] 2xl:max-w-[580px]"
-          : "relative w-full max-w-[380px] lg:max-w-[400px] xl:max-w-[420px]"
+          : "relative w-full max-w-[360px] sm:max-w-[400px]"
       }
     >
       <Link
@@ -219,66 +222,60 @@ export function EditionFlip({ publication }: { publication: Publication }) {
         aria-label={`Read ${publication.title}`}
         className="group relative block rounded-sm transition-transform duration-500 hover:-translate-y-2"
       >
-        {open ? (
-          <div
-            className="relative flex"
-            style={{
-              aspectRatio: `${(spread ? 2 : 1) * (ratio ?? 0.75)} / 1`,
-              perspective: "2200px",
-              perspectiveOrigin: "50% 42%",
-              transformStyle: "preserve-3d",
-            }}
-          >
-            {spread && <Half src={shownLeft} side="left" />}
-            <Half src={shownRight} side={spread ? "right" : "only"} />
+        <div
+          className="relative flex"
+          style={{
+            aspectRatio: `${(spread ? 2 : 1) * (ratio ?? 0.75)} / 1`,
+            perspective: "2200px",
+            perspectiveOrigin: "50% 42%",
+            transformStyle: "preserve-3d",
+          }}
+        >
+          {spread && <Half src={shownLeft} side="left" />}
+          <Half
+            src={shownRight}
+            side={spread ? "right" : "only"}
+            fallback={<CoverArt publication={publication} priority />}
+          />
 
-            {spread && (
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-y-0 left-1/2 z-10 w-[9%] -translate-x-1/2"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(0,0,0,0.2) 36%, rgba(0,0,0,0.34) 50%, rgba(0,0,0,0.2) 64%, transparent)",
-                }}
-              />
-            )}
-
-            {turning && (
-              <div
-                className="absolute top-0 h-full"
-                style={{
-                  width: spread ? "50%" : "100%",
-                  left: spread ? "50%" : 0,
-                  transformStyle: "preserve-3d",
-                  zIndex: 20,
-                }}
-              >
-                <BookLeaf
-                  key={turning.key}
-                  ref={leafRef}
-                  front={turning.front}
-                  back={turning.back}
-                  segments={9}
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Still closed: the cover, with the block of paper behind it. */
-          <div className="relative w-full" style={{ aspectRatio: "3 / 4", perspective: "2000px" }}>
+          {spread && (
             <div
-              className="page-stack absolute inset-y-[1.5%] left-[1.5%] right-[-2.2%] shadow-[0_20px_50px_-24px_rgba(20,16,12,0.5)]"
               aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-1/2 z-10 w-[9%] -translate-x-1/2"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, rgba(0,0,0,0.2) 36%, rgba(0,0,0,0.34) 50%, rgba(0,0,0,0.2) 64%, transparent)",
+              }}
             />
-            <div className="page-stack absolute inset-y-[0.8%] left-[0.8%] right-[-1.1%] opacity-90" aria-hidden />
-            <div className="page-stock absolute inset-0 z-10">
-              <CoverArt publication={publication} priority />
+          )}
+
+          {turning && (
+            <div
+              className="absolute top-0 h-full"
+              style={{
+                width: spread ? "50%" : "100%",
+                left: spread ? "50%" : 0,
+                transformStyle: "preserve-3d",
+                zIndex: 20,
+              }}
+            >
+              <BookLeaf
+                key={turning.key}
+                ref={leafRef}
+                front={turning.front}
+                back={turning.back}
+                segments={9}
+              />
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <span className="label-eyebrow mt-7 flex items-center justify-center gap-2.5 text-warm-400 transition-colors group-hover:text-gold-soft lg:justify-end">
-          {open ? `Page ${shownPage} · Open the edition` : "Open the edition"}
+          {index === 0
+            ? "Open the edition"
+            : spread
+              ? `Page ${shownPage}–${shownPage + 1} · Open the edition`
+              : `Page ${shownPage} · Open the edition`}
           <ArrowRight
             className="size-3.5 transition-transform duration-300 group-hover:translate-x-1"
             aria-hidden
@@ -290,10 +287,21 @@ export function EditionFlip({ publication }: { publication: Publication }) {
 }
 
 /** One half of the open spread. */
-function Half({ src, side }: { src: string | null; side: "left" | "right" | "only" }) {
+function Half({
+  src,
+  side,
+  fallback,
+}: {
+  src: string | null;
+  side: "left" | "right" | "only";
+  fallback?: React.ReactNode;
+}) {
   return (
     <div
-      className="relative h-full flex-none overflow-hidden bg-white"
+      className={cn(
+        "relative h-full flex-none overflow-hidden",
+        side === "left" && !src ? "bg-[#f8f6f2]" : "bg-white"
+      )}
       style={{
         width: side === "only" ? "100%" : "50%",
         borderRadius:
@@ -301,9 +309,21 @@ function Half({ src, side }: { src: string | null; side: "left" | "right" | "onl
         boxShadow: "0 2px 6px rgba(20,16,12,0.3), 0 30px 60px -28px rgba(20,16,12,0.75)",
       }}
     >
-      {src && (
+      {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" className="size-full object-cover" draggable={false} />
+      ) : side === "left" ? (
+        <div className="flex size-full flex-col items-center justify-center p-6 text-center select-none pointer-events-none">
+          <div
+            className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/10 to-transparent"
+            aria-hidden
+          />
+          <span className="font-serif italic text-xs tracking-wider text-warm-400/40">
+            Vaaram Magazine
+          </span>
+        </div>
+      ) : (
+        fallback ?? null
       )}
     </div>
   );
