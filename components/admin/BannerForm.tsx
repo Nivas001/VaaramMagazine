@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, ImagePlus, Loader2, X } from "lucide-react";
+import { AlertTriangle, Check, ImagePlus, Loader2, X } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import {
   AD_FORMATS,
@@ -12,9 +12,10 @@ import {
   MIN_ROTATE_SECONDS,
   formatSize,
   placementSpec,
+  type AdFormat,
   type BannerPlacement,
 } from "@/lib/types";
-import { createBanner } from "@/app/admin/actions";
+import { createBanner, createBannerBatch } from "@/app/admin/actions";
 import { normaliseAdArtwork } from "@/lib/image-resize";
 import { putToStorage, requestTicket } from "./UploadToStorage";
 import { cn, formatBytes } from "@/lib/utils";
@@ -37,14 +38,38 @@ export function BannerForm() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const [placement, setPlacement] = useState<BannerPlacement>("site_rail");
+
+  // Off by default: one placement at a time is the common case, and the
+  // dropdown above stays the simplest possible form for it. Turning this on
+  // swaps the dropdown for a checklist — see `selected` below — so the same
+  // artwork can be booked into several placements from one upload instead of
+  // repeating the whole form once per placement.
+  const [multi, setMulti] = useState(false);
+  const [selected, setSelected] = useState<Set<BannerPlacement>>(new Set());
+
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [bookedCount, setBookedCount] = useState<number | null>(null);
 
   const spec = useMemo(() => placementSpec(placement), [placement]);
+
+  // What is actually being booked into right now, single- or multi-mode —
+  // everything below (artwork size, the rotation field) is driven from this
+  // one list rather than branching twice.
+  const activePlacements = multi ? [...selected] : [placement];
+  const anyCarousel = activePlacements.some((p) => placementSpec(p).mode === "carousel");
+  const neededFormats = useMemo(() => {
+    const set = new Set(activePlacements.map((p) => placementSpec(p).format));
+    // Falls back to a single format so the artwork hint always has something
+    // to describe, even for the instant between turning multi mode on and
+    // checking a first box — submission itself is still blocked separately.
+    return set.size > 0 ? [...set] : (["card"] as AdFormat[]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [multi, placement, selected]);
 
   function pick(incoming: File | null) {
     setError(null);
@@ -68,6 +93,27 @@ export function BannerForm() {
     setPreview(null);
   }
 
+  function toggleMulti() {
+    if (multi) {
+      // Back to one placement: carry over whichever was checked first rather
+      // than leaving the dropdown pointed at something the admin never chose.
+      setPlacement([...selected][0] ?? placement);
+      setMulti(false);
+    } else {
+      setSelected(new Set([placement]));
+      setMulti(true);
+    }
+  }
+
+  function togglePlacement(value: BannerPlacement, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(value);
+      else next.delete(value);
+      return next;
+    });
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file) {
@@ -81,43 +127,94 @@ export function BannerForm() {
       setError("Enter the advertiser's name so you can identify this banner later.");
       return;
     }
+    if (multi && selected.size === 0) {
+      setError("Choose at least one placement.");
+      return;
+    }
+
+    const targetUrl = String(data.get("targetUrl") ?? "").trim();
+    const edition = String(data.get("edition") ?? "") || null;
+    const startsAt = String(data.get("startsAt") ?? "") || null;
+    const expiresAt = String(data.get("expiresAt") ?? "") || null;
+    const sortOrderRaw = String(data.get("sortOrder") ?? "").trim();
+    const rotateSecondsRaw = String(data.get("rotateSeconds") ?? "").trim();
+    const sortOrder = sortOrderRaw ? Number(sortOrderRaw) : null;
+    const rotateSeconds = rotateSecondsRaw ? Number(rotateSecondsRaw) : null;
+    const isActive = data.get("isActive") !== null;
 
     setBusy(true);
     setError(null);
     setProgress(0);
+    setBookedCount(null);
 
     try {
-      // Redrawn to the slot's exact size first. A page can carry twenty of
-      // these, and every byte uploaded is a byte each visitor downloads.
-      setStage("Preparing artwork");
-      const artwork = await normaliseAdArtwork(file, spec.format);
+      if (multi) {
+        const targets = [...selected];
+        const formats = [...new Set(targets.map((p) => placementSpec(p).format))];
+        const artworkByFormat: Partial<Record<AdFormat, { imageUrl: string; imageKey: string }>> = {};
 
-      setStage("Uploading artwork");
-      const ticket = await requestTicket(artwork.name, artwork.type, artwork.size);
-      await putToStorage(ticket, artwork, setProgress);
+        // Redrawn once per *shape*, not once per placement — two placements
+        // that both take a card share the one upload.
+        for (let i = 0; i < formats.length; i += 1) {
+          const format = formats[i];
+          const tag = formats.length > 1 ? ` (${AD_FORMATS[format].label}, ${i + 1} of ${formats.length})` : "";
+          setStage(`Preparing artwork${tag}`);
+          const resized = await normaliseAdArtwork(file, format);
+          setStage(`Uploading artwork${tag}`);
+          const ticket = await requestTicket(resized.name, resized.type, resized.size);
+          await putToStorage(ticket, resized, setProgress);
+          artworkByFormat[format] = { imageUrl: ticket.publicUrl, imageKey: ticket.objectKey };
+        }
 
-      setStage("Saving");
-      const sortOrder = String(data.get("sortOrder") ?? "").trim();
-      const rotateSeconds = String(data.get("rotateSeconds") ?? "").trim();
-      const result = await createBanner({
-        clientName,
-        targetUrl: String(data.get("targetUrl") ?? "").trim(),
-        imageUrl: ticket.publicUrl,
-        imageKey: ticket.objectKey,
-        placement,
-        edition: String(data.get("edition") ?? "") || null,
-        startsAt: String(data.get("startsAt") ?? "") || null,
-        expiresAt: String(data.get("expiresAt") ?? "") || null,
-        sortOrder: sortOrder ? Number(sortOrder) : null,
-        rotateSeconds: rotateSeconds ? Number(rotateSeconds) : null,
-        isActive: data.get("isActive") !== null,
-      });
+        setStage("Saving");
+        const result = await createBannerBatch({
+          clientName,
+          targetUrl,
+          edition,
+          startsAt,
+          expiresAt,
+          isActive,
+          sortOrder,
+          rotateSeconds,
+          placements: targets,
+          artworkByFormat: artworkByFormat as Record<string, { imageUrl: string; imageKey: string }>,
+        });
+        if (!result.ok) throw new Error(result.error);
 
-      if (!result.ok) throw new Error(result.error);
+        setBookedCount(result.created);
+        formRef.current?.reset();
+        clear();
+        setSelected(new Set());
+        setMulti(false);
+        setPlacement("site_rail");
+      } else {
+        setStage("Preparing artwork");
+        const artwork = await normaliseAdArtwork(file, spec.format);
+        setStage("Uploading artwork");
+        const ticket = await requestTicket(artwork.name, artwork.type, artwork.size);
+        await putToStorage(ticket, artwork, setProgress);
 
-      formRef.current?.reset();
-      clear();
-      setPlacement("site_rail");
+        setStage("Saving");
+        const result = await createBanner({
+          clientName,
+          targetUrl,
+          imageUrl: ticket.publicUrl,
+          imageKey: ticket.objectKey,
+          placement,
+          edition,
+          startsAt,
+          expiresAt,
+          sortOrder,
+          rotateSeconds,
+          isActive,
+        });
+        if (!result.ok) throw new Error(result.error);
+
+        formRef.current?.reset();
+        clear();
+        setPlacement("site_rail");
+      }
+
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the banner.");
@@ -136,44 +233,103 @@ export function BannerForm() {
       <h2 className="text-lg font-bold">Add a banner</h2>
       <p className="mt-1.5 text-sm text-[rgb(var(--text-muted))]">
         Choose where it appears first — the artwork size below changes to match
-        the slot you picked.
+        what you picked.
       </p>
 
       {/* Placement leads, because it decides the size hint underneath. */}
       <div className="mt-5">
-        <label htmlFor="placement" className={label}>
-          Where it appears
-        </label>
-        <select
-          id="placement"
-          name="placement"
-          value={placement}
-          onChange={(e) => setPlacement(e.target.value as BannerPlacement)}
-          className={cn(field, "appearance-none")}
-        >
-          {GROUPS.map((group) => (
-            <optgroup key={group} label={group}>
-              {BOOKABLE.filter((p) => p.group === group).map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="placement" className={label}>
+            Where it appears
+          </label>
+          <button
+            type="button"
+            onClick={toggleMulti}
+            className="text-[12px] font-semibold text-[rgb(var(--accent-text))] underline decoration-[rgb(var(--accent))]/40 underline-offset-4 hover:decoration-[rgb(var(--accent))]"
+          >
+            {multi ? "Just one placement" : "Book into more than one placement"}
+          </button>
+        </div>
+
+        {multi ? (
+          <div className="mt-2 max-h-64 space-y-4 overflow-y-auto rounded-md border border-[rgb(var(--hairline))] p-3">
+            {GROUPS.map((group) => (
+              <div key={group}>
+                <p className="label-eyebrow mb-2 text-[10px] text-[rgb(var(--text-faint))]">
+                  {group}
+                </p>
+                <div className="space-y-1.5">
+                  {BOOKABLE.filter((p) => p.group === group).map((p) => (
+                    <label
+                      key={p.value}
+                      className="flex cursor-pointer items-start gap-2.5 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected.has(p.value)}
+                        onChange={(e) => togglePlacement(p.value, e.target.checked)}
+                        className="mt-0.5 size-4 shrink-0 accent-[rgb(var(--accent))]"
+                      />
+                      <span>
+                        {p.label}{" "}
+                        <span className="text-[12px] font-normal text-[rgb(var(--text-faint))]">
+                          ({AD_FORMATS[p.format].label})
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <select
+            id="placement"
+            name="placement"
+            value={placement}
+            onChange={(e) => setPlacement(e.target.value as BannerPlacement)}
+            className={cn(field, "mt-2 appearance-none")}
+          >
+            {GROUPS.map((group) => (
+              <optgroup key={group} label={group}>
+                {BOOKABLE.filter((p) => p.group === group).map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        )}
+
         <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
-          {spec.hint}
-          {spec.mode !== "carousel" ? (
-            <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
-              This slot shows every banner booked into it, so you can add as many
-              as you like.
-            </span>
+          {multi ? (
+            selected.size === 0 ? (
+              "Pick at least one placement above."
+            ) : (
+              <>
+                This creates a separate booking in each of the {selected.size}{" "}
+                placement{selected.size > 1 ? "s" : ""} checked — the same photo,
+                resized to fit each one — so any single one can be reordered or
+                removed later without touching the others.
+              </>
+            )
           ) : (
-            <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
-              {spec.slots && spec.slots > 1
-                ? `Banners here take turns in ${spec.slots} frames, in the order below.`
-                : "Banners here take turns in one frame, in the order below."}
-            </span>
+            <>
+              {spec.hint}
+              {spec.mode !== "carousel" ? (
+                <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
+                  This slot shows every banner booked into it, so you can add as many
+                  as you like.
+                </span>
+              ) : (
+                <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
+                  {spec.slots && spec.slots > 1
+                    ? `Banners here take turns in ${spec.slots} frames, in the order below.`
+                    : "Banners here take turns in one frame, in the order below."}
+                </span>
+              )}
+            </>
           )}
         </p>
       </div>
@@ -184,13 +340,26 @@ export function BannerForm() {
           Artwork <span className="text-[rgb(var(--accent-text))]">*</span>
         </p>
         <p className="-mt-0.5 mb-3 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
-          One image is all you need. {AD_FORMATS[spec.format].hint} It is resized
-          for you on upload, and the same picture is used on phones, tablets and
-          desktops — only the space around it changes.
+          {neededFormats.length > 1 ? (
+            <>
+              One image is all you need — it is redrawn into{" "}
+              {neededFormats
+                .map((f) => `${AD_FORMATS[f].label} (${formatSize(f)})`)
+                .join(" and ")}{" "}
+              automatically, and the same picture is used on phones, tablets and
+              desktops.
+            </>
+          ) : (
+            <>
+              One image is all you need. {AD_FORMATS[neededFormats[0]].hint} It is
+              resized for you on upload, and the same picture is used on phones,
+              tablets and desktops — only the space around it changes.
+            </>
+          )}
         </p>
 
         <UploadZone
-          size={formatSize(spec.format)}
+          size={neededFormats.map((f) => formatSize(f)).join(" and ")}
           file={file}
           preview={preview}
           busy={busy}
@@ -267,11 +436,12 @@ export function BannerForm() {
             />
             <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
               Lower numbers come first.
+              {multi && " Applied in each placement checked above."}
             </p>
           </div>
         </div>
 
-        {spec.mode === "carousel" && (
+        {anyCarousel && (
           <div>
             <label htmlFor="rotateSeconds" className={label}>
               Seconds on screen{" "}
@@ -294,6 +464,7 @@ export function BannerForm() {
               Leave it blank for {DEFAULT_ROTATE_SECONDS} seconds. Give an
               advertisement carrying an address or a phone number longer —
               anything from {MIN_ROTATE_SECONDS} to {MAX_ROTATE_SECONDS}.
+              {multi && " Ignored by any placement checked above that shows every booking rather than rotating."}
             </p>
           </div>
         )}
@@ -353,13 +524,24 @@ export function BannerForm() {
         </p>
       )}
 
+      {bookedCount !== null && (
+        <p className="mt-4 flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+          <Check className="size-4 shrink-0" />
+          Booked into {bookedCount} placement{bookedCount === 1 ? "" : "s"}.
+        </p>
+      )}
+
       <button
         type="submit"
-        disabled={busy}
+        disabled={busy || (multi && selected.size === 0)}
         className="mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-wine-strong disabled:opacity-50"
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
-        {busy ? "Uploading" : "Add banner"}
+        {busy
+          ? "Uploading"
+          : multi
+            ? `Book into ${selected.size || 0} placement${selected.size === 1 ? "" : "s"}`
+            : "Add banner"}
       </button>
     </form>
   );

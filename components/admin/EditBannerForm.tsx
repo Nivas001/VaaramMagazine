@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, ImagePlus, Loader2, Save } from "lucide-react";
+import { AlertTriangle, Check, Copy, ImagePlus, Loader2, Save } from "lucide-react";
 import { siteConfig } from "@/site.config";
 import {
   AD_FORMATS,
@@ -15,7 +15,7 @@ import {
   type AdBanner,
   type BannerPlacement,
 } from "@/lib/types";
-import { updateBanner } from "@/app/admin/actions";
+import { duplicateBanner, updateBanner } from "@/app/admin/actions";
 import { normaliseAdArtwork } from "@/lib/image-resize";
 import { UploadZone } from "./BannerForm";
 import { putToStorage, requestTicket } from "./UploadToStorage";
@@ -151,288 +151,417 @@ export function EditBannerForm({ banner }: { banner: AdBanner }) {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-6"
-    >
-      {/* ── Artwork ────────────────────────────────────────────────────── */}
-      <p className={label}>Artwork</p>
-
-      {replacing ? (
-        <>
-          <p className="-mt-0.5 mb-3 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
-            {AD_FORMATS[spec.format].hint} It is resized for you on upload.
-          </p>
-          <UploadZone
-            size={formatSize(spec.format)}
-            file={file}
-            preview={preview}
-            busy={busy}
-            onPick={pick}
-            onClear={() => {
-              setFile(null);
-              setPreview(null);
-            }}
-          />
-          <button
-            type="button"
-            onClick={cancelReplacement}
-            disabled={busy}
-            className="mt-2.5 text-[13px] font-semibold text-[rgb(var(--text-muted))] underline underline-offset-4 transition-colors hover:text-[rgb(var(--text))]"
-          >
-            Keep the current artwork
-          </button>
-        </>
-      ) : (
-        <div className="rounded-md border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]/50 p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={banner.image_url}
-            alt={`Current artwork for ${banner.client_name}`}
-            className={cn(
-              "w-full rounded border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))] object-contain",
-              AD_FORMATS[spec.format].className
-            )}
-          />
-          <button
-            type="button"
-            onClick={() => setReplacing(true)}
-            disabled={busy}
-            className="mt-3 inline-flex h-9 items-center gap-2 rounded-full border border-[rgb(var(--hairline))] px-4 text-[13px] font-medium transition-colors hover:bg-[rgb(var(--surface-2))]"
-          >
-            <ImagePlus className="size-3.5" aria-hidden />
-            Upload new artwork
-          </button>
-        </div>
-      )}
-
-      {/* ── Details ────────────────────────────────────────────────────── */}
-      <div className="mt-6 grid gap-4">
-        <div>
-          <label htmlFor="placement" className={label}>
-            Where it appears
-          </label>
-          <select
-            id="placement"
-            value={placement}
-            onChange={(e) => setPlacement(e.target.value as BannerPlacement)}
-            className={cn(field, "appearance-none")}
-          >
-            {GROUPS.map((group) => (
-              <optgroup key={group} label={group}>
-                {options
-                  .filter((p) => p.group === group)
-                  .map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-            {options.some((p) => p.legacy) && (
-              <optgroup label="Retired">
-                {options
-                  .filter((p) => p.legacy)
-                  .map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-              </optgroup>
-            )}
-          </select>
-          <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
-            {spec.hint}
-            {spec.mode === "carousel" && (
-              <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
-                {spec.slots && spec.slots > 1
-                  ? `Banners here take turns in ${spec.slots} frames, in the order set below.`
-                  : "Banners here take turns in one frame, in the order set below."}
-              </span>
-            )}
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="clientName" className={label}>
-            Advertiser name <span className="text-[rgb(var(--accent-text))]">*</span>
-          </label>
-          <input
-            id="clientName"
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-            required
-            maxLength={160}
-            className={field}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="targetUrl" className={label}>
-            Link when clicked{" "}
-            <span className="font-normal normal-case tracking-normal opacity-70">
-              (optional)
-            </span>
-          </label>
-          <input
-            id="targetUrl"
-            type="url"
-            value={targetUrl}
-            onChange={(e) => setTargetUrl(e.target.value)}
-            className={field}
-            placeholder="https://example.com"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="edition" className={label}>
-              Only in one edition?
-            </label>
-            <select
-              id="edition"
-              value={edition}
-              onChange={(e) => setEdition(e.target.value)}
-              className={cn(field, "appearance-none")}
+    <>
+      <form
+        onSubmit={onSubmit}
+        className="rounded-lg border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-3))] p-6"
+      >
+        {/* ── Artwork ────────────────────────────────────────────────────── */}
+        <p className={label}>Artwork</p>
+  
+        {replacing ? (
+          <>
+            <p className="-mt-0.5 mb-3 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
+              {AD_FORMATS[spec.format].hint} It is resized for you on upload.
+            </p>
+            <UploadZone
+              size={formatSize(spec.format)}
+              file={file}
+              preview={preview}
+              busy={busy}
+              onPick={pick}
+              onClear={() => {
+                setFile(null);
+                setPreview(null);
+              }}
+            />
+            <button
+              type="button"
+              onClick={cancelReplacement}
+              disabled={busy}
+              className="mt-2.5 text-[13px] font-semibold text-[rgb(var(--text-muted))] underline underline-offset-4 transition-colors hover:text-[rgb(var(--text))]"
             >
-              <option value="">Show in all editions</option>
-              {siteConfig.editions.map((e) => (
-                <option key={e.slug} value={e.slug}>
-                  {e.name} only
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="sortOrder" className={label}>
-              Position
-            </label>
-            <input
-              id="sortOrder"
-              type="number"
-              min={0}
-              step={10}
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-              className={field}
+              Keep the current artwork
+            </button>
+          </>
+        ) : (
+          <div className="rounded-md border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))]/50 p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={banner.image_url}
+              alt={`Current artwork for ${banner.client_name}`}
+              className={cn(
+                "w-full rounded border border-[rgb(var(--hairline))] bg-[rgb(var(--surface-2))] object-contain",
+                AD_FORMATS[spec.format].className
+              )}
             />
-            <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
-              Lower numbers come first. Type a number to move it a long way; use
-              the arrows on the list for a single step.
-            </p>
-          </div>
-        </div>
-
-        {spec.mode === "carousel" && (
-          <div>
-            <label htmlFor="rotateSeconds" className={label}>
-              Seconds on screen{" "}
-              <span className="font-normal normal-case tracking-normal opacity-70">
-                (optional)
-              </span>
-            </label>
-            <input
-              id="rotateSeconds"
-              type="number"
-              min={MIN_ROTATE_SECONDS}
-              max={MAX_ROTATE_SECONDS}
-              step={1}
-              value={rotateSeconds}
-              onChange={(e) => setRotateSeconds(e.target.value)}
-              className={field}
-              placeholder={`${DEFAULT_ROTATE_SECONDS} seconds`}
-            />
-            <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
-              How long this one holds its frame before the next takes over.
-              Leave it blank for {DEFAULT_ROTATE_SECONDS} seconds. Anything from{" "}
-              {MIN_ROTATE_SECONDS} to {MAX_ROTATE_SECONDS}.
-            </p>
+            <button
+              type="button"
+              onClick={() => setReplacing(true)}
+              disabled={busy}
+              className="mt-3 inline-flex h-9 items-center gap-2 rounded-full border border-[rgb(var(--hairline))] px-4 text-[13px] font-medium transition-colors hover:bg-[rgb(var(--surface-2))]"
+            >
+              <ImagePlus className="size-3.5" aria-hidden />
+              Upload new artwork
+            </button>
           </div>
         )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
+  
+        {/* ── Details ────────────────────────────────────────────────────── */}
+        <div className="mt-6 grid gap-4">
           <div>
-            <label htmlFor="startsAt" className={label}>
-              Start showing on{" "}
+            <label htmlFor="placement" className={label}>
+              Where it appears
+            </label>
+            <select
+              id="placement"
+              value={placement}
+              onChange={(e) => setPlacement(e.target.value as BannerPlacement)}
+              className={cn(field, "appearance-none")}
+            >
+              {GROUPS.map((group) => (
+                <optgroup key={group} label={group}>
+                  {options
+                    .filter((p) => p.group === group)
+                    .map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+              {options.some((p) => p.legacy) && (
+                <optgroup label="Retired">
+                  {options
+                    .filter((p) => p.legacy)
+                    .map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+            </select>
+            <p className="mt-2 text-xs leading-relaxed text-[rgb(var(--text-muted))]">
+              {spec.hint}
+              {spec.mode === "carousel" && (
+                <span className="ml-1 font-semibold text-[rgb(var(--accent-text))]">
+                  {spec.slots && spec.slots > 1
+                    ? `Banners here take turns in ${spec.slots} frames, in the order set below.`
+                    : "Banners here take turns in one frame, in the order set below."}
+                </span>
+              )}
+            </p>
+          </div>
+  
+          <div>
+            <label htmlFor="clientName" className={label}>
+              Advertiser name <span className="text-[rgb(var(--accent-text))]">*</span>
+            </label>
+            <input
+              id="clientName"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              required
+              maxLength={160}
+              className={field}
+            />
+          </div>
+  
+          <div>
+            <label htmlFor="targetUrl" className={label}>
+              Link when clicked{" "}
               <span className="font-normal normal-case tracking-normal opacity-70">
                 (optional)
               </span>
             </label>
             <input
-              id="startsAt"
-              type="date"
-              value={startsAt}
-              onChange={(e) => setStartsAt(e.target.value)}
+              id="targetUrl"
+              type="url"
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
               className={field}
+              placeholder="https://example.com"
             />
           </div>
-          <div>
-            <label htmlFor="expiresAt" className={label}>
-              Stop showing on{" "}
-              <span className="font-normal normal-case tracking-normal opacity-70">
-                (optional)
-              </span>
-            </label>
+  
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="edition" className={label}>
+                Only in one edition?
+              </label>
+              <select
+                id="edition"
+                value={edition}
+                onChange={(e) => setEdition(e.target.value)}
+                className={cn(field, "appearance-none")}
+              >
+                <option value="">Show in all editions</option>
+                {siteConfig.editions.map((e) => (
+                  <option key={e.slug} value={e.slug}>
+                    {e.name} only
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="sortOrder" className={label}>
+                Position
+              </label>
+              <input
+                id="sortOrder"
+                type="number"
+                min={0}
+                step={10}
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className={field}
+              />
+              <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
+                Lower numbers come first. Type a number to move it a long way; use
+                the arrows on the list for a single step.
+              </p>
+            </div>
+          </div>
+  
+          {spec.mode === "carousel" && (
+            <div>
+              <label htmlFor="rotateSeconds" className={label}>
+                Seconds on screen{" "}
+                <span className="font-normal normal-case tracking-normal opacity-70">
+                  (optional)
+                </span>
+              </label>
+              <input
+                id="rotateSeconds"
+                type="number"
+                min={MIN_ROTATE_SECONDS}
+                max={MAX_ROTATE_SECONDS}
+                step={1}
+                value={rotateSeconds}
+                onChange={(e) => setRotateSeconds(e.target.value)}
+                className={field}
+                placeholder={`${DEFAULT_ROTATE_SECONDS} seconds`}
+              />
+              <p className="mt-1.5 text-[11px] leading-relaxed text-[rgb(var(--text-faint))]">
+                How long this one holds its frame before the next takes over.
+                Leave it blank for {DEFAULT_ROTATE_SECONDS} seconds. Anything from{" "}
+                {MIN_ROTATE_SECONDS} to {MAX_ROTATE_SECONDS}.
+              </p>
+            </div>
+          )}
+  
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="startsAt" className={label}>
+                Start showing on{" "}
+                <span className="font-normal normal-case tracking-normal opacity-70">
+                  (optional)
+                </span>
+              </label>
+              <input
+                id="startsAt"
+                type="date"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+                className={field}
+              />
+            </div>
+            <div>
+              <label htmlFor="expiresAt" className={label}>
+                Stop showing on{" "}
+                <span className="font-normal normal-case tracking-normal opacity-70">
+                  (optional)
+                </span>
+              </label>
+              <input
+                id="expiresAt"
+                type="date"
+                value={expiresAt}
+                onChange={(e) => setExpiresAt(e.target.value)}
+                className={field}
+              />
+            </div>
+          </div>
+  
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm">
             <input
-              id="expiresAt"
-              type="date"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-              className={field}
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="size-4 accent-[rgb(var(--accent))]"
             />
-          </div>
+            Show it on the website
+          </label>
         </div>
-
-        <label className="flex cursor-pointer items-center gap-2.5 text-sm">
-          <input
-            type="checkbox"
-            checked={isActive}
-            onChange={(e) => setIsActive(e.target.checked)}
-            className="size-4 accent-[rgb(var(--accent))]"
-          />
-          Show it on the website
-        </label>
-      </div>
-
-      {busy && (
-        <div className="mt-5">
-          <div className="h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-2))]">
-            <div
-              className="h-full rounded-full bg-[rgb(var(--accent))] transition-[width] duration-200"
-              style={{ width: `${progress}%` }}
-            />
+  
+        {busy && (
+          <div className="mt-5">
+            <div className="h-2 overflow-hidden rounded-full bg-[rgb(var(--surface-2))]">
+              <div
+                className="h-full rounded-full bg-[rgb(var(--accent))] transition-[width] duration-200"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            {stage && (
+              <p className="mt-2 text-xs text-[rgb(var(--text-muted))]">
+                {stage}
+                {progress > 0 && ` — ${progress}%`}
+              </p>
+            )}
           </div>
-          {stage && (
-            <p className="mt-2 text-xs text-[rgb(var(--text-muted))]">
-              {stage}
-              {progress > 0 && ` — ${progress}%`}
+        )}
+  
+        {error && (
+          <p className="mt-4 flex items-start gap-2 rounded-md border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            {error}
+          </p>
+        )}
+  
+        {saved && (
+          <p className="mt-4 flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+            <Check className="size-4 shrink-0" />
+            Saved. Returning to the list.
+          </p>
+        )}
+  
+        <button
+          type="submit"
+          disabled={busy}
+          className="mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-wine-strong disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          {busy ? "Saving" : "Save changes"}
+        </button>
+      </form>
+
+      <DuplicateToOtherPlacements banner={banner} />
+    </>
+  );
+}
+
+/**
+ * A second, independent action beside the main form: also book this same
+ * artwork — already uploaded, already approved — into other placements that
+ * share its shape.
+ *
+ * Deliberately narrower than the "book into more than one placement" mode on
+ * the Add a banner form: that one uploads fresh artwork per shape needed, so
+ * it can reach any placement. This one reuses the image already sitting in
+ * storage, which only ever looks right in a placement of the same format —
+ * see duplicateBanner in app/admin/actions.ts. Offering a different-shaped
+ * placement here would just be an invitation to submit it and get told no.
+ */
+function DuplicateToOtherPlacements({ banner }: { banner: AdBanner }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Set<BannerPlacement>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<number | null>(null);
+
+  const format = placementSpec(banner.placement).format;
+  const options = BOOKABLE.filter(
+    (p) => p.value !== banner.placement && p.format === format
+  );
+
+  // Nothing else on the site takes this shape — the section would just be an
+  // empty checklist, so it does not render at all.
+  if (options.length === 0) return null;
+
+  async function onDuplicate() {
+    if (picked.size === 0) {
+      setError("Choose at least one placement.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setDone(null);
+    try {
+      const result = await duplicateBanner(banner.id, [...picked]);
+      if (!result.ok) throw new Error(result.error);
+      setDone(result.created);
+      setPicked(new Set());
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not duplicate the booking.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-6 rounded-lg border border-dashed border-[rgb(var(--hairline))] p-4">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          <Copy className="size-4 text-[rgb(var(--text-faint))]" aria-hidden />
+          Also book this artwork into other placements
+        </span>
+        <span className="text-[12px] font-normal text-[rgb(var(--text-faint))]">
+          {open ? "Hide" : "Show"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="mt-3.5">
+          <p className="text-xs leading-relaxed text-[rgb(var(--text-muted))]">
+            These use the same {AD_FORMATS[format].label.toLowerCase()} shape as this
+            booking, so the artwork already uploaded here can go straight in —
+            nothing to re-upload. Each becomes its own booking, reorderable and
+            removable on its own.
+          </p>
+
+          <div className="mt-3 space-y-1.5">
+            {options.map((p) => (
+              <label key={p.value} className="flex cursor-pointer items-start gap-2.5 text-sm">
+                <input
+                  type="checkbox"
+                  checked={picked.has(p.value)}
+                  disabled={busy}
+                  onChange={(e) => {
+                    setPicked((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) next.add(p.value);
+                      else next.delete(p.value);
+                      return next;
+                    });
+                  }}
+                  className="mt-0.5 size-4 shrink-0 accent-[rgb(var(--accent))]"
+                />
+                {p.label}
+              </label>
+            ))}
+          </div>
+
+          {error && (
+            <p className="mt-3 flex items-start gap-2 rounded-md border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+              {error}
             </p>
           )}
+          {done !== null && (
+            <p className="mt-3 flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+              <Check className="size-3.5 shrink-0" />
+              Booked into {done} more placement{done === 1 ? "" : "s"}.
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={onDuplicate}
+            disabled={busy || picked.size === 0}
+            className="mt-3.5 inline-flex h-9 items-center gap-2 rounded-full bg-[rgb(var(--accent))] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-wine-strong disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+            {busy ? "Booking…" : "Book into placements checked above"}
+          </button>
         </div>
       )}
-
-      {error && (
-        <p className="mt-4 flex items-start gap-2 rounded-md border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          {error}
-        </p>
-      )}
-
-      {saved && (
-        <p className="mt-4 flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
-          <Check className="size-4 shrink-0" />
-          Saved. Returning to the list.
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={busy}
-        className="mt-6 inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[rgb(var(--accent))] text-sm font-semibold text-white shadow-sm transition-colors hover:bg-wine-strong disabled:opacity-50"
-      >
-        {busy ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-        {busy ? "Saving" : "Save changes"}
-      </button>
-    </form>
+    </div>
   );
 }
