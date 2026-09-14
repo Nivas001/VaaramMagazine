@@ -85,7 +85,7 @@ export function Hero({
     >
       <HeroGround />
 
-      <div className="mx-auto flex w-full max-w-[1760px] flex-col px-4 pb-10 pt-[96px] sm:px-6 sm:pb-14 sm:pt-[124px] lg:min-h-[min(880px,100svh)] lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1760px] flex-col px-4 pb-10 pt-[78px] sm:px-6 sm:pb-14 sm:pt-[98px] lg:min-h-[min(880px,100svh)] lg:px-8">
         {/* ── Towers · leaderboard-and-content · cards ─────────────────────
              The two rails are grid items stretched (the default) to the full
              height of this row, which is set by their tallest sibling — the
@@ -94,7 +94,7 @@ export function Hero({
              height with `justify-between` (see HeroTowers/HeroCards), so a
              reader on a wide screen sees paid advertising run top to bottom
              beside the page rather than sitting in a small centred block. */}
-        <div className={cn("grid flex-1 gap-x-8 gap-y-9 pt-8 sm:pt-10", columns)}>
+        <div className={cn("grid flex-1 gap-x-8 gap-y-9 pt-2 sm:pt-3", columns)}>
           {hasTowers && (
             <HeroTowers banners={ads.left} className="hidden xl:flex" />
           )}
