@@ -1,25 +1,82 @@
-# Supabase pauses a free project after 7 days with no database activity.
-# This pings the database every 5 days so the website never goes down.
+# Supabase pauses a free project after 7 days with no database activity, and a
+# paused database takes the whole website down until somebody un-pauses it by
+# hand. This pings it daily so that can never happen.
 #
-# After pushing this file, add two repository secrets in
+# ── Why daily, when the pause threshold is seven days ──────────────────────
+# The previous schedule was "0 6 */5 * *", read as "every five days". A cron
+# day-of-month field does not work that way: */5 means days 1, 6, 11, 16, 21
+# and 26, and then the count restarts with the month. In a 31-day month that
+# leaves a six-day gap between the 26th and the 1st — one day of margin
+# against a seven-day pause, and none at all if a run is delayed or fails.
+# A daily ping costs nothing on GitHub's free runners and turns that one day
+# of margin into six.
+#
+# ── The two secrets this needs ─────────────────────────────────────────────
 # GitHub → Settings → Secrets and variables → Actions:
-#   SUPABASE_URL       — your project URL
-#   SUPABASE_ANON_KEY  — your anon/publishable key
+#   SUPABASE_URL       — the project URL
+#   SUPABASE_ANON_KEY  — the anon / publishable key, NOT the secret key
+#
+# These are GitHub's own secrets. The same values living in the Vercel project
+# are a different store that this workflow cannot see — which is exactly how
+# this workflow sat failing from 11 to 15 September 2026.
 name: Keep Supabase awake
 
 on:
   schedule:
-    - cron: "0 6 */5 * *"
+    - cron: "0 6 * * *"
   workflow_dispatch:
+
+# Two runs pinging the same database at once would be pointless noise.
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - name: Check the secrets are present
+        # Without this, an empty secret produces "URL rejected: No host part in
+        # the URL", which says nothing about the actual cause. Fail loudly and
+        # name the missing value instead.
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::SUPABASE_URL is not set. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::SUPABASE_ANON_KEY is not set. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
       - name: Query one row
+        # --fail turns an HTTP error into a non-zero exit, so an expired key or
+        # a paused project fails the run rather than passing quietly. Retries
+        # cover a transient blip without waking anybody up.
         run: |
           curl --fail --silent --show-error \
+            --retry 3 --retry-delay 10 --retry-all-errors --max-time 30 \
             "${{ secrets.SUPABASE_URL }}/rest/v1/publications?select=id&limit=1" \
             --header "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             --header "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          echo ""
           echo "Database pinged successfully."
+
+      # GitHub disables a scheduled workflow after 60 days of repository
+      # inactivity, and this one is what keeps the database alive — so the
+      # quiet period that would disable it is exactly the period it is needed.
+      # Touching a file in the repository on the first of each month counts as
+      # activity and resets that clock.
+      - name: Keep the schedule itself alive
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$(date -u +%d)" != "01" ]; then
+            echo "Not the first of the month — nothing to do."
+            exit 0
+          fi
+          gh api "repos/${{ github.repository }}/dispatches" \
+            --method POST --field event_type=keep-alive-heartbeat \
+            && echo "Repository activity recorded; the 60-day clock is reset." \
+            || echo "Could not record activity — not fatal, the ping above still ran."
