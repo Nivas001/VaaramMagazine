@@ -210,8 +210,8 @@ export function EditionFlip({ publication }: { publication: Publication }) {
       onBlurCapture={() => setPaused(false)}
       className={
         open && spread
-          ? "relative w-[min(92vw,560px)] lg:w-[540px] xl:w-[580px]"
-          : "relative w-[min(76vw,380px)] sm:w-[min(44vw,420px)] lg:w-[420px]"
+          ? "relative w-full max-w-[560px] 2xl:max-w-[580px]"
+          : "relative w-full max-w-[380px] lg:max-w-[400px] xl:max-w-[420px]"
       }
     >
       <Link

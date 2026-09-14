@@ -71,11 +71,11 @@ export function Hero({
    */
   const columns =
     hasTowers && hasCards
-      ? "xl:grid-cols-[150px_minmax(0,1fr)_260px] 2xl:grid-cols-[210px_minmax(0,1fr)_340px]"
+      ? "xl:grid-cols-[140px_minmax(0,1fr)_230px] 2xl:grid-cols-[170px_minmax(0,1fr)_280px]"
       : hasCards
-        ? "xl:grid-cols-[minmax(0,1fr)_260px] 2xl:grid-cols-[minmax(0,1fr)_340px]"
+        ? "xl:grid-cols-[minmax(0,1fr)_230px] 2xl:grid-cols-[minmax(0,1fr)_280px]"
         : hasTowers
-          ? "xl:grid-cols-[150px_minmax(0,1fr)] 2xl:grid-cols-[210px_minmax(0,1fr)]"
+          ? "xl:grid-cols-[140px_minmax(0,1fr)] 2xl:grid-cols-[170px_minmax(0,1fr)]"
           : "";
 
   return (
@@ -102,7 +102,7 @@ export function Hero({
           <div className="flex min-w-0 flex-col gap-8 sm:gap-10">
             <HeroLeaderboard banners={ads.top} />
 
-            <div className="grid min-w-0 flex-1 items-center gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)] lg:gap-x-10 xl:gap-x-14">
+            <div className="grid min-w-0 flex-1 items-center gap-y-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)] lg:gap-x-8 xl:gap-x-10">
             {/* ── Words ─────────────────────────────────────────────────── */}
             <div className="max-w-[34rem]">
               <div className="animate-rise" style={{ animationDelay: "0.04s" }}>
@@ -177,7 +177,7 @@ export function Hero({
             {/* ── The magazine on its shelf ──────────────────────────────── */}
             {publication && (
               <div
-                className="animate-rise flex flex-col items-center gap-3 lg:items-end"
+                className="animate-rise flex min-w-0 w-full flex-col items-center gap-3 lg:items-end"
                 style={{ animationDelay: "0.16s" }}
               >
                 {/* The issue line sits directly over the cover it describes now,

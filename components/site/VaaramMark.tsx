@@ -18,6 +18,8 @@ export function VaaramMark({
   return (
     <svg
       viewBox="0 0 64 64"
+      width="16"
+      height="16"
       className={cn("block", className)}
       role={title ? "img" : "presentation"}
       aria-label={title}
