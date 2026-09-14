@@ -35,6 +35,28 @@ export const dynamic = "force-dynamic";
  * rather than against disclosure.
  * ──────────────────────────────────────────────────────────────────────────
  */
+/**
+ * Whether this is Vercel's own scheduler calling.
+ *
+ * Vercel sets `x-vercel-cron-schedule` on a cron invocation. A client could
+ * forge that header, so this is emphatically *not* an authentication check —
+ * it only decides whether the rate limit applies, and the thing being guarded
+ * is one public row that any visitor can already read.
+ *
+ * It matters because of how the limiter keys its buckets. `clientKey` falls
+ * back to the literal string "unknown" when a request carries no
+ * `x-forwarded-for`, which is exactly the shape of an internally originated
+ * cron invocation — so the scheduler would share a single four-per-hour
+ * bucket with every other unidentifiable request, and could be throttled into
+ * silence. A keep-alive that gets rate limited is worse than no keep-alive at
+ * all, because it fails quietly.
+ *
+ * Setting CRON_SECRET makes this moot: the branch above never reaches here.
+ */
+function isVercelCron(request: Request) {
+  return request.headers.get("x-vercel-cron-schedule") !== null;
+}
+
 export async function GET(request: Request) {
   // Vercel sends `Authorization: Bearer <CRON_SECRET>` on every cron
   // invocation once that variable is set on the project. When it is set we
@@ -45,8 +67,9 @@ export async function GET(request: Request) {
     if (request.headers.get("authorization") !== `Bearer ${secret}`) {
       return NextResponse.json({ ok: false }, { status: 401 });
     }
-  } else {
-    // Unsecured, so at least make it uninteresting to hammer.
+  } else if (!isVercelCron(request)) {
+    // Unsecured, so at least make it uninteresting to hammer. The cron itself
+    // is exempted above — see why in the note on isVercelCron.
     const limit = rateLimit(clientKey(request, "cron"), {
       limit: 4,
       windowMs: 60 * 60 * 1000,
